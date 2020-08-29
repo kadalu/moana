@@ -1,0 +1,30 @@
+secret_key_base: d3zZcriOJWQ-Uwd09RGehlcbPkSDc1bDixwgCSSOJ38
+port: 3000
+name: moana-node
+
+logging:
+  severity: debug
+  colorize: true
+  filter:
+    - password
+    - confirm_password
+
+host: 0.0.0.0
+port_reuse: true
+process_count: 1
+# ssl_key_file:
+# ssl_cert_file:
+redis_url: "redis://localhost:6379"
+database_url: sqlite3:./db/moana_node_development.db
+auto_reload: true
+
+session:
+  key: amber.session
+  store: signed_cookie
+  expires: 0
+
+smtp:
+  enabled: false
+
+secrets:
+  description: Store your development secrets credentials and settings here.

@@ -1,0 +1,10 @@
+name: moana
+version: 0.1.0
+
+authors:
+  - Kadalu.io <engineering@kadalu.io>
+
+description: |
+  Moana CLI
+
+license: Apache-2.0
