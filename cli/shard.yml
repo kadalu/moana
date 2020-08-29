@@ -8,3 +8,7 @@ description: |
   Moana CLI
 
 license: Apache-2.0
+
+targets:
+  moana:
+    main: src/moana.cr
