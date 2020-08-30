@@ -17,7 +17,7 @@ Amber::Server.configure do
     plug Amber::Pipe::Error.new
     plug Amber::Pipe::Logger.new
     plug Amber::Pipe::Session.new
-    #plug Amber::Pipe::CORS.new
+    # plug Amber::Pipe::CORS.new
   end
 
   # All static content will run these transformations
@@ -32,6 +32,14 @@ Amber::Server.configure do
 
   routes :api, "/api" do
     resources "/clusters", ClusterController, except: [:new, :edit]
+
+    resources "/clusters/:cluster_id/nodes", NodeController, except: [:new, :edit]
+
+    resources "/clusters/:cluster_id/volumes", VolumeController, except: [:new, :edit, :update]
+
+    resources "/clusters/:cluster_id/tasks", TaskController, except: [:new, :edit, :create]
+
+    resources "/tasks/:cluster_id/:node_id", TaskController, except: [:new, :edit, :create]
   end
 
   routes :static do

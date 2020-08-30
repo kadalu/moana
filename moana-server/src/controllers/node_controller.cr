@@ -1,18 +1,15 @@
-require "../response"
-
-class ClusterController < ApplicationController
+class NodeController < ApplicationController
   def index
-    clusters = ClusterView.all()
+    nodes = Node.where(cluster_id: params["cluster_id"]).select
     respond_with 200 do
-      json clusters_response(clusters).to_json
+      json nodes.to_json
     end
   end
 
   def show
-    cluster = ClusterView.all("WHERE clusters.id = ?", [params["id"]])
-    if cluster.size > 0
+    if node = Node.find params["id"]
       respond_with 200 do
-        json clusters_response(cluster, single: true).to_json
+        json node.to_json
       end
     else
       results = {status: "not found"}
@@ -23,12 +20,19 @@ class ClusterController < ApplicationController
   end
 
   def create
-    cluster = Cluster.new(cluster_params.validate!)
-    puts cluster.valid?
-    puts cluster.save!
-    if cluster.valid? && cluster.save
+    node = Node.new(node_params.validate!)
+    if cluster = Cluster.find params["cluster_id"]
+      node.cluster = cluster
+    else
+      results = {status: "invalid cluster ID"}
+      respond_with 422 do
+        json results.to_json
+      end
+    end
+
+    if node.valid? && node.save
       respond_with 201 do
-        json cluster.to_json
+        json node.to_json
       end
     else
       results = {status: "invalid"}
@@ -39,11 +43,11 @@ class ClusterController < ApplicationController
   end
 
   def update
-    if cluster = Cluster.find(params["id"])
-      cluster.set_attributes(cluster_params.validate!)
-      if cluster.valid? && cluster.save
+    if node = Node.find(params["id"])
+      node.set_attributes(node_params.validate!)
+      if node.valid? && node.save
         respond_with 200 do
-          json cluster.to_json
+          json node.to_json
         end
       else
         results = {status: "invalid"}
@@ -60,8 +64,8 @@ class ClusterController < ApplicationController
   end
 
   def destroy
-    if cluster = Cluster.find params["id"]
-      cluster.destroy
+    if node = Node.find params["id"]
+      node.destroy
       respond_with 204 do
         json ""
       end
@@ -73,9 +77,11 @@ class ClusterController < ApplicationController
     end
   end
 
-  def cluster_params
+  def node_params
     params.validation do
-      required(:name, msg: nil, allow_blank: true)
+      required(:hostname, msg: nil, allow_blank: true)
+      required(:endpoint, msg: nil, allow_blank: true)
+      required(:cluster_id, msg: nil, allow_blank: true)
     end
   end
 end

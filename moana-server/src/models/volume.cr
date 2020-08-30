@@ -1,14 +1,14 @@
-class Cluster < Granite::Base
+class Volume < Granite::Base
   connection pg
-  table clusters
+  table volumes
 
-  has_many :nodes, class_name: Node
-  has_many :tasks, class_name: Task
-  has_many :volumes, class_name: Volume
+  belongs_to :cluster, foreign_key: cluster_id : String
   has_many :bricks, class_name: Brick
 
   column id : String, primary: true, auto: false
   column name : String?
+  column state : String?
+  column type : String?
   timestamps
   before_create :assign_id
 
