@@ -10,9 +10,7 @@
 require "amber"
 require "./settings"
 require "./logger"
-require "./i18n"
-require "./database"
-require "./initializers/**"
+# require "./initializers/**"
 
 # Start Generator Dependencies: Don't modify.
 # End Generator Dependencies
