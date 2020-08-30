@@ -62,9 +62,9 @@ class TaskController < ApplicationController
 
   def task_params
     params.validation do
-      required(:data, msg: nil, allow_blank: true)
+      #required(:data, msg: nil, allow_blank: true)
       required(:state, msg: nil, allow_blank: true)
-      required(:type, msg: nil, allow_blank: true)
+      #required(:type, msg: nil, allow_blank: true)
       required(:response, msg: nil, allow_blank: true)
     end
   end
