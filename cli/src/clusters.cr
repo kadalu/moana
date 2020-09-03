@@ -5,26 +5,6 @@ require "file"
 
 require "./helpers"
 
-class Cluster
-  JSON.mapping(
-    id: String,
-    name: String
-  )
-end
-
-def cluster_id_from_name(name)
-  filename = Path.home.join(".moana", "clusters.json")
-  content = File.read(filename)
-  cluster_data = Array(Cluster).from_json(content)
-  cluster_data.each do |cluster|
-    if cluster.name == name || cluster.id == name
-      return cluster.id
-    end
-  end
-
-  return ""
-end
-
 def show_clusters(gflags, args)
   cluster_data = Array(Cluster).from_json(save_and_get_clusters_list(gflags.moana_url))
 
