@@ -1,10 +1,8 @@
-require "../response"
-
 class ClusterController < ApplicationController
   def index
     clusters = ClusterView.all()
     respond_with 200 do
-      json clusters_response(clusters).to_json
+      json ClusterView.response(clusters).to_json
     end
   end
 
@@ -12,7 +10,7 @@ class ClusterController < ApplicationController
     cluster = ClusterView.all("WHERE clusters.id = ?", [params["id"]])
     if cluster.size > 0
       respond_with 200 do
-        json clusters_response(cluster, single: true).to_json
+        json ClusterView.response(cluster, single: true).to_json
       end
     else
       results = {status: "not found"}
