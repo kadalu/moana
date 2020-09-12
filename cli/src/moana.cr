@@ -287,15 +287,18 @@ class MoanaCommands
         STDERR.puts "Volume name or bricks are not specified"
         exit 1
       end
+      cluster_name_required(@volume_args)
       @volume_args.name = @pos_args[0]
       # Except first argument, all other arguments are Bricks
       @volume_args.bricks = @pos_args[1 .. -1]
       create_volume(@gflags, @volume_args)
 
     when SubCommands::VolumeList
+      cluster_name_required(@volume_args)
       show_volumes(@gflags, @volume_args)
 
     when SubCommands::VolumeInfo
+      cluster_name_required(@volume_args)
       volumes_info(@gflags, @volume_args)
 
     end

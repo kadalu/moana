@@ -33,19 +33,23 @@ end
 class Brick
   include JSON::Serializable
 
-  property node, path, device, port
-
-  def initialize(@node = Node.new, @path = "", @device = "", @port = 0)
-  end
+  property node : Node, path : String, device : String, port : Int32
 end
 
 class Volume
   include JSON::Serializable
 
-  property id, name, type, state, brick_fs, bricks, xfs_opts, zfs_opts, ext4_opts, replica_count, disperse_count, start
-
-  def initialize(@id = "", @name = "", @type = "", @state = "", @brick_fs = "dir", @bricks = [] of Brick, @xfs_opts = "", @zfs_opts = "", @ext4_opts = "", @replica_count = 1, @disperse_count = 1, @start = false)
-  end
+  property id : String,
+           name : String,
+           type : String,
+           state : String,
+           brick_fs : String?,
+           bricks : Array(Brick),
+           xfs_opts : String?,
+           zfs_opts : String?,
+           ext4_opts : String?,
+           replica_count : Int32?,
+           disperse_count : Int32?
 end
 
 def cluster_id_from_name(name)

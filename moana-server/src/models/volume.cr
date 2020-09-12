@@ -10,9 +10,4 @@ class Volume < Granite::Base
   column state : String?
   column type : String?
   timestamps
-  before_create :assign_id
-
-  def assign_id
-    @id = UUID.random.to_s
-  end
 end

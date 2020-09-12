@@ -69,7 +69,7 @@ def create_volume(gflags, args)
     headers: HTTP::Headers{"Content-Type" => "application/json"}
   )
   if response.status_code == 201
-    puts "Volume created successfully."
+    puts "Volume creation request sent successfully."
     puts "Task ID: #{Task.from_json(response.body).id}"
   else
     STDERR.puts response.status_code

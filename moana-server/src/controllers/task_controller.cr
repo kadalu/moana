@@ -1,3 +1,5 @@
+require "../volume_create_params"
+
 class TaskController < ApplicationController
   def index
     if params["node_id"]?
@@ -29,6 +31,60 @@ class TaskController < ApplicationController
     if task = Task.find(params["id"])
       task.set_attributes(task_params.validate!)
       if task.valid? && task.save
+        if task.state == "Success"
+          if taskdata = task.data
+            # TODO: Use Db Transaction to insert all these
+            volreq = VolumeRequest.from_json(taskdata)
+            volume = Volume.new(
+              {
+                "id" => volreq.id,
+                "name" => volreq.name,
+                "state" => "Created",
+                "type" => volreq.type
+              }
+            )
+
+            volume.cluster = Cluster.new(
+              {
+                "id" => volreq.cluster_id
+              }
+            )
+
+            if !volume.save
+              results = {status: "failed to save volume"}
+              respond_with 500 do
+                json results.to_json
+              end
+            end
+
+            volreq.bricks.each do |brickreq|
+              brick = Brick.new(
+                {
+                  "path" => brickreq.path,
+                  "device" => brickreq.device,
+                  "port" => brickreq.port
+                }
+              )
+              brick.cluster = volume.cluster
+
+              brick.volume = volume
+              if node = brickreq.node
+                brick.node = Node.new(
+                  {
+                    "id" => node.id
+                  }
+                )
+              end
+              if !brick.save
+                results = {status: "failed to save brick"}
+                respond_with 500 do
+                  json results.to_json
+                end
+              end
+            end
+          end
+        end
+
         respond_with 200 do
           json task.to_json
         end
