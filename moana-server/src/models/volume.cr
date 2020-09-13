@@ -9,5 +9,7 @@ class Volume < Granite::Base
   column name : String?
   column state : String?
   column type : String?
+  column replica_count : Int32
+  column disperse_count : Int32
   timestamps
 end

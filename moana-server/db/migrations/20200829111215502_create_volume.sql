@@ -5,6 +5,8 @@ CREATE TABLE volumes (
   name VARCHAR,
   state VARCHAR,
   type VARCHAR,
+  replica_count INTEGER,
+  disperse_count INTEGER,
   created_at TIMESTAMP,
   updated_at TIMESTAMP
 );

@@ -128,7 +128,7 @@ def show_volumes(gflags, args)
   end
   volume_data.each do |volume|
     if args.name == "" || volume.id == args.name || volume.name == args.name
-      printf("%-36s  %-15s %-15s %-s",volume.id, volume.name, volume.type, volume.state)
+      printf("%-36s  %-15s %-15s %-s\n",volume.id, volume.name, volume.type, volume.state)
     end
   end
 end

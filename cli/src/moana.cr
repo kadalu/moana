@@ -3,6 +3,7 @@ require "option_parser"
 require "./clusters"
 require "./nodes"
 require "./volumes"
+require "./tasks"
 
 enum SubCommands
   Unknown
@@ -20,6 +21,8 @@ enum SubCommands
   VolumeList
   VolumeInfo
   VolumeDelete
+
+  TaskList
 end
 
 struct Gflags
@@ -30,30 +33,42 @@ struct Gflags
 end
 
 struct ClusterArgs
-  property name, newname
-
-  def initialize(@name = "", @newname = "")
-  end
+  property name = "",
+           newname = ""
 end
 
 struct NodeArgs
-  property name, newname, cluster_name, endpoint
-
-  def initialize(@name = "", @newname = "", @cluster_name = "", @endpoint = "")
-  end
+  property name = "",
+           newname = "",
+           cluster_name = "",
+           endpoint = ""
 end
 
 struct VolumeArgs
-  property name, cluster_name, replica_count, disperse_count, brick_fs, xfs_opts, zfs_opts, ext4_opts, use_lvm, size, start, bricks
+  property name : String = "",
+           cluster_name : String = "",
+           replica_count : Int32 = 1,
+           disperse_count : Int32 = 1,
+           brick_fs : String = "dir",
+           xfs_opts : String = "",
+           zfs_opts : String = "",
+           ext4_opts : String = "",
+           use_lvm = false,
+           size : UInt64 = 0,
+           start = false,
+           bricks = [] of String
+end
 
-  def initialize(@name = "", @cluster_name = "", @replica_count = 1, @disperse_count = 1, @brick_fs = "", @xfs_opts = "", @zfs_opts = "", @ext4_opts = "", @use_lvm = false, @size : UInt64 = 0, @start = false, @bricks = [] of String)
-  end
+struct TaskArgs
+  property cluster_name : String = "",
+           task_id : String = ""
 end
 
 class MoanaCommands
   @cluster_args = ClusterArgs.new
   @node_args = NodeArgs.new
   @volume_args = VolumeArgs.new
+  @task_args = TaskArgs.new
   @subcmd = SubCommands::Unknown
   @pos_args = [] of String
   @gflags = Gflags.new ENV.fetch("MOANA_URL", "")
@@ -180,6 +195,17 @@ class MoanaCommands
     end
   end
 
+  def task_commands(parser)
+    parser.on("task", "Manage Tasks") do
+      parser.banner = "Usage: moana task <subcommand> [arguments]"
+      parser.on("list", "List Tasks") do
+        @subcmd = SubCommands::TaskList
+        parser.banner = "Usage: moana node list [arguments]"
+        parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @task_args.cluster_name = name }
+        parser.on("-t TASK", "--task-id=TASK", "TASK Id") { |task_id| @task_args.task_id = task_id }
+      end
+    end
+  end
 
   def parse
     parser = OptionParser.new do |parser|
@@ -188,6 +214,7 @@ class MoanaCommands
       cluster_commands parser
       node_commands parser
       volume_commands parser
+      task_commands parser
 
       #parser.on("-v", "--verbose", "Enabled servose output") { verbose = true }
       parser.on("-h", "--help", "Show this help") do
@@ -301,6 +328,9 @@ class MoanaCommands
       cluster_name_required(@volume_args)
       volumes_info(@gflags, @volume_args)
 
+    when SubCommands::TaskList
+      cluster_name_required(@task_args)
+      show_tasks(@gflags, @task_args)
     end
   end
 end

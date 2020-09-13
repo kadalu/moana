@@ -3,21 +3,21 @@ require "../volume_create_params"
 class TaskController < ApplicationController
   def index
     if params["node_id"]?
-      tasks = Task.where(cluster_id: params["cluster_id"])
-                .where(node_id: params["node_id"]).select
+      tasks = TaskView.all("WHERE clusters.id = ? AND nodes.id = ?", [params["cluster_id"], params["node_id"]])
     else
-      tasks = Task.where(cluster_id: params["cluster_id"]).select
+      tasks = TaskView.all("WHERE clusters.id = ?", [params["cluster_id"]])
     end
 
     respond_with 200 do
-      json tasks.to_json
+      json TaskView.response(tasks).to_json
     end
   end
 
   def show
-    if task = Task.find params["id"]
+    task = TaskView.all("WHERE tasks.id = ?", [params["id"]])
+    if task.size > 0
       respond_with 200 do
-        json task.to_json
+        json TaskView.response(task, single: true).to_json
       end
     else
       results = {status: "not found"}
@@ -40,7 +40,9 @@ class TaskController < ApplicationController
                 "id" => volreq.id,
                 "name" => volreq.name,
                 "state" => "Created",
-                "type" => volreq.type
+                "type" => volreq.type,
+                "replica_count" => volreq.replica_count,
+                "disperse_count" => volreq.disperse_count
               }
             )
 
