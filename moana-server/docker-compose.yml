@@ -2,6 +2,7 @@ version: '2'
 
 services:
   app:
+    network_mode: host
     build: .
     image: moana-server
     command: amber watch

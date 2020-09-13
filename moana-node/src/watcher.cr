@@ -17,7 +17,7 @@ class Task
 end
 
 class Watcher
-  def initialize(@moana_url : String, @cluster_id : String, @node_id : String, @endpoint : String)
+  def initialize(@moana_url : String, @cluster_id : String, @node_id : String)
   end
 
   # Returns the routes for the supported actions in
@@ -31,6 +31,21 @@ class Watcher
     end
   end
 
+  def participating_nodes(task)
+    case task.type
+    when "volume_create"
+      volreq = VolumeRequest.from_json(task.data)
+
+      volreq.bricks.map do |brick|
+        brick.node
+      end
+
+    else
+      [] of NodeRequest
+    end
+    
+  end
+  
   # Update the status of Task, before and after the execution.
   # Queued -> Received -> Success|Failure
   def update_task_state(task_id, resp_status, reply)
@@ -58,7 +73,7 @@ class Watcher
     end
 
     # Do not Look again if already processed
-    if task.state == SUCCESS && task.state == FAILURE
+    if task.state == SUCCESS || task.state == FAILURE
       return
     end
 
@@ -69,33 +84,51 @@ class Watcher
 
     method, url, expected_status = router_data
 
+    errors = [] of Hash(String, Int32 | NodeRequest | String)
+
     case method
     when "POST"
-      # TODO: Get list of participating nodes and
-      # call the same API with all participating
-      # endpoints.
       # TODO: Execute the HTTP calls concurrently
-      response = HTTP::Client.post(
-        "#{@endpoint}#{url}",
-        body: task.to_json,
-        headers: HTTP::Headers{"Content-Type" => "application/json"}
-      )
-    end
-
-    if !response.nil?
-      resp_status = SUCCESS
-      if response.status_code != expected_status
-        resp_status = FAILURE
+      nodes = participating_nodes task
+      nodes.each do |node|
+        begin
+          response = HTTP::Client.post(
+            "#{node.endpoint}#{url}",
+            body: task.to_json,
+            headers: HTTP::Headers{"Content-Type" => "application/json"}
+          )
+          if response.status_code != expected_status
+            errors << {
+              "error" => response.body,
+              "node" => node,
+              "error_code" => response.status_code
+            }
+          end
+        rescue Socket::ConnectError
+          errors << {
+            "error" => "connection refused",
+            "node" => node,
+            "error_code" => 0
+          }
+        end
       end
-
-      # Two possible Status: SUCCESS and FAILURE
-      update_task_state task.id, resp_status, response.body
     end
+
+    resp_status = SUCCESS
+    if errors.size > 0
+      resp_status = FAILURE
+    end
+
+    # Two possible Status: SUCCESS and FAILURE
+    update_task_state task.id, resp_status, errors
   end
 
   # Entry point to get the list of Tasks from Moana Server
   def start()
     spawn do
+      # Wait for Moana node HTTP server comes online
+      sleep 10.seconds
+
       loop do
         # TODO: Remember the last processed entry so that avoid
         # getting same entries again and again.
@@ -107,7 +140,7 @@ class Watcher
         rescue Socket::ConnectError
           STDERR.puts "Moana Server is not reachable. Waiting..."
           sleep 10.seconds
-          return
+          next
         end
 
         if response.status_code == 200

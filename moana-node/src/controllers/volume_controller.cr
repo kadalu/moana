@@ -1,25 +1,48 @@
+require "../brickutils"
+
+class NodeRequest
+  include JSON::Serializable
+
+  property id : String, hostname : String, endpoint : String
+end
+
+class BrickRequest
+  include JSON::Serializable
+
+  property path : String, device : String, node : NodeRequest, mount_path : String = ""
+end
+
+class VolumeRequest
+  include JSON::Serializable
+
+  property id : String,
+           name : String,
+           bricks : Array(BrickRequest),
+           brick_fs : String,
+           xfs_opts : String = "",
+           zfs_opts : String = "",
+           ext4_opts : String = ""
+end
+
 class VolumeController < ApplicationController
   def create
-    # task = request.get_json()
-    # volume_data = copy.copy(task)
-    # del volume_data["bricks"]
+    volreq = VolumeRequest.from_json(params["data"])
+    volreq.bricks.each do |brick|
+      next if ENV.fetch("NODE_ID", "") != brick.node.id
 
-    # for brick in task["bricks"]:
-    #     if os.environ["NODE_ID"] != brick["node"]["id"]:
-    #         continue
+      if brick.device != ""
+        brick.mount_path = Path[brick.path].parent.to_s
+      end
+      begin
+        create_brick(volreq, brick)
+      rescue ex: CreateBrickException
+        result = {error: "#{ex}"}
+        return respond_with 500 do
+          json result.to_json
+        end
+      end
+    end
 
-    #     try:
-    #         brick.update(volume_data)
-    #         brick["volume_id"] = task["id"]
-    #         brick["volname"] = task["name"]
-    #         if brick["device"] != "":
-    #             brick["mount_path"] = os.path.dirname(brick["path"])
-
-    #         brickutils.create(brick)
-    #     except brickutils.CreateBrickError as err:
-    #         return jsonify({"error": f"{err}"}), 500
-
-    # return jsonify({"data": "created"}), 201
     respond_with 201 do
       json "{\"ok\": true}"
     end

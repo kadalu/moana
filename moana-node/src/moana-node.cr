@@ -19,14 +19,7 @@ if node_id == ""
   exit 1
 end
 
-# TODO: Get this from settings
-endpoint = ENV.fetch("ENDPOINT", "")
-if endpoint == ""
-  STDERR.puts "Environment variable ENDPOINT is not provided"
-  exit 1
-end
-
-watcher = Watcher.new moana_url, cluster_id, node_id, endpoint
+watcher = Watcher.new moana_url, cluster_id, node_id
 watcher.start
 
 Amber::Support::ClientReload.new if Amber.settings.auto_reload?

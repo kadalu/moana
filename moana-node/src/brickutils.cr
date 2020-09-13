@@ -1,3 +1,5 @@
+require "xattr"
+
 class CreateBrickException < Exception
 end
 
@@ -19,6 +21,10 @@ end
 class BrickXattrException < CreateBrickException
 end
 
+MOUNT_CMD = "mount"
+UMOUNT_CMD = "umount"
+VOLUME_ID_XATTR_NAME = "trusted.glusterfs.volume-id"
+
 def execute(cmd, args)
   stdout = IO::Memory.new
   stderr = IO::Memory.new
@@ -35,27 +41,27 @@ class BrickRequest
 end
 
 class Brick
-  def initialize(@request : BrickRequest)
+  def initialize(@volume : VolumeRequest, @request : BrickRequest)
+  end
+
+  def mkfs
   end
 
   def mount
     Dir.mkdir @request.mount_path
 
-    mount('xfs', @request.device, @request.mount_path)
-    args = ['-t', @request.fstype]
-    args << src
-    args << mnt
-    ret, out = execute(MOUNT_CMD, args)
+    args = ["-t", @volume.brick_fs, @request.device, @request.mount_path]
+    ret, resp = execute(MOUNT_CMD, args)
     if ret != 0
-      raise MountException(out)
+      raise MountException.new(resp)
     end
   end
 
-  def umount
+  def unmount
     args = [@request.mount_path]
-    ret, out = execute(UMOUNT_CMD, args)
+    ret, resp = execute(UMOUNT_CMD, args)
     if ret != 0
-      raise UnmountException(out)
+      raise UnmountException.new(resp)
     end
   end
 
@@ -64,43 +70,37 @@ class Brick
   end
 
   def verify_xattr_support
-    # """Verify Brick dir supports xattrs"""
-    # test_xattr_name = "user.testattr"
-    # test_xattr_value = b"testvalue"
-    # try:
-    #     xattr.set(self.data['path'], test_xattr_name, test_xattr_value)
-    #     val = xattr.get(self.data['path'], test_xattr_name)
-    #     if val != test_xattr_value:
-    #         raise XattrSupportError(
-    #             f"Xattr value mismatch. actual={val}  expected={test_xattr_value}"
-    #         )
-    # except OSError as err:
-    #     raise XattrSupportError(
-    #         f"Extended attributes are not supported: {err}"
-    #     )
+    test_xattr_name = "user.testattr"
+    test_xattr_value = "testvalue"
+
+    begin
+      xattr = XAttr.new(@request.mount_path)
+      xattr[test_xattr_name] = test_xattr_value
+      val = xattr[test_xattr_name]
+      if val != test_xattr_value
+        raise XattrSupportException.new("Xattr value mismatch. actual=#{val} expected=#{test_xattr_value}")
+      end
+    rescue ex: IO::Error
+      raise XattrSupportException.new("Extended attributes are not supported(Error: #{ex.os_error})")
+    end
   end
 
   def set_xattrs
-    # volume_id_bytes = uuid.UUID(self.data["volume_id"]).bytes
-    # try:
-    #     xattr.set(self.data["path"], VOLUME_ID_XATTR_NAME,
-    #               volume_id_bytes, xattr.XATTR_CREATE)
-    # except FileExistsError:
-    #     pass
-    # except OSError as err:
-    #     raise BrickXattrError(
-    #         f"Unable to set volume-id on brick root: {err}"
-    #     )
-
-    # volume_id = str(uuid.UUID(bytes=xattr.get(self.data["path"], VOLUME_ID_XATTR_NAME)))
-    # if volume_id != self.data["volume_id"]:
-    #     raise BrickXattrError("Brick is already used with another Volume")
+    volume_id = UUID.new(@volume.id)
+    begin
+      xattr = XAttr.new(@request.mount_path)
+      # if xattr[VOLUME_ID_XATTR_NAME] != volume_id.bytes
+      #   raise BrickXattrException.new("Brick is already used with another Volume")
+      # end
+      xattr[VOLUME_ID_XATTR_NAME] = volume_id.bytes.to_slice
+    rescue ex: IO::Error
+      raise BrickXattrException.new("Failed to set Volume ID Xattr(Error: #{ex.os_error})")
+    end
   end
 
   def create_dirs
-    # os.makedirs(os.path.join(self.data["path"], ".glusterfs"),
-    #         mode=0o755,
-    #         exist_ok=True)
+    # TODO: Handle Error
+    Dir.mkdir "#{@request.path}/.glusterfs"
   end
 
   def remove_xattrs
@@ -109,39 +109,39 @@ end
 
 class XfsBrick < Brick
   def mkfs
-    cmd = ['mkfs.xfs']
-    args = @request.xfs_opts.split
+    cmd = "mkfs.xfs"
+    args = @volume.xfs_opts.split
     args << @request.device
-    ret, out = execute(cmd, args)
+    ret, resp = execute(cmd, args)
     if ret != 0
-      raise MkfsException(out)
+      raise MkfsException.new(resp)
     end
   end
 end
 
 class ZfsBrick < Brick
   def mkfs
-    dev_name = @request.device.replace('/', '_').strip('_')
-    cmd = ["zpool"]
+    dev_name = @request.device.sub("/", "_").strip("_")
+    cmd = "zpool"
     args = ["create"]
-    args += @request.zfs_opts.split
+    args += @volume.zfs_opts.split
     args << dev_name
     args << @request.device
-    ret, out = execute(cmd, args)
+    ret, resp = execute(cmd, args)
     if ret != 0
-      raise MkfsException(out)
+      raise MkfsException.new(resp)
     end
   end
 end
 
 class Ext4Brick < Brick
   def mkfs
-    cmd = ['mkfs.ext4']
-    args = @request.xfs_opts.split
+    cmd = "mkfs.ext4"
+    args = @volume.xfs_opts.split
     args << @request.device
-    ret, out = execute(cmd, args)
+    ret, resp = execute(cmd, args)
     if ret != 0
-      raise MkfsException(out)
+      raise MkfsException.new(resp)
     end
   end
 end
@@ -151,6 +151,7 @@ class DirBrick < Brick
   end
 
   def mount
+    Dir.mkdir @request.path
   end
 
   def unmount
@@ -160,48 +161,49 @@ class DirBrick < Brick
   end
 end
 
-# def create(data):
-#     # Validate for supported Brick Filesystems
-#     brick_fs = data.get("brick_fs", "dir")
-#     BrickFsClass = globals().get(f'{brick_fs.capitalize()}Brick', None)
-#     if BrickFsClass is None:
-#         raise UnsupportedBrickFs(brick_fs)
+def brick_object(volreq, brickreq)
+  case volreq.brick_fs
+  when "xfs"
+    XfsBrick.new volreq, brickreq
+  when "zfs"
+    ZfsBrick.new volreq, brickreq
+  when "ext4"
+    Ext4Brick.new volreq, brickreq
+  else
+    DirBrick.new volreq, brickreq
+  end
+end
 
-#     # Load respective Fs Class instance, so that it will
-#     # be available as `brick.fs`
-#     brick = Brick(data, BrickFsClass)
+def create_brick(volreq, brickreq)
+  brick = brick_object(volreq, brickreq)
 
-#     # Try Creating Filesystem if not already Created
-#     # Do not use Force so that existing FS will not get overwritten
-#     brick.fs.mkfs()
+  # Try Creating Filesystem if not already Created
+  # Do not use Force so that existing FS will not get overwritten
+  brick.mkfs
 
-#     # If the Brick FS is not dir then Try mounting the already
-#     # created filesystem
-#     brick.fs.mount()
+  # If the Brick FS is not dir then Try mounting the already
+  # created filesystem
+  brick.mount
 
-#     # Create essential directories required for GlusterFS Brick
-#     brick.create_dirs()
+  # Create essential directories required for GlusterFS Brick
+  brick.create_dirs
+  
+  brick.verify_xattr_support
 
-#     brick.verify_xattr_support()
+  # Verify that the Volume ID is same as the input Volume ID
+  # If the Volume ID not exists then Create that xattr
+  # This xattr is used to identify that the mount point or directory
+  # is not part of any other Volume.
+  brick.set_xattrs
+end
 
-#     # Verify that the Volume ID is same as the input Volume ID
-#     # If the Volume ID not exists then Create that xattr
-#     # This xattr is used to identify that the mount point or directory
-#     # is not part of any other Volume.
-#     brick.set_xattrs()
+# def delete(volreq, wipe=false)
+#   brick = brick_object(volreq, brickreq)
 
+#   brick.remove_xattrs
+#   brick.unmount
 
-# def delete(data, wipe=False):
-#     # Validate for supported Brick Filesystems
-#     brick_fs = data.get("brick_fs", "dir")
-#     BrickFsClass = globals().get(f'{brick_fs.capitalize()}Brick', None)
-#     if BrickFsClass is None:
-#         raise UnsupportedBrickFs(brick_fs)
-
-#     brick = Brick(data, BrickFsClass)
-
-#     brick.remove_xattrs()
-#     brick.fs.umount()
-
-#     if wipe:
-#         brick.fs.wipe()
+#   if wipe
+#     brick.wipe
+#   end
+# end

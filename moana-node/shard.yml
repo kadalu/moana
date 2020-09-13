@@ -24,6 +24,9 @@ dependencies:
     version: 0.35.0
     #branch: master
 
+  xattr:
+    github: ettomatic/xattr
+
 development_dependencies:
   garnet_spec:
     github: amberframework/garnet-spec

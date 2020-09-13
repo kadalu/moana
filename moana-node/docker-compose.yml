@@ -7,6 +7,9 @@ services:
     command: amber watch
     environment:
       PORT: ${PORT}
+      NODE_ID: ${NODE_ID}
+      CLUSTER_ID: ${CLUSTER_ID}
+      MOANA_URL: ${MOANA_URL}
     ports:
       - ${PORT}:${PORT}
     volumes:
