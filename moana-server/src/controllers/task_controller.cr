@@ -62,9 +62,10 @@ class TaskController < ApplicationController
             volreq.bricks.each do |brickreq|
               brick = Brick.new(
                 {
-                  "path" => brickreq.path,
-                  "device" => brickreq.device,
-                  "port" => brickreq.port
+                  "path" => brickreq.path == "" ? "-" : brickreq.path,
+                  "device" => brickreq.device == "" ? "-" : brickreq.device,
+                  "port" => brickreq.port,
+                  "state" => "-"
                 }
               )
               brick.cluster = volume.cluster

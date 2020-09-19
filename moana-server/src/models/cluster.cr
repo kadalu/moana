@@ -8,7 +8,7 @@ class Cluster < Granite::Base
   has_many :bricks, class_name: Brick
 
   column id : String, primary: true, auto: false
-  column name : String?
+  column name : String
   timestamps
   before_create :assign_id
 

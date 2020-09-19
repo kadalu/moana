@@ -40,6 +40,10 @@ Amber::Server.configure do
     resources "/clusters/:cluster_id/tasks", TaskController, except: [:new, :edit, :create]
 
     resources "/tasks/:cluster_id/:node_id", TaskController, except: [:new, :edit, :create]
+
+    get "/volfiles/:cluster_id/:name", VolfileController, :show_cluster_level
+    get "/volfiles/:cluster_id/:name/:volume_id", VolfileController, :show_volume_and_brick_level
+    get "/volfiles/:cluster_id/:name/:volume_id/:brick_id", VolfileController, :show_volume_and_brick_level
   end
 
   routes :static do

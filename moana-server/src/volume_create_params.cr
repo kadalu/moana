@@ -155,18 +155,18 @@ class VolumeCreateParams
   def volume_type
     if @volume.replica_count > 1
       if @volume.bricks.size > @volume.replica_count
-        "Distributed Replicate"
+        "distributed replicate"
       else
-        "Replicate"
+        "replicate"
       end
     elsif @volume.disperse_count > 1
       if @volume.bricks.size > @volume.disperse_count
-        "Distributed Disperse"
+        "distributed disperse"
       else
-        "Disperse"
+        "disperse"
       end
     else
-      "Distribute"
+      "distribute"
     end
   end
 

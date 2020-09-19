@@ -95,17 +95,19 @@ def volumes_info(gflags, args)
     puts "Type                    : #{vol.type}"
     puts "ID                      : #{vol.id}"
     puts "Status                  : #{vol.state}"
-    puts "Number of Storage units : #{vol.bricks.size}"
-    vol.bricks.each_with_index do |brick, idx|
-      printf(
-        "Storage Unit %-3s        : %s:%s (Port: %s)\n",
-        idx+1,
-        brick.node.hostname,
-        brick.path,
-        brick.port
-      )
-      puts
-      puts
+    puts "Number of Storage units : #{vol.subvols.size * vol.subvols[0].bricks.size}"
+    vol.subvols.each_with_index do |subvol, sidx|
+      subvol.bricks.each_with_index do |brick, idx|
+        printf(
+          "Storage Unit %-3s        : %s:%s (Port: %s)\n",
+          idx+1,
+          brick.node.hostname,
+          brick.path,
+          brick.port
+        )
+        puts
+        puts
+      end
     end
   end
 end

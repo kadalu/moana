@@ -36,6 +36,15 @@ class Brick
   property node : Node, path : String, device : String, port : Int32
 end
 
+class Subvol
+  include JSON::Serializable
+
+  property type : String,
+           bricks : Array(Brick),
+           replica_count : Int32?,
+           disperse_count : Int32?
+end
+
 class Volume
   include JSON::Serializable
 
@@ -44,7 +53,7 @@ class Volume
            type : String,
            state : String,
            brick_fs : String?,
-           bricks : Array(Brick),
+           subvols : Array(Subvol),
            xfs_opts : String?,
            zfs_opts : String?,
            ext4_opts : String?,
