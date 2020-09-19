@@ -16,8 +16,21 @@ class Task
   property response : String
 end
 
+class NodeConfig
+  include JSON::Serializable
+
+  property node_id : String?,
+           hostname : String,
+           endpoint : String,
+           moana_url : String,
+           cluster_id : String
+end
+
 class Watcher
-  def initialize(@moana_url : String, @cluster_id : String, @node_id : String)
+  def initialize()
+    @moana_url = ""
+    @cluster_id = ""
+    @node_id = ""
   end
 
   # Returns the routes for the supported actions in
@@ -128,6 +141,29 @@ class Watcher
     spawn do
       # Wait for Moana node HTTP server comes online
       sleep 10.seconds
+
+      # Open and see the Node config file, If node ID is set then
+      # it is ready to start the Watcher
+      workdir = ENV.fetch("WORKDIR", ".")
+      filename = "#{workdir}/node.json"
+      loop do
+        if File.exists?(filename)
+          conf = NodeConfig.from_json(File.read(filename))
+          if nodeid = conf.node_id
+            # Node is joined to a Cluster, set required
+            # instance variables
+            @node_id = nodeid
+            @moana_url = conf.moana_url
+            @cluster_id = conf.cluster_id
+            break
+          else
+            # Node is not yet Joined to a Cluster
+            sleep 10.seconds
+          end
+        else
+          sleep 10.seconds
+        end
+      end
 
       loop do
         # TODO: Remember the last processed entry so that avoid

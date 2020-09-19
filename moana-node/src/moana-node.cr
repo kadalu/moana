@@ -1,25 +1,19 @@
 require "../config/application"
 require "./watcher"
 
-moana_url = ENV.fetch("MOANA_URL", "")
-if moana_url == ""
-  STDERR.puts "Environment variable MOANA_URL is not provided"
+node_name = ENV.fetch("NODENAME", "")
+if node_name == ""
+  STDERR.puts "Environment variable NODENAME is not provided"
   exit 1
 end
 
-cluster_id = ENV.fetch("CLUSTER_ID", "")
-if cluster_id == ""
-  STDERR.puts "Environment variable CLUSTER_ID is not provided"
+node_endpoint = ENV.fetch("ENDPOINT", "")
+if node_endpoint == ""
+  STDERR.puts "Environment variable ENDPOINT is not provided"
   exit 1
 end
 
-node_id = ENV.fetch("NODE_ID", "")
-if node_id == ""
-  STDERR.puts "Environment variable NODE_ID is not provided"
-  exit 1
-end
-
-watcher = Watcher.new moana_url, cluster_id, node_id
+watcher = Watcher.new
 watcher.start
 
 Amber::Support::ClientReload.new if Amber.settings.auto_reload?
