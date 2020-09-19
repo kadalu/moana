@@ -41,7 +41,8 @@ struct NodeArgs
   property name = "",
            newname = "",
            cluster_name = "",
-           endpoint = ""
+           endpoint = "",
+           token = "ABCD"   # TODO: Replace this
 end
 
 struct VolumeArgs
@@ -114,6 +115,7 @@ class MoanaCommands
         @subcmd = SubCommands::NodeJoin
         parser.banner = "Usage: moana node join NAME ENDPOINT [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @node_args.cluster_name = name }
+        parser.on("-t TOKEN", "--token=TOKEN", "Token") { |token| @node_args.token = token }
       end
 
       parser.on("leave", "Leave from a Moana Cluster") do

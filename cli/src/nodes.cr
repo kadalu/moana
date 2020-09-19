@@ -27,10 +27,10 @@ end
 
 def create_node(gflags, args)
   cluster_id = cluster_id_from_name(args.cluster_name)
-  url = "#{gflags.moana_url}/api/clusters/#{cluster_id}/nodes"
+  url = "#{args.endpoint}/api/join"
   response = HTTP::Client.post(
     url,
-    body: {hostname: args.name, endpoint: args.endpoint}.to_json,
+    body: {cluster_id: cluster_id, moana_url: gflags.moana_url, token: args.token}.to_json,
     headers: HTTP::Headers{"Content-Type" => "application/json"}
   )
   if response.status_code == 201

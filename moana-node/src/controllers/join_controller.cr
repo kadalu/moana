@@ -62,15 +62,15 @@ class JoinController < ApplicationController
       }
       workdir = ENV.fetch("WORKDIR", ".")
       File.write("#{workdir}/node.json", data.to_json())
+
+      respond_with 201 do
+        json response.body
+      end
     else
       result = {error: "Failed to Join the cluster(Response: #{response.status_code})"}
       return respond_with 500 do
         json result.to_json
       end
-    end
-
-    respond_with 201 do
-      json "{\"ok\": true}"
     end
   end
 
