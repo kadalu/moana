@@ -38,6 +38,16 @@ class JoinController < ApplicationController
         json result.to_json
       end
     end
+    workdir = ENV.fetch("WORKDIR", ".")
+    filename = "#{workdir}/node.json"
+
+    if File.exists?(filename)
+      # TODO: Ignore as safe error if Cluster ID is same as already joined
+      result = {error: "Node is already part of a Cluster"}
+      return respond_with 400 do
+        json result.to_json
+      end
+    end
 
     req = {
       "hostname" => node_name,
@@ -60,8 +70,8 @@ class JoinController < ApplicationController
         "hostname" => node.hostname,
         "endpoint" => node.endpoint
       }
-      workdir = ENV.fetch("WORKDIR", ".")
-      File.write("#{workdir}/node.json", data.to_json())
+
+      File.write(filename, data.to_json())
 
       respond_with 201 do
         json response.body
