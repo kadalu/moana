@@ -4,6 +4,7 @@ require "./clusters"
 require "./nodes"
 require "./volumes"
 require "./tasks"
+require "./helpers"
 
 enum SubCommands
   Unknown
@@ -11,6 +12,7 @@ enum SubCommands
   ClusterUpdate
   ClusterList
   ClusterDelete
+  ClusterSetDefault
 
   NodeJoin
   NodeUpdate
@@ -81,6 +83,11 @@ class MoanaCommands
         @subcmd = SubCommands::ClusterList
         parser.banner = "Usage: moana cluster list [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @cluster_args.name = name }
+      end
+
+      parser.on("default", "Set default Cluster") do
+        @subcmd = SubCommands::ClusterSetDefault
+        parser.banner = "Usage: moana cluster default NAME"
       end
 
       parser.on("create", "Create Moana Cluster") do
@@ -258,9 +265,17 @@ class MoanaCommands
 
   def cluster_name_required(args)
     if args.cluster_name == ""
-      STDERR.puts "Cluster name or ID not specified"
-      exit 1
+      cluster = default_cluster()
+      if cluster == ""
+        STDERR.puts "Cluster name or ID not specified."
+        STDERR.puts "Use `moana cluster default <name>` to set default Cluster."
+        exit 1
+      else
+        args.cluster_name = cluster
+      end
     end
+
+    args
   end
 
   def handle
@@ -274,6 +289,11 @@ class MoanaCommands
       @cluster_args.name = @pos_args[0]
       create_cluster(@gflags, @cluster_args)
 
+    when SubCommands::ClusterSetDefault
+      cluster_name_validate(@pos_args)
+      @cluster_args.name = @pos_args[0]
+      set_default_cluster(@gflags, @cluster_args)
+
     when SubCommands::ClusterUpdate
       cluster_name_validate(@pos_args)
       @cluster_args.newname = @pos_args[0]
@@ -285,7 +305,7 @@ class MoanaCommands
       delete_cluster(@gflags, @cluster_args)
 
     when SubCommands::NodeList
-      cluster_name_required(@node_args)
+      @node_args = cluster_name_required(@node_args)
       show_nodes(@gflags, @node_args)
 
     when SubCommands::NodeJoin
@@ -293,13 +313,13 @@ class MoanaCommands
         STDERR.puts "Nodename and Endpoint not specified"
         exit 1
       end
-      cluster_name_required(@node_args)
+      @node_args = cluster_name_required(@node_args)
       @node_args.name = @pos_args[0]
       @node_args.endpoint = @pos_args[1]
       create_node(@gflags, @node_args)
 
     when SubCommands::NodeUpdate
-      cluster_name_required(@node_args)
+      @node_args = cluster_name_required(@node_args)
       update_node(@gflags, @node_args)
 
     when SubCommands::NodeLeave
@@ -307,7 +327,7 @@ class MoanaCommands
         STDERR.puts "Nodename is not specified"
         exit 1
       end
-      cluster_name_required(@node_args)
+      @node_args = cluster_name_required(@node_args)
       @node_args.name = @pos_args[0]
       delete_node(@gflags, @node_args)
 
@@ -316,22 +336,22 @@ class MoanaCommands
         STDERR.puts "Volume name or bricks are not specified"
         exit 1
       end
-      cluster_name_required(@volume_args)
+      @volume_args = cluster_name_required(@volume_args)
       @volume_args.name = @pos_args[0]
       # Except first argument, all other arguments are Bricks
       @volume_args.bricks = @pos_args[1 .. -1]
       create_volume(@gflags, @volume_args)
 
     when SubCommands::VolumeList
-      cluster_name_required(@volume_args)
+      @volume_args = cluster_name_required(@volume_args)
       show_volumes(@gflags, @volume_args)
 
     when SubCommands::VolumeInfo
-      cluster_name_required(@volume_args)
+      @volume_args = cluster_name_required(@volume_args)
       volumes_info(@gflags, @volume_args)
 
     when SubCommands::TaskList
-      cluster_name_required(@task_args)
+      @task_args = cluster_name_required(@task_args)
       show_tasks(@gflags, @task_args)
     end
   end
