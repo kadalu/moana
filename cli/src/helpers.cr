@@ -119,3 +119,12 @@ def save_and_get_clusters_list(base_url)
 
   content
 end
+
+def default_cluster
+  filename = Path.home.join(".moana", "default_cluster")
+  if File.exists?(filename)
+    File.read(filename)
+  else
+    ""
+  end
+end
