@@ -3,6 +3,7 @@ require "regex"
 require "../volume_create_params"
 
 VOLUME_CREATE = "volume_create"
+VOLUME_START = "volume_start"
 
 class VolumeController < ApplicationController
   def index
@@ -21,6 +22,55 @@ class VolumeController < ApplicationController
     else
       results = {status: "not found"}
       respond_with 404 do
+        json results.to_json
+      end
+    end
+  end
+
+  def start
+    # If Cluster ID is valid or not
+    if tmp = Cluster.find params["cluster_id"]
+      # TODO: Check if the logged in user is authorized for this Cluster
+      cluster = tmp
+    else
+      result = {error: "Invalid Cluster ID"}
+      return respond_with 422 do
+        json result.to_json
+      end
+    end
+
+    volume = VolumeView.all("WHERE volumes.id = ?", [params["id"]])
+    if volume.size == 0
+      results = {status: "not found"}
+      return respond_with 404 do
+        json results.to_json
+      end
+    end
+
+    voldata = VolumeView.response(volume)[0]
+    task = Task.new(
+      {
+        "state" => "Queued",
+        "type" => VOLUME_START,
+        "data" => voldata.to_json,
+        "response" => "{}"
+      }
+    )
+
+    task.cluster = cluster
+    node = voldata.subvols[0].bricks[0].node
+    task_node = Node.new
+    task_node.id = node.id
+
+    task.node = task_node
+
+    if task.save
+      respond_with 201 do
+        json task.to_json
+      end
+    else
+      results = {status: "failed to create task"}
+      respond_with 500 do
         json results.to_json
       end
     end

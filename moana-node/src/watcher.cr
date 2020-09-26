@@ -38,7 +38,10 @@ class Watcher
   def task_route(task_type)
     case task_type
     when "volume_create"
-      ["POST", "/api/volumes", 201]
+      ["POST", "/api/volume_create", 201]
+
+    when "volume_start"
+      ["POST", "/api/volume_start", 200]
     else
       nil
     end
@@ -70,6 +73,7 @@ class Watcher
       headers: HTTP::Headers{"Content-Type" => "application/json"}
     )
 
+    puts response.body
     if response.status_code != 200
       STDERR.puts "Failed to send response: #{response.status_code}"
     end

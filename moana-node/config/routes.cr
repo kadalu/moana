@@ -31,7 +31,8 @@ Amber::Server.configure do
   end
 
   routes :api, "/api" do
-    post "/volumes", VolumeController, :create
+    post "/volume_create", VolumeController, :create
+    post "/volume_start", VolumeController, :start
     post "/join", JoinController, :create
   end
 

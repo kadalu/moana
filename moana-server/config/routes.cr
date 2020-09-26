@@ -36,6 +36,7 @@ Amber::Server.configure do
     resources "/clusters/:cluster_id/nodes", NodeController, except: [:new, :edit]
 
     resources "/clusters/:cluster_id/volumes", VolumeController, except: [:new, :edit, :update]
+    post "/clusters/:cluster_id/volumes/:id/start", VolumeController, :start
 
     resources "/clusters/:cluster_id/tasks", TaskController, except: [:new, :edit, :create]
 
