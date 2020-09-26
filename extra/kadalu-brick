@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+"""
+Script to read the input configuration JSON file and start the
+respective GlusterFS Brick Process.
+
+USAGE: kadalu-brick config.json
+
+Config Format:
+
+```
+{
+    "path": "/bricks/b1",
+    "node.id": "f38f869b-6a40-42d3-bed5-766e0a622cbc",
+    "node.hostname": "node1.example.com",
+    "volume.name": "gv1",
+    "name": "node1.example.com:-bricks-b1",
+    "port": 43001,
+    "device": "",
+    "mountdir": ""
+}
+```
+"""
+
+REQUIRED_FIELDS = ["path", "node.id", "node.hostname", "volume.name", "name", "port"]
+OPTIONAL_FIELDS = ["device", "mountdir"]
+
+import os
+import sys
+import json
+import subprocess
+
+
+class CommandException(Exception):
+    """Custom exception for command execution"""
+    def __init__(self, ret, out, err):
+        self.ret = ret
+        self.out = out
+        self.err = err
+        msg = "[%d] %s %s" % (ret, out, err)
+        super().__init__(msg)
+
+
+def execute(*cmd):
+    """
+    Execute command. Returns output and error.
+    Raises CommandException on error
+    """
+    proc = subprocess.Popen(cmd, stderr=subprocess.PIPE,
+                            stdout=subprocess.PIPE,
+                            universal_newlines=True)
+    out, err = proc.communicate()
+    if proc.returncode != 0:
+        raise CommandException(proc.returncode, out.strip(), err.strip())
+    return (out.strip(), err.strip())
+
+
+def mount_brick(brick_device, mountdir):
+    try:
+        execute("mount", brick_device, mountdir)
+    except CommandException as err:
+        if 'already mounted' not in err.err:
+            logging.error(logf(
+                "Failed to mount export brick",
+                device=brick_device,
+                mountdir=mountdir,
+                error=err,
+                ))
+            sys.exit(1)
+        else:
+            pass
+
+
+def start_brick_process(conf):
+    if conf["device"] != "":
+        mount_brick(conf["device"], conf["mountdir"])
+
+    glusterfsd = os.environ.get("GLUSTERFSD", "/usr/sbin/glusterfsd")
+    os.execv(
+        glusterfsd,
+        [
+            glusterfsd,
+            "-N",
+            "-p", "/var/run/moana/%s.pid" % conf["name"],
+            "-S", "/var/run/moana/%s.socket" % conf["name"],
+            "--brick-name", conf["path"],
+            "-l", "/var/log/moana/bricks/%s.log" % conf["name"],
+            "--xlator-option",
+            "*-posix.glusterd-uuid=%s" % conf["node.id"],
+            "--process-name", "brick",
+            "--brick-port", "%s" % conf["port"],
+            "--xlator-option",
+            "%s-server.listen-port=%s" % (conf["volume.name"], conf["port"]),
+            "-f", "/var/lib/moana/volfiles/%s.vol" % conf["name"]
+        ]
+    )
+
+
+def main(args):
+    if len(args) != 2:
+        print("Config file not provided", file=sys.stderr)
+        sys.exit(1)
+
+    config_file = args[1]
+    with open(config_file) as conff:
+        config_data = json.load(conff)
+
+    config_data["name"] = os.path.basename(args[1]).replace(".json", "")
+
+    for field in REQUIRED_FIELDS:
+        if config_data.get(field, None) is None:
+            print("%s not exists in config file" % field, file=sys.stderr)
+            sys.exit(1)
+
+    # Set empty string if Optional fields doesn't exists
+    for field in OPTIONAL_FIELDS:
+        config_data[field] = config_data.get(field, "")
+
+    start_brick_process(config_data)
+
+
+if __name__ == "__main__":
+    main(sys.argv)

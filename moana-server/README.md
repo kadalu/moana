@@ -1,50 +1,56 @@
-# moana-server
+## Development Setup
 
-[![Amber Framework](https://img.shields.io/badge/using-amber_framework-orange.svg)](https://amberframework.org)
-
-This is a project written using [Amber](https://amberframework.org). Enjoy!
-
-## Getting Started
-
-These instructions will get a copy of this project running on your machine for development and testing purposes.
-
-Please see [deployment](https://docs.amberframework.org/amber/deployment) for notes on deploying the project in production.
-
-## Prerequisites
-
-This project requires [Crystal](https://crystal-lang.org/) ([installation guide](https://crystal-lang.org/docs/installation/)).
-
-## Development
-
-To start your Amber server:
-
-1. Install dependencies with `shards install`
-2. Build executables with `shards build`
-3. Create and migrate your database with `bin/amber db create migrate`. Also see [creating the database](https://docs.amberframework.org/amber/guides/create-new-app#creating-the-database).
-4. Start Amber server with `bin/amber watch`
-
-Now you can visit http://localhost:3000/ from your browser.
-
-Getting an error message you need help decoding? Check the [Amber troubleshooting guide](https://docs.amberframework.org/amber/troubleshooting), post a [tagged message on Stack Overflow](https://stackoverflow.com/questions/tagged/amber-framework), or visit [Amber on Gitter](https://gitter.im/amberframework/amber).
-
-Using Docker? Please check [Amber Docker guides](https://docs.amberframework.org/amber/guides/docker).
-
-## Tests
-
-To run the test suite:
+Install Crystal
 
 ```
-crystal spec
+$ curl https://dist.crystal-lang.org/apt/setup.sh | sudo bash
+$ sudo apt-get install build-essential crystal
 ```
 
-## Contributing
+Install Amber
 
-1. Fork it ( https://github.com/your-github-user/moana-server/fork )
-2. Create your feature branch ( `git checkout -b my-new-feature` )
-3. Commit your changes ( `git commit -am 'Add some feature'` )
-4. Push to the branch ( `git push origin my-new-feature` )
-5. Create a new Pull Request
+```
+$ sudo apt-get install libreadline-dev libsqlite3-dev libpq-dev libmysqlclient-dev libssl-dev libyaml-dev libpcre3-dev libevent-dev
+$ curl -L https://github.com/amberframework/amber/archive/stable.tar.gz | tar xz
+$ cd amber-stable/
+$ shards install
+$ make install
+$ cd ..
+$ rm -rf amber-stable
+```
 
-## Contributors
+Install the dependencies
 
-- [your-github-user](https://github.com/your-github-user) Aravinda Vishwanathapura - creator, maintainer
+```
+$ cd moana-server
+$ shards install
+```
+
+Postgres Database setup
+
+```
+sudo su - postgres
+$ psql
+postgres-# CREATE DATABASE moana_server_development;
+postgres-# CREATE USER postgres;
+postgres-# ALTER USER postgres PASSWORD 'secret';
+postgres-# ALTER USER postgres WITH SUPERUSER;
+```
+
+Export the `DATABASE_URL`
+
+```
+$ export DATABASE_URL=postgres://postgres:secret@localhost:5432/moana_server_development
+```
+
+Run database migrations
+
+```
+$ amber db create migrate
+```
+
+Start the moana-node service,
+
+```
+$ amber watch
+```

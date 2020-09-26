@@ -1,50 +1,79 @@
 # moana-node
 
-[![Amber Framework](https://img.shields.io/badge/using-amber_framework-orange.svg)](https://amberframework.org)
-
-This is a project written using [Amber](https://amberframework.org). Enjoy!
-
-## Getting Started
-
-These instructions will get a copy of this project running on your machine for development and testing purposes.
-
-Please see [deployment](https://docs.amberframework.org/amber/deployment) for notes on deploying the project in production.
-
-## Prerequisites
-
-This project requires [Crystal](https://crystal-lang.org/) ([installation guide](https://crystal-lang.org/docs/installation/)).
-
-## Development
-
-To start your Amber server:
-
-1. Install dependencies with `shards install`
-2. Build executables with `shards build`
-3. Create and migrate your database with `bin/amber db create migrate`. Also see [creating the database](https://docs.amberframework.org/amber/guides/create-new-app#creating-the-database).
-4. Start Amber server with `bin/amber watch`
-
-Now you can visit http://localhost:3000/ from your browser.
-
-Getting an error message you need help decoding? Check the [Amber troubleshooting guide](https://docs.amberframework.org/amber/troubleshooting), post a [tagged message on Stack Overflow](https://stackoverflow.com/questions/tagged/amber-framework), or visit [Amber on Gitter](https://gitter.im/amberframework/amber).
-
-Using Docker? Please check [Amber Docker guides](https://docs.amberframework.org/amber/guides/docker).
-
-## Tests
-
-To run the test suite:
+Clone the repo
 
 ```
-crystal spec
+$ git clone https://github.com/kadalu/moana.cr.git
+$ cd moana.cr
 ```
 
-## Contributing
+Create Required directories in the node
 
-1. Fork it ( https://github.com/your-github-user/moana-node/fork )
-2. Create your feature branch ( `git checkout -b my-new-feature` )
-3. Commit your changes ( `git commit -am 'Add some feature'` )
-4. Push to the branch ( `git push origin my-new-feature` )
-5. Create a new Pull Request
+```
+$ mkdir /var/lib/moana \
+    /var/run/moana \
+    /var/lib/moana/volfiles \
+    /var/log/moana
+```
 
-## Contributors
+Copy Systemd unit template file
 
-- [your-github-user](https://github.com/your-github-user) Aravinda Vishwanathapura - creator, maintainer
+```
+$ cp extra/kadalu-brick@.service /lib/systemd/system/
+```
+
+Copy glusterfsd wrapper script
+
+```
+$ cp extra/kadalu-brick /usr/sbin/
+```
+
+## Development Setup
+
+Install Crystal
+
+```
+$ curl https://dist.crystal-lang.org/apt/setup.sh | sudo bash
+$ sudo apt-get install build-essential crystal
+```
+
+Install Amber
+
+```
+$ sudo apt-get install libreadline-dev libsqlite3-dev libpq-dev libmysqlclient-dev libssl-dev libyaml-dev libpcre3-dev libevent-dev
+$ curl -L https://github.com/amberframework/amber/archive/stable.tar.gz | tar xz
+$ cd amber-stable/
+$ shards install
+$ make install
+$ cd ..
+$ rm -rf amber-stable
+```
+
+Install the dependencies
+
+```
+$ cd moana-node
+$ shards install
+```
+
+Start the moana-node service,
+
+```
+$ amber watch
+```
+
+Options available are:
+
+* `NODENAME` - Node name/host name to use with all Volume operations. Default `$(hostname)`
+* `PORT` - Port of the service. If `ENDPOINT` is specified then takes the PORT from that. Default value is `4000` if Endpoint also not specified.
+* `ENDPOINT` - Endpoint to use for in-cluster communication between nodes. Default is `$(hostname):${PORT}`
+* `ENDPOINT_HTTPS` - If `yes` then use `https` for the endpoint URL else use `http`.
+* `WORKDIR` - Workdir to save node/cluster configurations once joined to a Cluster. Default is `/var/lib/kadalu`
+
+To run with the above options,
+
+```
+$ NODENAME=node1.example.com ENDPOINT=http://node1.local:3001 amber watch
+```
+
+Now `moana-node` is ready for getting Join request.

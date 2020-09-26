@@ -74,7 +74,7 @@ class Brick
     test_xattr_value = "testvalue"
 
     begin
-      xattr = XAttr.new(@request.mount_path)
+      xattr = XAttr.new(@request.path)
       xattr[test_xattr_name] = test_xattr_value
       val = xattr[test_xattr_name]
       if val != test_xattr_value
@@ -88,7 +88,7 @@ class Brick
   def set_xattrs
     volume_id = UUID.new(@volume.id)
     begin
-      xattr = XAttr.new(@request.mount_path)
+      xattr = XAttr.new(@request.path)
       # if xattr[VOLUME_ID_XATTR_NAME] != volume_id.bytes
       #   raise BrickXattrException.new("Brick is already used with another Volume")
       # end
