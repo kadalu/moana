@@ -120,7 +120,7 @@ class MoanaCommands
 
       parser.on("join", "Join to a Moana Cluster") do
         @subcmd = SubCommands::NodeJoin
-        parser.banner = "Usage: moana node join NAME ENDPOINT [arguments]"
+        parser.banner = "Usage: moana node join ENDPOINT [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @node_args.cluster_name = name }
         parser.on("-t TOKEN", "--token=TOKEN", "Token") { |token| @node_args.token = token }
       end
@@ -309,13 +309,12 @@ class MoanaCommands
       show_nodes(@gflags, @node_args)
 
     when SubCommands::NodeJoin
-      if @pos_args.size != 2
-        STDERR.puts "Nodename and Endpoint not specified"
+      if @pos_args.size != 1
+        STDERR.puts "Node Endpoint not specified"
         exit 1
       end
       @node_args = cluster_name_required(@node_args)
-      @node_args.name = @pos_args[0]
-      @node_args.endpoint = @pos_args[1]
+      @node_args.endpoint = @pos_args[0]
       create_node(@gflags, @node_args)
 
     when SubCommands::NodeUpdate
