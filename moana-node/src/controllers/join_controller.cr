@@ -38,8 +38,8 @@ class JoinController < ApplicationController
         json result.to_json
       end
     end
-    workdir = ENV.fetch("WORKDIR", ".")
-    filename = "#{workdir}/node.json"
+    workdir = ENV.fetch("WORKDIR", "")
+    filename = "#{workdir}/#{node_name}.json"
 
     if File.exists?(filename)
       # TODO: Ignore as safe error if Cluster ID is same as already joined
@@ -70,6 +70,9 @@ class JoinController < ApplicationController
         "hostname" => node.hostname,
         "endpoint" => node.endpoint
       }
+
+      # Set node ID for future use
+      ENV["NODE_ID"] = node.id
 
       File.write(filename, data.to_json())
 

@@ -144,8 +144,8 @@ class Watcher
 
       # Open and see the Node config file, If node ID is set then
       # it is ready to start the Watcher
-      workdir = ENV.fetch("WORKDIR", ".")
-      filename = "#{workdir}/node.json"
+      workdir = ENV.fetch("WORKDIR", "")
+      filename = "#{workdir}/#{ENV["NODENAME"]}.json"
       loop do
         if File.exists?(filename)
           conf = NodeConfig.from_json(File.read(filename))

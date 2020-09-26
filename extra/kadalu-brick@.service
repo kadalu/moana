@@ -1,0 +1,10 @@
+[Unit]
+Description=Kadalu Storage unit management %I
+After=network.target
+
+[Service]
+PIDFile=/var/run/moana/%i.pid
+ExecStart=/usr/sbin/kadalu-brick /var/lib/moana/%i.json
+
+[Install]
+WantedBy=multi-user.target

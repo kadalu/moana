@@ -24,11 +24,26 @@ class VolumeRequest
            ext4_opts : String = ""
 end
 
+def nodeid_from_conf
+  workdir = ENV.fetch("WORKDIR", "")
+  filename = "#{workdir}/#{ENV["NODENAME"]}.json"
+  nodeid = ""
+  if File.exists?(filename)
+    conf = NodeConfig.from_json(File.read(filename))
+    if tmp = conf.node_id
+      nodeid = tmp
+    end
+  end
+
+  nodeid
+end
+
 class VolumeController < ApplicationController
   def create
+    this_node = nodeid_from_conf
     volreq = VolumeRequest.from_json(params["data"])
     volreq.bricks.each do |brick|
-      next if ENV.fetch("NODE_ID", "") != brick.node.id
+      next if this_node != brick.node.id
 
       if brick.device != ""
         brick.mount_path = Path[brick.path].parent.to_s
