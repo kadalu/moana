@@ -1,0 +1,10 @@
+name: moana_types
+version: 0.1.0
+
+authors:
+  - Kadalu.io <engineering@kadalu.io>
+
+description: |
+  Moana Types
+
+license: Apache-2.0

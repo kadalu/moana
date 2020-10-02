@@ -19,6 +19,9 @@ targets:
     main: lib/amber/src/amber/cli.cr
 
 dependencies:
+  moana_types:
+    path: ../types
+
   amber:
     github: amberframework/amber
     version: 0.35.0

@@ -1,36 +1,8 @@
-require "uuid"
+require "moana_types"
 
-class NodeRequest
-  include JSON::Serializable
+require "./models/node"
 
-  property id, hostname, endpoint
-
-  def initialize(@id : String?, @hostname : String?, @endpoint : String?)
-  end
-end
-
-class BrickRequest
-  include JSON::Serializable
-
-  property node_id : String|Nil,
-           path : String?,
-           device : String?,
-           port : Int32?,
-           node : NodeRequest?
-end
-
-class VolumeRequest
-  include JSON::Serializable
-
-  property name : String,
-           brick_fs : String = "dir",
-           bricks : Array(BrickRequest),
-           replica_count : Int32 = 1,
-           disperse_count : Int32 = 1,
-           cluster_id : String?,
-           type : String = "Distribute",
-           id : String = UUID.random.to_s  # Generate Volume ID server side
-end
+include MoanaTypes
 
 class VolumeCreateParams
   @error = ""
