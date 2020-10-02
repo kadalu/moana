@@ -1,20 +1,6 @@
-class BrickRequest
-  include JSON::Serializable
+require "moana_types"
 
-  property node_id, path, device
-
-  def initialize(@node_id = "", @path = "", @device = "")
-  end
-end
-
-class VolumeCreateRequest
-  include JSON::Serializable
-
-  property name, brick_fs, bricks, xfs_opts, zfs_opts, ext4_opts, replica_count, disperse_count, start
-
-  def initialize(@name = "", @brick_fs = "dir", @bricks = [] of BrickRequest, @xfs_opts = "", @zfs_opts = "", @ext4_opts = "", @replica_count = 1, @disperse_count = 1, @start = false)
-  end
-end
+include MoanaTypes
 
 def prepare_bricks_list(args, cluster_id, data)
   if nodes = nodes_by_cluster_id(cluster_id)
@@ -51,7 +37,7 @@ end
 
 def create_volume(gflags, args)
   cluster_id = cluster_id_from_name(args.cluster_name)
-  req = VolumeCreateRequest.new
+  req = VolumeRequest.new
   req.name = args.name
   req.brick_fs = args.brick_fs
   req.zfs_opts = args.zfs_opts

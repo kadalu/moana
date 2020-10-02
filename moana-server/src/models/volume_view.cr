@@ -1,66 +1,10 @@
 require "json"
+require "moana_types"
 
-class VolumeViewNode
-  include JSON::Serializable
-
-  property id, hostname, endpoint
-
-  def initialize(@id = "", @hostname = "", @endpoint = "")
-  end
-end
-
-class VolumeViewBrick
-  include JSON::Serializable
-
-  property id, path, device, node, port, state, type
-
-  def initialize(@id = "",
-                 @path = "",
-                 @device = "",
-                 @port : Int32 = 0,
-                 @state = "",
-                 @type = "",
-                 @node = VolumeViewNode.new)
-  end
-end
-
-class VolumeViewSubvol
-  include JSON::Serializable
-
-  property replica_count, disperse_count, type, bricks
-
-  def initialize(@replica_count : Int32 = 1,
-                 @disperse_count : Int32 = 1,
-                 @type = "",
-                 @bricks = [] of VolumeViewBrick)
-  end
-end
-
-class VolumeViewCluster
-  include JSON::Serializable
-
-  property id, name
-
-  def initialize(@id = "", @name = "")
-  end
-end
-
-class VolumeViewVolume
-  include JSON::Serializable
-
-  property id, name, replica_count, disperse_count, state, type, cluster, subvols, options
-
-  def initialize(@id = "",
-           @name = "",
-           @replica_count : Int32 = 1,
-           @disperse_count : Int32 = 1,
-           @state = "",
-           @type = "",
-           @cluster = VolumeViewCluster.new,
-           @subvols = [] of VolumeViewSubvol,
-           @options = {} of String => String)
-  end
-end
+# include helps to include all the struct available
+# into current namespace. Without this `MoanaTypes` prefix
+# is required. For example, `MoanaTypes::VolumeResponse`
+include MoanaTypes
 
 
 class VolumeView < Granite::Base
@@ -105,7 +49,7 @@ class VolumeView < Granite::Base
     grouped_data.map do |key, value|
       value = value.select { |brick| !brick.brick_id.nil? }
       bricks_data = value.map do |brick|
-        brk = VolumeViewBrick.new
+        brk = BrickResponse.new
 
         brk.id = brick.brick_id
         brk.path = brick.brick_path
@@ -124,7 +68,7 @@ class VolumeView < Granite::Base
       number_of_subvols = bricks_data.size / subvol_bricks_count
 
       subvols = (0 .. number_of_subvols-1).map do |sidx|
-        subvol = VolumeViewSubvol.new
+        subvol = SubvolResponse.new
 
         subvol.replica_count = value[0].replica_count
         subvol.disperse_count = value[0].disperse_count
@@ -136,7 +80,7 @@ class VolumeView < Granite::Base
         subvol
       end
 
-      volume = VolumeViewVolume.new
+      volume = VolumeResponse.new
 
       volume.id = value[0].id.to_s
       volume.name = value[0].name
