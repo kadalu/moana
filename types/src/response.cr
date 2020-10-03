@@ -1,6 +1,21 @@
 require "json"
 
 module MoanaTypes
+  struct ErrorResponse
+    include JSON::Serializable
+
+    property error : String, status_code : Int32 = 0
+  end
+
+  struct TaskResponse
+    include JSON::Serializable
+
+    property id
+
+    def initialize(@id = "")
+    end
+  end
+
   struct NodeResponse
     include JSON::Serializable
 
@@ -40,7 +55,7 @@ module MoanaTypes
   struct ClusterResponse
     include JSON::Serializable
 
-    property id, name
+    property id, name, nodes : Array(NodeResponse)?
 
     def initialize(@id = "", @name = "")
     end
