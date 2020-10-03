@@ -5,6 +5,7 @@ require "moana_types"
 require "./helpers"
 require "./volumes"
 require "./nodes"
+require "./tasks"
 
 module MoanaClient
   class Cluster
@@ -24,7 +25,7 @@ module MoanaClient
       end
     end
 
-    def info
+    def get
       url = "#{@ctx.url}/api/clusters/#{@cluster_id}"
       response = HTTP::Client.get url
       if response.status_code == 200
@@ -76,20 +77,32 @@ module MoanaClient
       Volume.new(@ctx, @cluster_id, id)
     end
 
-    def volumes()
+    def volumes
       Volume.all(@ctx, @cluster_id)
     end
 
-    def node_create(endpoint : String, token : String)
-      Node.create(@ctx, @cluster_id, endpoint, token)
+    def node_join(endpoint : String, token : String)
+      Node.join(@ctx, @cluster_id, endpoint, token)
+    end
+
+    def node_create(hostname : String, endpoint : String)
+      Node.create(@ctx, @cluster_id, hostname, endpoint)
     end
 
     def node(id : String)
       Node.new(@ctx, @cluster_id, id)
     end
 
-    def nodes()
+    def nodes
       Node.all(@ctx, @cluster_id)
+    end
+
+    def task(id : String)
+      Task.new(@ctx, @cluster_id, id)
+    end
+
+    def tasks
+      Task.all(@ctx, @cluster_id)
     end
   end
 end

@@ -22,18 +22,20 @@ class TaskView < Granite::Base
 
   def self.response(data, single=false)
     data.map do |row|
-      {
-        "id" => row.id,
-        "data" => row.data,
-        "state" => row.state,
-        "type" => row.type,
-        "response" => row.response,
-        "node" => {
-          "id" => row.node_id,
-          "hostname" => row.node_hostname,
-          "endpoint" => row.node_endpoint
-        }
-      }
+      if task_id = row.id
+        task = TaskResponse.new
+        task.id = task_id
+        task.data = row.data
+        task.state = row.state
+        task.type = row.type
+        task.response = row.response
+        task.node = NodeResponse.new
+        task.node.id = row.node_id
+        task.node.hostname = row.node_hostname
+        task.node.endpoint = row.node_endpoint
+
+        task
+      end
     end
   end
 end

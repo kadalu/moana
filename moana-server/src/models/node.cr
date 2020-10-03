@@ -7,8 +7,8 @@ class Node < Granite::Base
   has_many :bricks, class_name: Brick
 
   column id : String, primary: true, auto: false
-  column hostname : String?
-  column endpoint : String?
+  column hostname : String
+  column endpoint : String
   timestamps
   before_create :assign_id
 

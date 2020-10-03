@@ -38,50 +38,16 @@ class JoinController < ApplicationController
         json result.to_json
       end
     end
-    workdir = ENV.fetch("WORKDIR", "")
-    filename = "#{workdir}/#{node_name}.json"
 
-    if File.exists?(filename)
-      # TODO: Ignore as safe error if Cluster ID is same as already joined
-      result = {error: "Node is already part of a Cluster"}
-      return respond_with 400 do
-        json result.to_json
-      end
-    end
-
-    req = {
-      "hostname" => node_name,
-      "endpoint" => node_endpoint
-    }
-
-    # Cluster_id and Token
-    url = "#{params["moana_url"]}/api/clusters/#{params["cluster_id"]}/nodes"
-    response = HTTP::Client.post(
-      url,
-      body: req.to_json,
-      headers: HTTP::Headers{"Content-Type" => "application/json"}
-    )
-    if response.status_code == 201
-      node = NodeResponse.from_json(response.body)
-      data = {
-        "moana_url" => params["moana_url"],
-        "cluster_id" => params["cluster_id"],
-        "node_id" => node.id,
-        "hostname" => node.hostname,
-        "endpoint" => node.endpoint
-      }
-
-      # Set node ID for future use
-      ENV["NODE_ID"] = node.id
-
-      File.write(filename, data.to_json())
-
+    task = NodeTask.new(params["moana_url"], params["cluster_id"], ENV.fetch("WORKDIR", ""))
+    begin
+      node = task.node_join(node_name, node_endpoint)
       respond_with 201 do
-        json response.body
+        json node.to_json
       end
-    else
-      result = {error: "Failed to Join the cluster(Response: #{response.status_code})"}
-      return respond_with 500 do
+    rescue ex : MoanaClient::MoanaClientException
+      result = {error: ex.message}
+      return respond_with ex.status_code do
         json result.to_json
       end
     end

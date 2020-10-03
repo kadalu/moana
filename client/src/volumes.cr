@@ -23,7 +23,7 @@ module MoanaClient
       end
     end
 
-    def info
+    def get
       url = "#{@ctx.url}/api/clusters/#{@cluster_id}/volumes/#{@id}"
       response = HTTP::Client.get url
       if response.status_code == 200
@@ -48,6 +48,17 @@ module MoanaClient
       response = HTTP::Client.delete url
 
       if response.status_code != 204
+        MoanaClient.error_response(response)
+      end
+    end
+
+    def brick_volfile(brick_id : String)
+      url = "#{@ctx.url}/api/volfiles/#{@cluster_id}/brick/#{@id}/#{brick_id}"
+      response = HTTP::Client.get url
+
+      if response.status_code == 200
+        MoanaTypes::VolfileResponse.from_json(response.body)
+      else
         MoanaClient.error_response(response)
       end
     end
