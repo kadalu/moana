@@ -1,6 +1,15 @@
 require "xattr"
 
+class SystemctlException < Exception
+end
+
 class CreateBrickException < Exception
+end
+
+class StartBrickException < Exception
+end
+
+class StopBrickException < Exception
 end
 
 class MkfsException < CreateBrickException
@@ -36,12 +45,8 @@ def execute(cmd, args)
   end
 end
 
-class BrickRequest
-  
-end
-
 class Brick
-  def initialize(@volume : VolumeRequest, @request : BrickRequest)
+  def initialize(@volume : MoanaTypes::VolumeRequest, @request : MoanaTypes::BrickRequest)
   end
 
   def mkfs
@@ -207,3 +212,38 @@ end
 #     brick.wipe
 #   end
 # end
+
+def systemctl_service(name, action)
+  # Enable the Service
+  ret, resp = execute(
+         "systemctl", [
+           action,
+           name
+         ])
+  if ret != 0
+    raise SystemctlException.new("Failed to #{action} service: #{resp}")
+  end
+end
+
+def start_brick(workdir, volume, brick)
+  # Create the config file
+  filename = "#{workdir}/#{brick.node.hostname}:#{brick.path.gsub("/", "-")}.json"
+  File.write(filename, {
+               "path" => brick.path,
+               "node.id" => brick.node.id,
+               "node.hostname" => brick.node.hostname,
+               "volume.name" => volume.name,
+               "port" => brick.port,
+               "device" => brick.device
+             }.to_json)
+
+  service_name = "kadalu-brick@#{brick.node.hostname}:#{brick.path.gsub("/", "-")}.service"
+  systemctl_service(service_name, "enable")
+  systemctl_service(service_name, "start")
+end
+
+def stop_brick(workdir, volume, brick)
+  service_name = "kadalu-brick@#{brick.node.hostname}:#{brick.path.gsub("/", "-")}.service"
+  systemctl_service(service_name, "stop")
+  systemctl_service(service_name, "disable")
+end

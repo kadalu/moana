@@ -64,8 +64,10 @@ class VolumeCreateParams
           seterror "Port not available for #{node.hostname}:#{path_or_dev}"
         end
 
-        brick.node = NodeRequest.new node.id, node.hostname, node.endpoint
-        brick.node_id = nil
+        if node_id = node.id
+          brick.node = NodeRequest.new node_id, node.hostname, node.endpoint
+          brick.node_id = nil
+        end
         @nodes << node
       else
         seterror "invalid Node #{brick.node_id}"

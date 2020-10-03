@@ -7,7 +7,7 @@ module MoanaTypes
 
     property id, hostname, endpoint
 
-    def initialize(@id : String?, @hostname : String?, @endpoint : String?)
+    def initialize(@id : String = "", @hostname : String = "", @endpoint : String = "")
     end
   end
 
@@ -17,10 +17,11 @@ module MoanaTypes
     property node_id : String|Nil,
              path : String,
              device : String,
+             mount_path : String,
              port : Int32?,
-             node : NodeRequest?
+             node : NodeRequest
 
-    def initialize(@node_id = "", @path = "", @device = "")
+    def initialize(@node_id = "", @path = "", @device = "", @mount_path = "", @node = NodeRequest.new)
     end
   end
 

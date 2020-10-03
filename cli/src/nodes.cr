@@ -30,7 +30,7 @@ def create_node(gflags, args)
   client = MoanaClient::Client.new(gflags.moana_url)
   cluster = client.cluster(cluster_id)
   begin
-    node = cluster.node_create(args.endpoint, args.token)
+    node = cluster.node_join(args.endpoint, args.token)
     save_and_get_clusters_list(gflags.moana_url)
     puts "Node joined successfully."
     puts "ID: #{node.id}"

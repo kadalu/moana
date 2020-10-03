@@ -1,30 +1,14 @@
 require "json"
 require "http/client"
 
+require "moana_types"
+require "moana_client"
+
+SUPPORTED_TASK_TYPES = ["volume_create", "volume_start"]
 QUEUED = "Queued"
 RECEIVED = "Received"
 SUCCESS = "Success"
 FAILURE = "Failure"
-
-class Task
-  include JSON::Serializable
-
-  property id : String
-  property data : String
-  property state : String
-  property type : String
-  property response : String
-end
-
-class NodeConfig
-  include JSON::Serializable
-
-  property node_id : String?,
-           hostname : String,
-           endpoint : String,
-           moana_url : String,
-           cluster_id : String
-end
 
 class Watcher
   def initialize()
@@ -33,49 +17,30 @@ class Watcher
     @node_id = ""
   end
 
-  # Returns the routes for the supported actions in
-  # the format [HTTP_METHOD, URL, EXPECTED_HTTP_STATUS]
-  def task_route(task_type)
-    case task_type
-    when "volume_create"
-      ["POST", "/api/volume_create", 201]
-
-    when "volume_start"
-      ["POST", "/api/volume_start", 200]
-    else
-      nil
-    end
-  end
-
   def participating_nodes(task)
     case task.type
     when "volume_create"
-      volreq = VolumeRequest.from_json(task.data)
+      volreq = MoanaTypes::VolumeRequest.from_json(task.data)
 
       volreq.bricks.map do |brick|
         brick.node
       end
 
     else
-      [] of NodeRequest
+      [] of MoanaTypes::NodeRequest
     end
-    
+
   end
-  
+
   # Update the status of Task, before and after the execution.
   # Queued -> Received -> Success|Failure
   def update_task_state(task_id, resp_status, reply)
-    url = "#{@moana_url}/api/tasks/#{@cluster_id}/#{@node_id}/#{task_id}"
-
-    response = HTTP::Client.put(
-      url,
-      body: {"state" => resp_status, "response" => reply}.to_json,
-      headers: HTTP::Headers{"Content-Type" => "application/json"}
-    )
-
-    puts response.body
-    if response.status_code != 200
-      STDERR.puts "Failed to send response: #{response.status_code}"
+    client = MoanaClient::Client.new(@moana_url)
+    task = client.cluster(@cluster_id).task(task_id)
+    begin
+      task.update(resp_status, reply.to_json)
+    rescue ex : MoanaClient::MoanaClientException
+      STDERR.puts "Failed to send response: #{ex.status_code}"
     end
   end
 
@@ -83,8 +48,7 @@ class Watcher
   # participating nodes. Then based on the HTTP Method, make
   # ReST API call to those nodes.
   def handle_task(task)
-    router_data = task_route task.type
-    if router_data.nil?
+    if !SUPPORTED_TASK_TYPES.includes?(task.type)
       STDERR.puts "Unsupported Task Type: #{task.type}"
       return
     end
@@ -99,35 +63,32 @@ class Watcher
     # Also helps to Timeout an action from Server
     update_task_state task.id, RECEIVED, "{}"
 
-    method, url, expected_status = router_data
+    errors = [] of Hash(String, Int32 | MoanaTypes::NodeRequest | String)
 
-    errors = [] of Hash(String, Int32 | NodeRequest | String)
-
-    case method
-    when "POST"
-      # TODO: Execute the HTTP calls concurrently
-      nodes = participating_nodes task
-      nodes.each do |node|
-        begin
-          response = HTTP::Client.post(
-            "#{node.endpoint}#{url}",
-            body: task.to_json,
-            headers: HTTP::Headers{"Content-Type" => "application/json"}
-          )
-          if response.status_code != expected_status
-            errors << {
-              "error" => response.body,
-              "node" => node,
-              "error_code" => response.status_code
-            }
-          end
-        rescue Socket::ConnectError
+    # TODO: Execute the HTTP calls concurrently
+    nodes = participating_nodes task
+    nodes.each do |node|
+      begin
+        # All task handlers are POST /api/<task_type>
+        # and returns 200 as Response.
+        response = HTTP::Client.post(
+          "#{node.endpoint}/api/#{task.type}",
+          body: task.to_json,
+          headers: HTTP::Headers{"Content-Type" => "application/json"}
+        )
+        if response.status_code != 200
           errors << {
-            "error" => "connection refused",
+            "error" => response.body,
             "node" => node,
-            "error_code" => 0
+            "error_code" => response.status_code
           }
         end
+      rescue Socket::ConnectError
+        errors << {
+          "error" => "connection refused",
+          "node" => node,
+          "error_code" => 0
+        }
       end
     end
 
@@ -146,51 +107,45 @@ class Watcher
       # Wait for Moana node HTTP server comes online
       sleep 10.seconds
 
-      # Open and see the Node config file, If node ID is set then
-      # it is ready to start the Watcher
+      # Open and see the Node config file
       workdir = ENV.fetch("WORKDIR", "")
-      filename = "#{workdir}/#{ENV["NODENAME"]}.json"
+      node_conf = NodeConfig.new(workdir, ENV["NODENAME"])
       loop do
-        if File.exists?(filename)
-          conf = NodeConfig.from_json(File.read(filename))
-          if nodeid = conf.node_id
-            # Node is joined to a Cluster, set required
-            # instance variables
-            @node_id = nodeid
-            @moana_url = conf.moana_url
-            @cluster_id = conf.cluster_id
-            break
-          else
-            # Node is not yet Joined to a Cluster
-            sleep 10.seconds
-          end
+        if node_conf.exists?
+          # TODO: Handle JSON error if any failure
+          conf = node_conf.get
+          # Node is joined to a Cluster, set required
+          # instance variables
+          @node_id = conf.node_id
+          @moana_url = conf.moana_url
+          @cluster_id = conf.cluster_id
+          break
         else
+          # Node is not yet Joined to a Cluster
           sleep 10.seconds
         end
       end
+
+      client = MoanaClient::Client.new(@moana_url)
+      node = client.cluster(@cluster_id).node(@node_id)
 
       loop do
         # TODO: Remember the last processed entry so that avoid
         # getting same entries again and again.
 
-        url = "#{@moana_url}/api/tasks/#{@cluster_id}/#{@node_id}"
-
         begin
-          response = HTTP::Client.get url
+          # Execute each action in sequence
+          node.tasks.each do |task|
+            handle_task task
+          end
         rescue Socket::ConnectError
           STDERR.puts "Moana Server is not reachable. Waiting..."
           sleep 10.seconds
           next
+        rescue ex : MoanaClient::MoanaClientException
+          STDERR.puts "Failed to get tasks from Moana Server(HTTP Error #{ex.status_code})"
         end
 
-        if response.status_code == 200
-          tasks = Array(Task).from_json(response.body)
-
-          # Execute each action in sequence
-          tasks.each do |task|
-            handle_task task
-          end
-        end
         sleep 5.seconds
       end
     end

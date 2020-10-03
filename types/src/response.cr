@@ -7,12 +7,18 @@ module MoanaTypes
     property error : String, status_code : Int32 = 0
   end
 
+  struct VolfileResponse
+    include JSON::Serializable
+
+    property content : String
+  end
+
   struct TaskResponse
     include JSON::Serializable
 
-    property id
+    property id, data, state, type, response, node
 
-    def initialize(@id = "")
+    def initialize(@id = "", @data = "", @state = "", @type = "", @response = "", @node = NodeResponse.new)
     end
   end
 
@@ -28,11 +34,12 @@ module MoanaTypes
   struct BrickResponse
     include JSON::Serializable
 
-    property id, path, device, node, port, state, type
+    property id, path, device, mount_path, node, port, state, type
 
     def initialize(@id = "",
                    @path = "",
                    @device = "",
+                   @mount_path = "",
                    @port : Int32 = 0,
                    @state = "",
                    @type = "",
