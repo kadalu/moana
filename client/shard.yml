@@ -1,21 +1,16 @@
-name: moana
+name: moana_client
 version: 0.1.0
 
 authors:
   - Kadalu.io <engineering@kadalu.io>
 
 description: |
-  Moana CLI
+  Moana Client
+
+license: Apache-2.0
+
+crystal: 0.35.1
 
 dependencies:
   moana_types:
     path: ../types
-
-  moana_client:
-    path: ../client
-
-license: Apache-2.0
-
-targets:
-  moana:
-    main: src/moana.cr

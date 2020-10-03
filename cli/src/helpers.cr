@@ -1,3 +1,4 @@
+require "json"
 require "path"
 require "file"
 require "dir"
@@ -64,7 +65,7 @@ end
 def cluster_id_from_name(name)
   filename = Path.home.join(".moana", "clusters.json")
   content = File.read(filename)
-  cluster_data = Array(Cluster).from_json(content)
+  cluster_data = Array(ClusterResponse).from_json(content)
   cluster_data.each do |cluster|
     if cluster.name == name || cluster.id == name
       return cluster.id
@@ -77,7 +78,7 @@ end
 def cluster_and_node_id_from_name(cluster_name, name)
   filename = Path.home.join(".moana", "clusters.json")
   content = File.read(filename)
-  cluster_data = Array(Cluster).from_json(content)
+  cluster_data = Array(ClusterResponse).from_json(content)
   cluster_data.each do |cluster|
     if cluster.name == cluster_name || cluster.id == cluster_name
       if nodes = cluster.nodes
@@ -96,7 +97,7 @@ end
 def nodes_by_cluster_id(cluster_id)
   filename = Path.home.join(".moana", "clusters.json")
   content = File.read(filename)
-  cluster_data = Array(Cluster).from_json(content)
+  cluster_data = Array(ClusterResponse).from_json(content)
   cluster_data.each do |cluster|
     if cluster.id == cluster_id
       return cluster.nodes
@@ -108,16 +109,18 @@ end
 
 def save_and_get_clusters_list(base_url)
   filename = Path.home.join(".moana", "clusters.json")
-  url = "#{base_url}/api/clusters"
-  response = HTTP::Client.get url
-  content = ""
-  if response.status_code == 200
-    content = response.body
-    Dir.mkdir_p(Path[filename].parent)
-    File.write(filename, content)
-  end
+  client = MoanaClient::Client.new(base_url)
 
-  content
+  begin
+    clusters = client.clusters
+    Dir.mkdir_p(Path[filename].parent)
+    File.write(filename, clusters.to_json)
+
+    clusters
+  rescue ex : MoanaClient::MoanaClientException
+    STDERR.puts "[#{ex.status_code}] #{ex.message}"
+    exit
+  end
 end
 
 def default_cluster

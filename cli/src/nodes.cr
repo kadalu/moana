@@ -7,70 +7,65 @@ require "./helpers"
 
 def show_nodes(gflags, args)
   cluster_id = cluster_id_from_name(args.cluster_name)
-  url = "#{gflags.moana_url}/api/clusters/#{cluster_id}/nodes"
-  response = HTTP::Client.get url
-  content = "[]"
-  if response.status_code == 200
-    content = response.body
-  end
-  node_data = Array(Node).from_json(content)
-
-  if node_data
-    printf("%-36s  %-25s  %-s\n", "ID", "Name", "Endpoint")
-  end
-  node_data.each do |node|
-    if args.name == "" || node.id == args.name || node.hostname == args.name
-      printf("%-36s  %-25s  %-s\n", node.id, node.hostname, node.endpoint)
+  client = MoanaClient::Client.new(gflags.moana_url)
+  cluster = client.cluster(cluster_id)
+  begin
+    nodes_data = cluster.nodes
+    if nodes_data
+      printf("%-36s  %-25s  %-s\n", "ID", "Name", "Endpoint")
     end
+    nodes_data.each do |node|
+      if args.name == "" || node.id == args.name || node.hostname == args.name
+        printf("%-36s  %-25s  %-s\n", node.id, node.hostname, node.endpoint)
+      end
+    end
+  rescue ex : MoanaClient::MoanaClientException
+    STDERR.puts ex.status_code
+    exit 1
   end
 end
 
 def create_node(gflags, args)
   cluster_id = cluster_id_from_name(args.cluster_name)
-  url = "#{args.endpoint}/api/join"
-  response = HTTP::Client.post(
-    url,
-    body: {cluster_id: cluster_id, moana_url: gflags.moana_url, token: args.token}.to_json,
-    headers: HTTP::Headers{"Content-Type" => "application/json"}
-  )
-  if response.status_code == 201
+  client = MoanaClient::Client.new(gflags.moana_url)
+  cluster = client.cluster(cluster_id)
+  begin
+    node = cluster.node_create(args.endpoint, args.token)
     save_and_get_clusters_list(gflags.moana_url)
     puts "Node joined successfully."
-    puts "ID: #{Node.from_json(response.body).id}"
-  else
-    STDERR.puts response.status_code
+    puts "ID: #{node.id}"
+  rescue ex : MoanaClient::MoanaClientException
+    STDERR.puts ex.status_code
   end
 end
 
 def update_node(gflags, args)
   cluster_id, node_id = cluster_and_node_id_from_name(args.cluster_name, args.name)
-  url = "#{gflags.moana_url}/api/clusters/#{cluster_id}/nodes/#{node_id}"
-  response = HTTP::Client.put(
-    url,
-    body: {hostname: args.newname, endpoint: args.endpoint}.to_json,
-    headers: HTTP::Headers{"Content-Type" => "application/json"}
-  )
-
-  if response.status_code == 200
+  client = MoanaClient::Client.new(gflags.moana_url)
+  cluster = client.cluster(cluster_id)
+  begin
+    cluster.node(node_id).update(args.newname, args.endpoint)
     save_and_get_clusters_list(gflags.moana_url)
     puts "Node updated successfully"
-  else
-    STDERR.puts response.status_code
+  rescue ex : MoanaClient::MoanaClientException
+    STDERR.puts ex.status_code
   end
 end
 
 def delete_node(gflags, args)
   cluster_id, node_id = cluster_and_node_id_from_name(args.cluster_name, args.name)
-  url = "#{gflags.moana_url}/api/clusters/#{cluster_id}/#{node_id}"
-  response = HTTP::Client.delete url
-
-  if response.status_code == 204
+  client = MoanaClient::Client.new(gflags.moana_url)
+  cluster = client.cluster(cluster_id)
+  begin
+    cluster.node(node_id).delete
     save_and_get_clusters_list(gflags.moana_url)
     puts "Node removed from the Cluster"
-  elsif response.status_code == 404
-    STDERR.puts "Invalid Cluster/Node name"
-    exit
-  else
-    STDERR.puts response.status_code
+  rescue ex : MoanaClient::MoanaClientException
+    if ex.status_code == 404
+      STDERR.puts "Invalid Cluster/Node name"
+      exit
+    else
+      STDERR.puts ex.status_code
+    end
   end
 end

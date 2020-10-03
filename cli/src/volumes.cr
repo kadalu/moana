@@ -47,76 +47,67 @@ def create_volume(gflags, args)
   req.disperse_count = args.disperse_count
   req.start = args.start
   req.bricks = prepare_bricks_list args, cluster_id, args.bricks
+  req.cluster_id = cluster_id
 
-  url = "#{gflags.moana_url}/api/clusters/#{cluster_id}/volumes"
-  response = HTTP::Client.post(
-    url,
-    body: req.to_json,
-    headers: HTTP::Headers{"Content-Type" => "application/json"}
-  )
-  if response.status_code == 201
+  client = MoanaClient::Client.new(gflags.moana_url)
+  cluster = client.cluster(cluster_id)
+  begin
+    task = cluster.volume_create(req)
     puts "Volume creation request sent successfully."
-    puts "Task ID: #{Task.from_json(response.body).id}"
-  else
-    STDERR.puts response.status_code
+    puts "Task ID: #{task.id}"
+  rescue ex : MoanaClient::MoanaClientException
+    STDERR.puts ex.status_code
   end
 end
 
-
 def volumes_info(gflags, args)
   cluster_id = cluster_id_from_name(args.cluster_name)
-  url = "#{gflags.moana_url}/api/clusters/#{cluster_id}/volumes"
-  response = HTTP::Client.get url
-  content = "[]"
-  if response.status_code == 200
-    content = response.body
-  else
-    STDERR.puts response.status_code
-    exit 1
-  end
-  volume_data = Array(Volume).from_json(content)
-  
-  volume_data.each do |vol|
-    puts "Name                    : #{vol.name}"
-    puts "Type                    : #{vol.type}"
-    puts "ID                      : #{vol.id}"
-    puts "Status                  : #{vol.state}"
-    puts "Number of Storage units : #{vol.subvols.size * vol.subvols[0].bricks.size}"
-    vol.subvols.each_with_index do |subvol, sidx|
-      subvol.bricks.each_with_index do |brick, idx|
-        printf(
-          "Storage Unit %-3s        : %s:%s (Port: %s)\n",
-          idx+1,
-          brick.node.hostname,
-          brick.path,
-          brick.port
-        )
-        puts
-        puts
+  client = MoanaClient::Client.new(gflags.moana_url)
+  cluster = client.cluster(cluster_id)
+  begin
+    volume_data = cluster.volumes
+    volume_data.each do |vol|
+      puts "Name                    : #{vol.name}"
+      puts "Type                    : #{vol.type}"
+      puts "ID                      : #{vol.id}"
+      puts "Status                  : #{vol.state}"
+      puts "Number of Storage units : #{vol.subvols.size * vol.subvols[0].bricks.size}"
+      vol.subvols.each_with_index do |subvol, sidx|
+        subvol.bricks.each_with_index do |brick, idx|
+          printf(
+            "Storage Unit %-3s        : %s:%s (Port: %s)\n",
+            idx+1,
+            brick.node.hostname,
+            brick.path,
+            brick.port
+          )
+          puts
+          puts
+        end
       end
     end
+  rescue ex : MoanaClient::MoanaClientException
+    STDERR.puts ex.status_code
+    exit 1
   end
 end
 
 def show_volumes(gflags, args)
   cluster_id = cluster_id_from_name(args.cluster_name)
-  url = "#{gflags.moana_url}/api/clusters/#{cluster_id}/volumes"
-  response = HTTP::Client.get url
-  content = "[]"
-  if response.status_code == 200
-    content = response.body
-  else
-    STDERR.puts response.status_code
-    exit 1
-  end
-  volume_data = Array(Volume).from_json(content)
-
-  if volume_data
-    printf("%-36s  %-15s %-15s %s\n", "ID", "Name", "Type", "State")
-  end
-  volume_data.each do |volume|
-    if args.name == "" || volume.id == args.name || volume.name == args.name
-      printf("%-36s  %-15s %-15s %-s\n",volume.id, volume.name, volume.type, volume.state)
+  client = MoanaClient::Client.new(gflags.moana_url)
+  cluster = client.cluster(cluster_id)
+  begin
+    volume_data = cluster.volumes
+    if volume_data
+      printf("%-36s  %-15s %-15s %s\n", "ID", "Name", "Type", "State")
     end
+    volume_data.each do |volume|
+      if args.name == "" || volume.id == args.name || volume.name == args.name
+        printf("%-36s  %-15s %-15s %-s\n",volume.id, volume.name, volume.type, volume.state)
+      end
+    end
+  rescue ex : MoanaClient::MoanaClientException
+    STDERR.puts ex.status_code
+    exit 1
   end
 end

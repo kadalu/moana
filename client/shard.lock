@@ -1,9 +1,5 @@
 version: 2.0
 shards:
-  moana_client:
-    path: ../client
-    version: 0.1.0
-
   moana_types:
     path: ../types
     version: 0.1.0

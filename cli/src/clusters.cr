@@ -1,12 +1,15 @@
-require "http/client"
 require "json"
 require "path"
 require "file"
 
 require "./helpers"
+require "moana_client"
+require "moana_types"
+
+include MoanaTypes
 
 def show_clusters(gflags, args)
-  cluster_data = Array(Cluster).from_json(save_and_get_clusters_list(gflags.moana_url))
+  cluster_data = save_and_get_clusters_list(gflags.moana_url)
   default_cluster_id = default_cluster()
   if cluster_data
     printf(" %-36s  %-s\n", "ID", "Name")
@@ -33,49 +36,43 @@ def set_default_cluster(gflags, args)
 end
 
 def create_cluster(gflags, args)
-  url = "#{gflags.moana_url}/api/clusters"
-  response = HTTP::Client.post(
-    url,
-    body: {name: args.name}.to_json,
-    headers: HTTP::Headers{"Content-Type" => "application/json"}
-  )
-  if response.status_code == 201
+  client = MoanaClient::Client.new(gflags.moana_url)
+  begin
+    cluster = client.cluster_create(args.name)
     save_and_get_clusters_list(gflags.moana_url)
     default_cluster_id = default_cluster()
     puts "Cluster created successfully."
-    puts "ID: #{Cluster.from_json(response.body).id}"
+    puts "ID: #{cluster.id}"
     if default_cluster_id == ""
-      save_default_cluster(Cluster.from_json(response.body).id)
+      save_default_cluster(cluster.id)
       puts "\nSaved as default Cluster"
     end
-  else
-    STDERR.puts response.status_code
+  rescue ex : MoanaClient::MoanaClientException
+    STDERR.puts ex.status_code
   end
 end
 
 def update_cluster(gflags, args)
   cluster_id = cluster_id_from_name(args.name)
-  url = "#{gflags.moana_url}/api/clusters/#{cluster_id}"
-  response = HTTP::Client.put(
-    url,
-    body: {name: args.newname}.to_json,
-    headers: HTTP::Headers{"Content-Type" => "application/json"}
-  )
+  client = MoanaClient::Client.new(gflags.moana_url)
+  cluster = client.cluster(cluster_id)
 
-  if response.status_code == 200
+  begin
+    cluster.update(args.newname)
     save_and_get_clusters_list(gflags.moana_url)
     puts "Cluster updated successfully"
-  else
-    STDERR.puts response.status_code
+  rescue ex : MoanaClient::MoanaClientException
+    STDERR.puts ex.status_code
   end
 end
 
 def delete_cluster(gflags, args)
   cluster_id = cluster_id_from_name(args.name)
-  url = "#{gflags.moana_url}/api/clusters/#{cluster_id}"
-  response = HTTP::Client.delete url
+  client = MoanaClient::Client.new(gflags.moana_url)
+  cluster = client.cluster(cluster_id)
 
-  if response.status_code == 204
+  begin
+    cluster.delete
     default_cluster_id = default_cluster()
     save_and_get_clusters_list(gflags.moana_url)
     # If the Cluster deleted is the default Cluster then
@@ -84,10 +81,13 @@ def delete_cluster(gflags, args)
       save_default_cluster("")
     end
     puts "Cluster deleted successfully"
-  elsif response.status_code == 404
-    STDERR.puts "Invalid Cluster name"
-    exit
-  else
-    STDERR.puts response.status_code
+  rescue ex : MoanaClient::MoanaClientException
+    if ex.status_code == 404
+      STDERR.puts "Invalid Cluster name"
+      exit
+    else
+      STDERR.puts ex.status_code
+      exit
+    end
   end
 end
