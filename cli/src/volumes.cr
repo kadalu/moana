@@ -35,6 +35,45 @@ def prepare_bricks_list(args, cluster_id, data)
 
 end
 
+def volume_id_from_name(client, cluster_id, name)
+  begin
+    # TODO: Optimize this by calling search API
+    # Now this is getting all volumes and searching
+    volumes = client.cluster(cluster_id).volumes
+    volumes.each do |volume|
+      if volume.name == name || volume.id == name
+        return volume.id
+      end
+    end
+
+    STDERR.puts "Invalid Volume name"
+    exit 1
+  rescue ex : MoanaClient::MoanaClientException
+    STDERR.puts "Failed to get Volume ID from the name(HTTP Error: #{ex.status_code})"
+    exit 1
+  end
+end
+
+def start_stop_volume(gflags, args, action)
+  cluster_id = cluster_id_from_name(args.cluster_name)
+  client = MoanaClient::Client.new(gflags.moana_url)
+
+  begin
+    volume_id = volume_id_from_name(client, cluster_id, args.name)
+    volume = client.cluster(cluster_id).volume(volume_id)
+    task = if action == "start"
+             volume.start
+           else
+             volume.stop
+           end
+      puts "Volume #{action} request sent successfully."
+      puts "Task ID: #{task.id}"
+  rescue ex : MoanaClient::MoanaClientException
+    STDERR.puts ex.status_code
+    exit 1
+  end
+end
+
 def create_volume(gflags, args)
   cluster_id = cluster_id_from_name(args.cluster_name)
   req = VolumeRequest.new

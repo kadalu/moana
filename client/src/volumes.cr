@@ -23,6 +23,25 @@ module MoanaClient
       end
     end
 
+    private def action(name)
+      url = "#{@ctx.url}/api/clusters/#{@cluster_id}/volumes/#{@id}/#{name}"
+      response = HTTP::Client.post url
+
+      if response.status_code == 200
+        MoanaTypes::TaskResponse.from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
+
+    def start
+      action("start")
+    end
+
+    def stop
+      action("stop")
+    end
+
     def get
       url = "#{@ctx.url}/api/clusters/#{@cluster_id}/volumes/#{@id}"
       response = HTTP::Client.get url
