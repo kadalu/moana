@@ -2,7 +2,7 @@ require "json"
 require "uuid"
 
 module MoanaTypes
-  struct NodeRequest
+  class NodeRequest
     include JSON::Serializable
 
     property id, hostname, endpoint
@@ -11,7 +11,7 @@ module MoanaTypes
     end
   end
 
-  struct BrickRequest
+  class BrickRequest
     include JSON::Serializable
 
     property node_id : String|Nil,
@@ -25,7 +25,7 @@ module MoanaTypes
     end
   end
 
-  struct VolumeRequest
+  class VolumeRequest
     include JSON::Serializable
 
     property id, name, brick_fs, bricks, xfs_opts, zfs_opts, ext4_opts, replica_count, disperse_count, start, cluster_id : String?, type

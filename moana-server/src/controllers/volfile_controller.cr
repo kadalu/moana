@@ -12,15 +12,15 @@ class VolfileController < ApplicationController
   def show_volume_and_brick_level
     voldata = VolumeView.all("WHERE volumes.id = ?", [params["volume_id"]])
     if voldata.size > 0
-      volume = VolumeView.response(voldata)
+      volume = VolumeView.response_single(voldata)
 
       volfile_content =
         if params["brick_id"]?
           # TODO: Get Volfile template from Db based on params["name"]
-          Volfile.brick_level(params["name"], BRICK_VOLFILE, volume[0], params["brick_id"])
+          Volfile.brick_level(params["name"], BRICK_VOLFILE, volume, params["brick_id"])
         else
           # TODO: Get Volfile template from Db based on params["name"]
-          Volfile.volume_level(params["name"], CLIENT_VOLFILE, volume[0])
+          Volfile.volume_level(params["name"], CLIENT_VOLFILE, volume)
         end
 
       if volfile_content == ""

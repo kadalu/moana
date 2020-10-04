@@ -17,7 +17,7 @@ class TaskController < ApplicationController
     task = TaskView.all("WHERE tasks.id = ?", [params["id"]])
     if task.size > 0
       respond_with 200 do
-        json TaskView.response(task, single: true).to_json
+        json TaskView.response_single(task).to_json
       end
     else
       results = {status: "not found"}
