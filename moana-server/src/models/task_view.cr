@@ -20,7 +20,7 @@ class TaskView < Granite::Base
     ON tasks.cluster_id = clusters.id
   SQL
 
-  def self.response(data, single=false)
+  def self.response(data)
     data.map do |row|
       if task_id = row.id
         task = TaskResponse.new
@@ -30,12 +30,16 @@ class TaskView < Granite::Base
         task.type = row.type
         task.response = row.response
         task.node = NodeResponse.new
-        task.node.id = row.node_id
-        task.node.hostname = row.node_hostname
-        task.node.endpoint = row.node_endpoint
+        task.node.not_nil!.id = row.node_id
+        task.node.not_nil!.hostname = row.node_hostname
+        task.node.not_nil!.endpoint = row.node_endpoint
 
         task
       end
     end
+  end
+
+  def self.response_single(data)
+    self.response(data)[0]
   end
 end

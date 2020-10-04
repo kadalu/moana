@@ -38,7 +38,7 @@ class Watcher
     client = MoanaClient::Client.new(@moana_url)
     task = client.cluster(@cluster_id).task(task_id)
     begin
-      task.update(resp_status, reply.to_json)
+      task.update(resp_status, reply)
     rescue ex : MoanaClient::MoanaClientException
       STDERR.puts "Failed to send response: #{ex.status_code}"
     end
@@ -98,7 +98,7 @@ class Watcher
     end
 
     # Two possible Status: SUCCESS and FAILURE
-    update_task_state task.id, resp_status, errors
+    update_task_state task.id, resp_status, errors.to_json
   end
 
   # Entry point to get the list of Tasks from Moana Server

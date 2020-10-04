@@ -96,4 +96,8 @@ class VolumeView < Granite::Base
       volume
     end
   end
+
+  def self.response_single(data)
+    self.response(data)[0]
+  end
 end

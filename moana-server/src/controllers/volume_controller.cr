@@ -17,7 +17,7 @@ class VolumeController < ApplicationController
     volume = VolumeView.all("WHERE volumes.id = ?", [params["id"]])
     if volume.size > 0
       respond_with 200 do
-        json VolumeView.response(volume)[0].to_json
+        json VolumeView.response_single(volume).to_json
       end
     else
       results = {status: "not found"}

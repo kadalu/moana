@@ -1,28 +1,28 @@
 require "json"
 
 module MoanaTypes
-  struct ErrorResponse
+  class ErrorResponse
     include JSON::Serializable
 
     property error : String, status_code : Int32 = 0
   end
 
-  struct VolfileResponse
+  class VolfileResponse
     include JSON::Serializable
 
     property content : String
   end
 
-  struct TaskResponse
+  class TaskResponse
     include JSON::Serializable
 
-    property id, data, state, type, response, node
+    property id, data, state, type, response, node : NodeResponse?
 
-    def initialize(@id = "", @data = "", @state = "", @type = "", @response = "", @node = NodeResponse.new)
+    def initialize(@id = "", @data = "", @state = "", @type = "", @response = "")
     end
   end
 
-  struct NodeResponse
+  class NodeResponse
     include JSON::Serializable
 
     property id, hostname, endpoint
@@ -31,7 +31,7 @@ module MoanaTypes
     end
   end
 
-  struct BrickResponse
+  class BrickResponse
     include JSON::Serializable
 
     property id, path, device, mount_path, node, port, state, type
@@ -47,7 +47,7 @@ module MoanaTypes
     end
   end
 
-  struct SubvolResponse
+  class SubvolResponse
     include JSON::Serializable
 
     property replica_count, disperse_count, type, bricks
@@ -59,7 +59,7 @@ module MoanaTypes
     end
   end
 
-  struct ClusterResponse
+  class ClusterResponse
     include JSON::Serializable
 
     property id, name, nodes : Array(NodeResponse)?
@@ -68,7 +68,7 @@ module MoanaTypes
     end
   end
 
-  struct VolumeResponse
+  class VolumeResponse
     include JSON::Serializable
 
     property id, name, replica_count, disperse_count, state, type, cluster, subvols, options
