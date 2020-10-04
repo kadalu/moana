@@ -4,6 +4,7 @@ require "../volume_create_params"
 
 VOLUME_CREATE = "volume_create"
 VOLUME_START = "volume_start"
+VOLUME_STOP = "volume_stop"
 
 class VolumeController < ApplicationController
   def index
@@ -27,7 +28,14 @@ class VolumeController < ApplicationController
     end
   end
 
-  def start
+  def action
+    if !["start", "stop"].includes?(params["action"])
+      result = {error: "Invalid action"}
+      return respond_with 400 do
+        json result.to_json
+      end
+    end
+
     # If Cluster ID is valid or not
     if tmp = Cluster.find params["cluster_id"]
       # TODO: Check if the logged in user is authorized for this Cluster
@@ -47,17 +55,22 @@ class VolumeController < ApplicationController
       end
     end
 
-    voldata = VolumeView.response(volume)[0]
+    task_type = VOLUME_START
+    task_type = VOLUME_STOP if params["action"] == "stop"
+
+    voldata = VolumeView.response_single(volume)
     task = Task.new(
       {
         "state" => "Queued",
-        "type" => VOLUME_START,
+        "type" => task_type,
         "data" => voldata.to_json,
         "response" => "{}"
       }
     )
 
     task.cluster = cluster
+    # Add to first node so that it takes care of starting
+    # in all other nodes
     node = voldata.subvols[0].bricks[0].node
     task_node = Node.new
     task_node.id = node.id

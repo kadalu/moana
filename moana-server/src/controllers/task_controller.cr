@@ -1,4 +1,5 @@
 require "../volume_create_params"
+require "../task_response_handlers"
 
 class TaskController < ApplicationController
   def index
@@ -32,73 +33,36 @@ class TaskController < ApplicationController
       task.set_attributes(task_params.validate!)
       if task.valid? && task.save
         if task.state == "Success"
-          if taskdata = task.data
-            # TODO: Use Db Transaction to insert all these
-            volreq = VolumeRequest.from_json(taskdata)
-            volume = Volume.new(
-              {
-                "id" => volreq.id,
-                "name" => volreq.name,
-                "state" => "Created",
-                "type" => volreq.type,
-                "replica_count" => volreq.replica_count,
-                "disperse_count" => volreq.disperse_count
-              }
-            )
+          begin
+            case task.type
+            when VOLUME_CREATE
+              task_volume_create(task)
 
-            volume.cluster = Cluster.new(
-              {
-                "id" => volreq.cluster_id
-              }
-            )
+            when VOLUME_START
+              task_volume_start(task)
 
-            if !volume.save
-              results = {status: "failed to save volume"}
-              respond_with 500 do
-                json results.to_json
-              end
+            when VOLUME_STOP
+              task_volume_stop(task)
             end
-
-            volreq.bricks.each do |brickreq|
-              brick = Brick.new(
-                {
-                  "path" => brickreq.path == "" ? "-" : brickreq.path,
-                  "device" => brickreq.device == "" ? "-" : brickreq.device,
-                  "port" => brickreq.port,
-                  "state" => "-"
-                }
-              )
-              brick.cluster = volume.cluster
-
-              brick.volume = volume
-              if node = brickreq.node
-                brick.node = Node.new(
-                  {
-                    "id" => node.id
-                  }
-                )
-              end
-              if !brick.save
-                results = {status: "failed to save brick"}
-                respond_with 500 do
-                  json results.to_json
-                end
-              end
+          rescue ex : TaskResponseHandlerException
+            results = {status: "#{ex}"}
+            return respond_with 500 do
+              json results.to_json
             end
           end
         end
 
-        respond_with 200 do
+        return respond_with 200 do
           json task.to_json
         end
       else
-        results = {status: "invalid"}
-        respond_with 422 do
+        results = {status: "failed to update task"}
+        respond_with 500 do
           json results.to_json
         end
       end
     else
-      results = {status: "not found"}
+      results = {status: "task not found"}
       respond_with 404 do
         json results.to_json
       end

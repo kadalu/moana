@@ -20,6 +20,8 @@ enum SubCommands
   NodeLeave
 
   VolumeCreate
+  VolumeStart
+  VolumeStop
   VolumeList
   VolumeInfo
   VolumeDelete
@@ -157,6 +159,18 @@ class MoanaCommands
         parser.banner = "Usage: moana volume list [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @volume_args.cluster_name = name }
         parser.on("-n NAME", "--volume=NAME", "Volume name") { |name| @volume_args.name = name }
+      end
+
+      parser.on("start", "Kadalu Storage Volumes Start") do
+        @subcmd = SubCommands::VolumeStart
+        parser.banner = "Usage: moana volume start NAME [arguments]"
+        parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @volume_args.cluster_name = name }
+      end
+
+      parser.on("stop", "Kadalu Storage Volumes Stop") do
+        @subcmd = SubCommands::VolumeStop
+        parser.banner = "Usage: moana volume stop NAME [arguments]"
+        parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @volume_args.cluster_name = name }
       end
 
       parser.on("create", "Create Kadalu Storage Volume") do
@@ -340,6 +354,24 @@ class MoanaCommands
       # Except first argument, all other arguments are Bricks
       @volume_args.bricks = @pos_args[1 .. -1]
       create_volume(@gflags, @volume_args)
+
+    when SubCommands::VolumeStart
+      if @pos_args.size < 1
+        STDERR.puts "Volume name not specified"
+        exit 1
+      end
+      @volume_args = cluster_name_required(@volume_args)
+      @volume_args.name = @pos_args[0]
+      start_stop_volume(@gflags, @volume_args, "start")
+
+    when SubCommands::VolumeStop
+      if @pos_args.size < 1
+        STDERR.puts "Volume name not specified"
+        exit 1
+      end
+      @volume_args = cluster_name_required(@volume_args)
+      @volume_args.name = @pos_args[0]
+      start_stop_volume(@gflags, @volume_args, "stop")
 
     when SubCommands::VolumeList
       @volume_args = cluster_name_required(@volume_args)

@@ -50,59 +50,50 @@ class NodeTask
   end
 
   def volume_start(node_conf : NodeConfigData, task_data : String)
-    req = Hash(String, String).from_json(task_data)
+    voldata = MoanaTypes::VolumeResponse.from_json(task_data)
     client = MoanaClient::Client.new(node_conf.moana_url)
-    volume = client.cluster(node_conf.cluster_id).volume(req["id"])
+    volume = client.cluster(node_conf.cluster_id).volume(voldata.id)
 
-    begin
-      voldata = volume.get
-      voldata.subvols.each do |subvol|
-        subvol.bricks.each do |brick|
-          next if node_conf.node_id != brick.node.id
+    voldata.subvols.each do |subvol|
+      subvol.bricks.each do |brick|
+        next if node_conf.node_id != brick.node.id
 
-          if brick.device != ""
-            brick.mount_path = Path[brick.path].parent.to_s
-          end
+        if brick.device != ""
+          brick.mount_path = Path[brick.path].parent.to_s
+        end
 
-          # Download the Volfile
-          begin
-            volfile = volume.brick_volfile(brick.id)
-            filename = "#{@workdir}/volfiles/#{brick.node.hostname}:#{brick.path.gsub("/", "-")}.vol"
+        # Download the Volfile
+        begin
+          volfile = volume.brick_volfile(brick.id)
+          filename = "#{@workdir}/volfiles/#{brick.node.hostname}:#{brick.path.gsub("/", "-")}.vol"
 
-            # TODO: Handle file write error
-            File.write(filename, volfile.content)
-            start_brick(@workdir, voldata, brick)
-          rescue ex : MoanaClient::MoanaClientException
-            raise NodeTaskException.new("Failed to fetch Volfile", ex.status_code)
-          rescue ex : SystemctlException
-            raise NodeTaskException.new("#{ex}", 500)
-          end
+          # TODO: Handle file write error
+          File.write(filename, volfile.content)
+          start_brick(@workdir, voldata, brick)
+        rescue ex : MoanaClient::MoanaClientException
+          raise NodeTaskException.new("Failed to fetch Volfile", ex.status_code)
+        rescue ex : SystemctlException
+          raise NodeTaskException.new("#{ex}", 500)
         end
       end
     end
   end
 
   def volume_stop(node_conf : NodeConfigData, task_data : String)
-    req = Hash(String, String).from_json(task_data)
-    client = MoanaClient::Client.new(node_conf.moana_url)
-    volume = client.cluster(node_conf.cluster_id).volume(req["id"])
+    voldata = MoanaTypes::VolumeResponse.from_json(task_data)
 
-    begin
-      voldata = volume.get
-      voldata.subvols.each do |subvol|
-        subvol.bricks.each do |brick|
-          next if node_conf.node_id != brick.node.id
+    voldata.subvols.each do |subvol|
+      subvol.bricks.each do |brick|
+        next if node_conf.node_id != brick.node.id
 
-          if brick.device != ""
-            brick.mount_path = Path[brick.path].parent.to_s
-          end
+        if brick.device != ""
+          brick.mount_path = Path[brick.path].parent.to_s
+        end
 
-          # Download the Volfile
-          begin
-            stop_brick(@workdir, voldata, brick)
-          rescue ex : SystemctlException
-            raise NodeTaskException.new("#{ex}", 500)
-          end
+        begin
+          stop_brick(@workdir, voldata, brick)
+        rescue ex : SystemctlException
+          raise NodeTaskException.new("#{ex}", 500)
         end
       end
     end
