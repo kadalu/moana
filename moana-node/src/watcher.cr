@@ -4,7 +4,7 @@ require "http/client"
 require "moana_types"
 require "moana_client"
 
-SUPPORTED_TASK_TYPES = ["volume_create", "volume_start"]
+SUPPORTED_TASK_TYPES = ["volume_create", "volume_start", "volume_stop"]
 QUEUED = "Queued"
 RECEIVED = "Received"
 SUCCESS = "Success"
@@ -25,6 +25,18 @@ class Watcher
       volreq.bricks.map do |brick|
         brick.node
       end
+
+    when "volume_start", "volume_stop"
+      vol = MoanaTypes::VolumeResponse.from_json(task.data)
+
+      nodes = [] of MoanaTypes::NodeResponse
+      vol.subvols.each do |subvol|
+        subvol.bricks.each do |brick|
+          nodes << brick.node
+        end
+      end
+
+      nodes
 
     else
       [] of MoanaTypes::NodeRequest
@@ -63,7 +75,7 @@ class Watcher
     # Also helps to Timeout an action from Server
     update_task_state task.id, RECEIVED, "{}"
 
-    errors = [] of Hash(String, Int32 | MoanaTypes::NodeRequest | String)
+    errors = [] of Hash(String, Int32 | MoanaTypes::NodeRequest | MoanaTypes::NodeResponse | String)
 
     # TODO: Execute the HTTP calls concurrently
     nodes = participating_nodes task

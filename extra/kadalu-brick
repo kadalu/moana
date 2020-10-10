@@ -59,19 +59,19 @@ def mount_brick(brick_device, mountdir):
         execute("mount", brick_device, mountdir)
     except CommandException as err:
         if 'already mounted' not in err.err:
-            logging.error(logf(
-                "Failed to mount export brick",
-                device=brick_device,
-                mountdir=mountdir,
-                error=err,
-                ))
+            print(
+                "Failed to mount export brick. device=%s  mountdir=%s  error=%s" % (
+                    brick_device,
+                    mountdir,
+                    err),
+                file=sys.stderr)
             sys.exit(1)
         else:
             pass
 
 
 def start_brick_process(conf):
-    if conf["device"] != "":
+    if conf["device"] != "" and conf["device"] != "-":
         mount_brick(conf["device"], conf["mountdir"])
 
     glusterfsd = os.environ.get("GLUSTERFSD", "/usr/sbin/glusterfsd")
