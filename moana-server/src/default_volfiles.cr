@@ -26,6 +26,7 @@ brick:
   - type: "protocol/server"
     name: "{{ volume.name }}-server"
     options:
+      transport-type: tcp
       auth-path: "{{ brick.path }}"
       "auth.login.{{ brick.path }}.ssl-allow": "*"
       "auth.addr.{{ brick.path }}.allow": "*"

@@ -78,7 +78,7 @@ class VolumeController < ApplicationController
     task.node = task_node
 
     if task.save
-      respond_with 201 do
+      respond_with 200 do
         json task.to_json
       end
     else
