@@ -25,6 +25,8 @@ enum SubCommands
   VolumeList
   VolumeInfo
   VolumeDelete
+  VolumeSet
+  VolumeReset
 
   TaskList
 end
@@ -61,6 +63,8 @@ struct VolumeArgs
            use_lvm = false,
            size : UInt64 = 0,
            start = false,
+           options = {} of String => String,
+           option_names = [] of String,
            bricks = [] of String
 end
 
@@ -213,6 +217,18 @@ class MoanaCommands
       parser.on("delete", "Delete Kadalu Storage Volume") do
         @subcmd = SubCommands::VolumeDelete
         parser.banner = "Usage: moana volume delete NAME [arguments]"
+        parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @volume_args.cluster_name = name }
+      end
+
+      parser.on("set", "Set Kadalu Storage Volume Options") do
+        @subcmd = SubCommands::VolumeSet
+        parser.banner = "Usage: moana volume set OPTNAME1 OPTVALUE1 ... [arguments]"
+        parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @volume_args.cluster_name = name }
+      end
+
+      parser.on("reset", "Reset Kadalu Storage Volume Options") do
+        @subcmd = SubCommands::VolumeReset
+        parser.banner = "Usage: moana volume reset OPTNAME1 ... [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @volume_args.cluster_name = name }
       end
     end
@@ -384,6 +400,38 @@ class MoanaCommands
     when SubCommands::TaskList
       @task_args = cluster_name_required(@task_args)
       show_tasks(@gflags, @task_args)
+
+    when SubCommands::VolumeSet
+      if @pos_args.size < 3
+        STDERR.puts "Volume name and options are not specified"
+        exit 1
+      end
+      if (@pos_args.size - 1).remainder(2) != 0
+        STDERR.puts "Options pair not matching"
+        exit 1
+      end
+      @volume_args = cluster_name_required(@volume_args)
+      @volume_args.name = @pos_args[0]
+      # Except first argument, all other arguments are Option pairs
+      @pos_args[1 .. -1].each_slice(2) do |opt|
+        @volume_args.options[opt[0]] = opt[1]
+      end
+
+      volume_setopt(@gflags, @volume_args)
+
+    when SubCommands::VolumeReset
+      if @pos_args.size < 2
+        STDERR.puts "Volume name and option names are not specified"
+        exit 1
+      end
+
+      @volume_args = cluster_name_required(@volume_args)
+      @volume_args.name = @pos_args[0]
+      # Except first argument, all other arguments are Option names
+      @volume_args.option_names = @pos_args[1 .. -1]
+
+      volume_resetopt(@gflags, @volume_args)
+
     end
   end
 end

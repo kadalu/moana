@@ -124,6 +124,11 @@ def volumes_info(gflags, args)
           puts
         end
       end
+      puts "Options:" + (vol.options.size > 0 ? "" : " -")
+
+      vol.options.each do |k, v|
+        printf("    %20s: %s\n", k, v)
+      end
     end
   rescue ex : MoanaClient::MoanaClientException
     STDERR.puts ex.status_code

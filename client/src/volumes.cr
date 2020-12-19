@@ -81,5 +81,33 @@ module MoanaClient
         MoanaClient.error_response(response)
       end
     end
+
+    def setopt(req : Hash(String, String))
+      url = "#{ctx.url}/api/clusters/#{req.cluster_id}/volumes/#{@id}/options/set"
+      response = HTTP::Client.post(
+        url,
+        body: req.to_json,
+        headers: HTTP::Headers{"Content-Type" => "application/json"}
+      )
+      if response.status_code == 200
+        MoanaTypes::TaskResponse.from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
+
+    def resetopt(req : Array(String))
+      url = "#{ctx.url}/api/clusters/#{req.cluster_id}/volumes/#{@id}/options/reset"
+      response = HTTP::Client.post(
+        url,
+        body: req.to_json,
+        headers: HTTP::Headers{"Content-Type" => "application/json"}
+      )
+      if response.status_code == 200
+        MoanaTypes::TaskResponse.from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
   end
 end

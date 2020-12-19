@@ -81,7 +81,7 @@ module MoanaTypes
                    @type = "",
                    @cluster = ClusterResponse.new,
                    @subvols = [] of SubvolResponse,
-                                    @options = {} of String => String)
+                   @options = {} of String => String)
     end
   end
 end

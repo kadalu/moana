@@ -28,10 +28,10 @@ module MoanaTypes
   class VolumeRequest
     include JSON::Serializable
 
-    property id, name, brick_fs, bricks, xfs_opts, zfs_opts, ext4_opts, replica_count, disperse_count, start, cluster_id : String?, type
+    property id, name, brick_fs, bricks, xfs_opts, zfs_opts, ext4_opts, replica_count, disperse_count, start, cluster_id : String?, type, options
 
     # Generate Volume ID server side
-    def initialize(@id : String = UUID.random.to_s, @name = "", @brick_fs = "dir", @bricks = [] of BrickRequest, @xfs_opts = "", @zfs_opts = "", @ext4_opts = "", @replica_count = 1, @disperse_count = 1, @start = false, @type = "Distribute")
+    def initialize(@id : String = UUID.random.to_s, @name = "", @brick_fs = "dir", @bricks = [] of BrickRequest, @xfs_opts = "", @zfs_opts = "", @ext4_opts = "", @replica_count = 1, @disperse_count = 1, @start = false, @type = "Distribute", @options="{}")
     end
   end
 end

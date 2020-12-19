@@ -7,6 +7,7 @@ CREATE TABLE volumes (
   type VARCHAR,
   replica_count INTEGER,
   disperse_count INTEGER,
+  options VARCHAR,
   created_at TIMESTAMP,
   updated_at TIMESTAMP
 );

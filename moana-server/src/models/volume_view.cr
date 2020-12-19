@@ -16,6 +16,7 @@ class VolumeView < Granite::Base
   column type : String
   column replica_count : Int32
   column disperse_count : Int32
+  column options : String
   column cluster_id : String
   column cluster_name : String
   column brick_id : String
@@ -28,7 +29,7 @@ class VolumeView < Granite::Base
   column node_endpoint : String
 
   select_statement <<-SQL
-    SELECT volumes.id, volumes.name, volumes.state, volumes.type, volumes.replica_count, volumes.disperse_count,
+    SELECT volumes.id, volumes.name, volumes.state, volumes.type, volumes.replica_count, volumes.disperse_count, volumes.options,
            clusters.id as cluster_id, clusters.name as cluster_name,
            bricks.id as brick_id, bricks.path as brick_path, bricks.device as brick_device, bricks.port as brick_port, bricks.state as brick_state,
            nodes.id as node_id, nodes.hostname as node_hostname, nodes.endpoint as node_endpoint
@@ -43,7 +44,7 @@ class VolumeView < Granite::Base
 
   def self.response(data)
     grouped_data = data.group_by do |rec|
-      [rec.id, rec.name, rec.state, rec.type, rec.cluster_id, rec.cluster_name, rec.replica_count.to_s, rec.disperse_count.to_s]
+      [rec.id, rec.name, rec.state, rec.type, rec.cluster_id, rec.cluster_name, rec.replica_count.to_s, rec.disperse_count.to_s, rec.options]
     end
 
     grouped_data.map do |key, value|
@@ -86,6 +87,7 @@ class VolumeView < Granite::Base
       volume.name = value[0].name
       volume.state = value[0].state
       volume.type = value[0].type
+      volume.options = Hash(String, String).from_json(value[0].options)
       volume.cluster.id = value[0].cluster_id
       volume.cluster.name = value[0].cluster_name
       volume.subvols = subvols

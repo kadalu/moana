@@ -36,8 +36,13 @@ Amber::Server.configure do
     resources "/clusters/:cluster_id/nodes", NodeController, except: [:new, :edit]
 
     resources "/clusters/:cluster_id/volumes", VolumeController, except: [:new, :edit, :update]
-    post "/clusters/:cluster_id/volumes/:id/:action", VolumeController, :action
 
+    # Volume Options
+    get "/clusters/:cluster_id/volumes/:id/options", OptionController, :index
+    post "/clusters/:cluster_id/volumes/:id/options/set", OptionController, :setopt
+    post "/clusters/:cluster_id/volumes/:id/options/reset", OptionController, :resetopt
+
+    post "/clusters/:cluster_id/volumes/:id/:action", VolumeController, :action
     resources "/clusters/:cluster_id/tasks", TaskController, except: [:new, :edit, :create]
 
     resources "/tasks/:cluster_id/:node_id", TaskController, except: [:new, :edit, :create]
