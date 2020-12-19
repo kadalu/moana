@@ -1,3 +1,5 @@
 lib
 bin
 *.db
+*.db-shm
+*.db-wal

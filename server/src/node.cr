@@ -25,8 +25,8 @@ post "/api/v1/:cluster_id/nodes" do |env|
 end
 
 put "/api/v1/:cluster_id/nodes/:id" do |env|
-  hostname = env.params.json["hostname"].as(String?)
-  endpoint = env.params.json["endpoint"].as(String?)
+  hostname = env.params.json["hostname"]?.as(String?)
+  endpoint = env.params.json["endpoint"]?.as(String?)
 
   MoanaDB.update_node(env.params.url["id"], hostname, endpoint).to_json
 end
