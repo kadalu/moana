@@ -1,0 +1,23 @@
+name: moana-server
+version: 0.1.0
+
+authors:
+  - Kadalu.io <engineering@kadalu.io>
+
+description: |
+  Moana Server
+
+license: Apache-2.0
+
+crystal: 0.35.1
+
+targets:
+  moana-server:
+    main: src/server.cr
+
+dependencies:
+  sqlite3:
+    github: crystal-lang/crystal-sqlite3
+
+  kemal:
+    github: kemalcr/kemal
