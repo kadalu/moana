@@ -1,0 +1,13 @@
+language: crystal
+
+os:
+  - linux
+  - osx
+
+script:
+  - crystal spec
+  - crystal tool format --check
+
+before_install:
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update         ; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install crystal; fi

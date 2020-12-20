@@ -1,0 +1,29 @@
+name: moana-node
+version: 0.1.0
+
+authors:
+  - Kadalu.io <engineering@kadalu.io>
+
+description: |
+  Moana Node
+
+license: Apache-2.0
+
+crystal: 0.35.1
+
+targets:
+  moana-node:
+    main: src/node.cr
+
+dependencies:
+  kemal:
+    github: kemalcr/kemal
+
+  moana_types:
+    path: ../types
+
+  moana_client:
+    path: ../client
+
+  xattr:
+    github: ettomatic/xattr

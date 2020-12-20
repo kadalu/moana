@@ -1,6 +1,7 @@
 require "json"
 
 require "kemal"
+require "moana_types"
 
 require "./db/volume"
 require "./volume_utils"
@@ -11,25 +12,6 @@ TASK_VOLUME_START = "volume_start"
 TASK_VOLUME_STOP = "volume_stop"
 TASK_VOLUME_DELETE = "volume_delete"
 
-struct BrickRequest
-  include JSON::Serializable
-
-  property node_id : String,
-           path : String,
-           device : String
-end
-
-struct VolumeCreateRequest
-  include JSON::Serializable
-
-  property name : String,
-           replica_count : Int32 = 1,
-           disperse_count : Int32 = 1,
-           bricks : Array(BrickRequest),
-           brick_fs : String = "",
-           fs_opts : String = "",
-           start : Bool = true
-end
 
 get "/api/v1/:cluster_id/volumes" do |env|
   MoanaDB.list_volumes(env.params.url["cluster_id"]).to_json
@@ -46,16 +28,22 @@ get "/api/v1/:cluster_id/volumes/:id" do |env|
 end
 
 post "/api/v1/:cluster_id/volumes" do |env|
-  req = VolumeCreateRequest.from_json(env.request.body.not_nil!)
+  req = MoanaTypes::VolumeCreateRequest.from_json(env.request.body.not_nil!)
 
-  task_type = TASK_VOLUME_CREATE
-  task_type = TASK_VOLUME_CREATE_START if req.start
+  begin
+    req.validate!(env.params.url["cluster_id"])
+    task_type = TASK_VOLUME_CREATE
+    task_type = TASK_VOLUME_CREATE_START if req.start
 
-  volume = volume_from_request(req)
-  # First participating node to assign task
-  node_id = volume.first_node_id
+    volume = volume_from_request(req)
+    # First participating node to assign task
+    node_id = volume.first_node_id
 
-  MoanaDB.create_task(env.params.url["cluster_id"], node_id, task_type, volume.to_json).to_json
+    MoanaDB.create_task(env.params.url["cluster_id"], node_id, task_type, volume.to_json).to_json
+  rescue ex: MoanaTypes::VolumeException
+    env.response.status_code = 400
+    {"error": ex.message}.to_json
+  end
 end
 
 post "/api/v1/:cluster_id/volumes/:id/:action" do |env|

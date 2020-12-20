@@ -1,0 +1,16 @@
+name: moana_volgen
+version: 0.1.0
+
+authors:
+  - Kadalu.io <engineering@kadalu.io>
+
+description: |
+  Moana Volfiles generation
+
+license: Apache-2.0
+
+crystal: 0.35.1
+
+dependencies:
+  moana_types:
+    path: ../types

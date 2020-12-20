@@ -21,3 +21,9 @@ dependencies:
 
   kemal:
     github: kemalcr/kemal
+
+  moana_types:
+    path: ../types
+
+  moana_volgen:
+    path: ../volgen

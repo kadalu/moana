@@ -1,6 +1,7 @@
 require "json"
 require "uuid"
 
+require "moana_types"
 require "sqlite3"
 
 require "./node"
@@ -30,74 +31,6 @@ VOLUME_SELECT_QUERY = <<-SQL
     LEFT OUTER JOIN nodes
     ON bricks.node_id = nodes.id
 SQL
-
-
-struct Brick
-  include JSON::Serializable
-
-  property id = "",
-           path = "",
-           device = "",
-           node = Node.new,
-           port : Int32 = 0,
-           state = "",
-           type = ""
-
-  def initialize
-  end
-end
-
-struct Subvol
-  include JSON::Serializable
-
-  property replica_count : Int32 = 1,
-           disperse_count : Int32 = 1,
-           type = "",
-           bricks = [] of Brick
-
-  def initialize
-  end
-end
-
-struct Volume
-  include JSON::Serializable
-
-  property id = "",
-           name = "",
-           replica_count : Int32 = 1,
-           disperse_count : Int32 = 1,
-           state = "",
-           type = "",
-           brick_fs = "",
-           fs_opts = "",
-           subvols = [] of Subvol
-
-  def initialize
-  end
-
-  def participating_nodes
-    node_ids = [] of String
-    @subvols.each do |subvol|
-      subvol.bricks.each do |brick|
-        node_ids << brick.node.id
-      end
-    end
-
-    node_ids
-  end
-
-  def first_node_id
-    node_id = ""
-    @subvols.each do |subvol|
-      subvol.bricks.each do |brick|
-        node_id = brick.node.id
-        break
-      end
-    end
-
-    node_id
-  end
-end
 
 module MoanaDB
   struct VolumeView
@@ -144,7 +77,7 @@ module MoanaDB
     number_of_subvols = bricks_data.size / subvol_bricks_count
 
     (0 .. number_of_subvols-1).map do |sidx|
-      subvol = Subvol.new
+      subvol = MoanaTypes::Subvol.new
 
       subvol.replica_count = entry.replica_count
       subvol.disperse_count = entry.disperse_count
@@ -165,7 +98,7 @@ module MoanaDB
     grouped_data.map do |key, rows|
       rows = rows.select { |brick| !brick.brick_id.nil? }
       bricks_data = rows.map do |brick|
-        brk = Brick.new
+        brk = MoanaTypes::Brick.new
 
         brk.id = brick.brick_id
         brk.path = brick.brick_path
@@ -179,7 +112,7 @@ module MoanaDB
         brk
       end
 
-      volume = Volume.new
+      volume = MoanaTypes::Volume.new
 
       volume.id = rows[0].id
       volume.name = rows[0].name

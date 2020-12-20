@@ -1,6 +1,7 @@
 require "json"
 require "uuid"
 
+require "moana_types"
 require "sqlite3"
 
 TASK_SELECT_QUERY = <<-SQL
@@ -12,13 +13,6 @@ TASK_SELECT_QUERY = <<-SQL
          response
   FROM tasks
 SQL
-
-struct Task
-  include JSON::Serializable
-  include DB::Serializable
-
-  property id : String, node_id : String, type : String, state : String, data : String, response : String
-end
 
 module MoanaDB
   def self.create_table_tasks(conn = @@conn)
@@ -38,19 +32,19 @@ module MoanaDB
   end
 
   def self.list_tasks(conn = @@conn)
-    conn.not_nil!.query_all(TASK_SELECT_QUERY, as: Task)
+    conn.not_nil!.query_all(TASK_SELECT_QUERY, as: MoanaTypes::Task)
   end
 
   def self.list_tasks(cluster_id : String, conn = @@conn)
-    conn.not_nil!.query_all("#{TASK_SELECT_QUERY} WHERE cluster_id = ?", cluster_id, as: Task)
+    conn.not_nil!.query_all("#{TASK_SELECT_QUERY} WHERE cluster_id = ?", cluster_id, as: MoanaTypes::Task)
   end
 
   def self.list_tasks(cluster_id : String, node_id : String, conn = @@conn)
-    conn.not_nil!.query_all("#{TASK_SELECT_QUERY} WHERE cluster_id = ? AND node_id = ?", cluster_id, node_id, as: Task)
+    conn.not_nil!.query_all("#{TASK_SELECT_QUERY} WHERE cluster_id = ? AND node_id = ?", cluster_id, node_id, as: MoanaTypes::Task)
   end
   
   def self.get_task(id : String, conn = @@conn)
-    tasks = conn.not_nil!.query_all("#{TASK_SELECT_QUERY} WHERE id = ?", id, as: Task)
+    tasks = conn.not_nil!.query_all("#{TASK_SELECT_QUERY} WHERE id = ?", id, as: MoanaTypes::Task)
 
     return nil if tasks.size == 0
     tasks[0]

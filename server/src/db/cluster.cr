@@ -2,8 +2,7 @@ require "json"
 require "uuid"
 
 require "sqlite3"
-
-require "./node"
+require "moana_types"
 
 CLUSTER_SELECT_QUERY = <<-SQL
   SELECT clusters.id AS id,
@@ -15,16 +14,6 @@ CLUSTER_SELECT_QUERY = <<-SQL
   LEFT OUTER JOIN nodes
   ON clusters.id = nodes.cluster_id
 SQL
-
-struct Cluster
-  include JSON::Serializable
-
-  getter id, name
-  property nodes = [] of Node
-
-  def initialize(@id : String, @name : String)
-  end
-end
 
 module MoanaDB
   struct ClusterView
@@ -59,9 +48,9 @@ module MoanaDB
       # Select only if node details are not nil
       rows = rows.select { |row| !row.node_id.nil? }
       
-      cluster = Cluster.new(key[0], key[1])
+      cluster = MoanaTypes::Cluster.new(key[0], key[1])
       cluster.nodes = rows.map do |row|
-        Node.new(row.node_id.not_nil!, row.node_hostname.not_nil!, row.node_endpoint.not_nil!)
+        MoanaTypes::Node.new(row.node_id.not_nil!, row.node_hostname.not_nil!, row.node_endpoint.not_nil!)
       end
 
       cluster
@@ -95,7 +84,7 @@ module MoanaDB
       name
     )
 
-    Cluster.new(cluster_id, name)
+    MoanaTypes::Cluster.new(cluster_id, name)
   end
 
   def self.update_cluster(id : String, name : String, conn = @@conn)

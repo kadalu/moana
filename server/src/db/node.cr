@@ -2,23 +2,15 @@ require "json"
 require "uuid"
 
 require "sqlite3"
+require "moana_types"
 
 NODE_SELECT_QUERY = <<-SQL
   SELECT id,
          hostname,
-         endpoint
+         endpoint,
+         cluster_id
   FROM nodes
 SQL
-
-struct Node
-  include JSON::Serializable
-  include DB::Serializable
-
-  property id = "", hostname = "", endpoint = ""
-
-  def initialize(@id : String = "", @hostname : String = "", @endpoint : String = "")
-  end
-end
 
 module MoanaDB
   def self.create_table_nodes(conn = @@conn)
@@ -34,15 +26,15 @@ module MoanaDB
   end
 
   def self.list_nodes(conn = @@conn)
-    conn.not_nil!.query_all(NODE_SELECT_QUERY, as: Node)
+    conn.not_nil!.query_all(NODE_SELECT_QUERY, as: MoanaTypes::Node)
   end
 
   def self.list_nodes(cluster_id : String, conn = @@conn)
-    conn.not_nil!.query_all("#{NODE_SELECT_QUERY} WHERE cluster_id = ?", cluster_id, as: Node)
+    conn.not_nil!.query_all("#{NODE_SELECT_QUERY} WHERE cluster_id = ?", cluster_id, as: MoanaTypes::Node)
   end
 
   def self.get_node(id : String, conn = @@conn)
-    nodes = conn.not_nil!.query_all("#{NODE_SELECT_QUERY} WHERE id = ?", id, as: Node)
+    nodes = conn.not_nil!.query_all("#{NODE_SELECT_QUERY} WHERE id = ?", id, as: MoanaTypes::Node)
 
     return nil if nodes.size == 0
     nodes[0]
@@ -61,7 +53,7 @@ module MoanaDB
       endpoint
     )
 
-    Node.new(node_id, hostname, endpoint)
+    MoanaTypes::Node.new(node_id, hostname, endpoint)
   end
 
   def self.update_node(id : String, hostname : String? = nil, endpoint : String? = nil, conn = @@conn)

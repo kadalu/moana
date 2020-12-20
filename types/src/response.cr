@@ -1,87 +1,111 @@
 require "json"
+require "db"
 
 module MoanaTypes
-  class ErrorResponse
+  struct Node
+    include JSON::Serializable
+    include DB::Serializable
+
+    property id = "", hostname = "", endpoint = "", cluster_id = ""
+
+    def initialize(@id : String = "", @hostname : String = "", @endpoint : String = "", @cluster_id : String = "")
+    end
+  end
+
+  struct Cluster
+    include JSON::Serializable
+
+    getter id, name
+    property nodes = [] of Node
+
+    def initialize(@id : String, @name : String)
+    end
+  end
+
+  struct Task
+    include JSON::Serializable
+    include DB::Serializable
+
+    property id : String, node_id : String, type : String, state : String, data : String, response : String
+  end
+
+  struct Brick
+    include JSON::Serializable
+
+    property id = "",
+             path = "",
+             device = "",
+             node = Node.new,
+             port : Int32 = 0,
+             state = "",
+             type = ""
+
+    def initialize
+    end
+  end
+
+  struct Subvol
+    include JSON::Serializable
+
+    property replica_count : Int32 = 1,
+             disperse_count : Int32 = 1,
+             type = "",
+             bricks = [] of Brick
+
+    def initialize
+    end
+  end
+
+  struct Volume
+    include JSON::Serializable
+
+    property id = "",
+             name = "",
+             replica_count : Int32 = 1,
+             disperse_count : Int32 = 1,
+             state = "",
+             type = "",
+             brick_fs = "",
+             fs_opts = "",
+             subvols = [] of Subvol
+
+    def initialize
+    end
+
+    def participating_nodes
+      node_ids = [] of String
+      @subvols.each do |subvol|
+        subvol.bricks.each do |brick|
+          node_ids << brick.node.id
+        end
+      end
+
+      node_ids
+    end
+
+    def first_node_id
+      node_id = ""
+      @subvols.each do |subvol|
+        subvol.bricks.each do |brick|
+          node_id = brick.node.id
+          break
+        end
+      end
+
+      node_id
+    end
+  end
+
+  
+  struct Error
     include JSON::Serializable
 
     property error : String, status_code : Int32 = 0
   end
 
-  class VolfileResponse
+  struct Volfile
     include JSON::Serializable
 
     property content : String
-  end
-
-  class TaskResponse
-    include JSON::Serializable
-
-    property id, data, state, type, response, node : NodeResponse?
-
-    def initialize(@id = "", @data = "", @state = "", @type = "", @response = "")
-    end
-  end
-
-  class NodeResponse
-    include JSON::Serializable
-
-    property id, hostname, endpoint
-
-    def initialize(@id = "", @hostname = "", @endpoint = "")
-    end
-  end
-
-  class BrickResponse
-    include JSON::Serializable
-
-    property id, path, device, mount_path, node, port, state, type
-
-    def initialize(@id = "",
-                   @path = "",
-                   @device = "",
-                   @mount_path = "",
-                   @port : Int32 = 0,
-                   @state = "",
-                   @type = "",
-                   @node = NodeResponse.new)
-    end
-  end
-
-  class SubvolResponse
-    include JSON::Serializable
-
-    property replica_count, disperse_count, type, bricks
-
-    def initialize(@replica_count : Int32 = 1,
-                   @disperse_count : Int32 = 1,
-                   @type = "",
-                   @bricks = [] of BrickResponse)
-    end
-  end
-
-  class ClusterResponse
-    include JSON::Serializable
-
-    property id, name, nodes : Array(NodeResponse)?
-
-    def initialize(@id = "", @name = "")
-    end
-  end
-
-  class VolumeResponse
-    include JSON::Serializable
-
-    property id, name, replica_count, disperse_count, state, type, cluster, subvols, options
-
-    def initialize(@id = "",
-                   @name = "",
-                   @replica_count : Int32 = 1,
-                   @disperse_count : Int32 = 1,
-                   @state = "",
-                   @type = "",
-                   @cluster = ClusterResponse.new,
-                   @subvols = [] of SubvolResponse,
-                   @options = {} of String => String)
-    end
   end
 end
