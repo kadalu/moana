@@ -51,6 +51,8 @@ module MoanaDB
   
   def self.get_task(id : String, conn = @@conn)
     tasks = conn.not_nil!.query_all("#{TASK_SELECT_QUERY} WHERE id = ?", id, as: Task)
+
+    return nil if tasks.size == 0
     tasks[0]
   end
 

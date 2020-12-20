@@ -6,6 +6,7 @@ require "./db/db"
 require "./cluster"
 require "./node"
 require "./task"
+require "./volume"
 
 # Set the content type for all APIs
 before_all do |env|

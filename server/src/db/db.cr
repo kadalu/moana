@@ -5,6 +5,8 @@ require "sqlite3"
 require "./cluster"
 require "./node"
 require "./task"
+require "./volume"
+require "./brick"
 
 module MoanaDB
   @@conn : DB::Database | Nil = nil
@@ -19,5 +21,7 @@ module MoanaDB
     create_table_clusters
     create_table_nodes
     create_table_tasks
+    create_table_volumes
+    create_table_bricks
   end
 end

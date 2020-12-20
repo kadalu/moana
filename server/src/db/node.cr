@@ -14,9 +14,9 @@ struct Node
   include JSON::Serializable
   include DB::Serializable
 
-  getter id, hostname, endpoint
+  property id = "", hostname = "", endpoint = ""
 
-  def initialize(@id : String, @hostname : String, @endpoint : String)
+  def initialize(@id : String = "", @hostname : String = "", @endpoint : String = "")
   end
 end
 
@@ -43,6 +43,8 @@ module MoanaDB
 
   def self.get_node(id : String, conn = @@conn)
     nodes = conn.not_nil!.query_all("#{NODE_SELECT_QUERY} WHERE id = ?", id, as: Node)
+
+    return nil if nodes.size == 0
     nodes[0]
   end
 
