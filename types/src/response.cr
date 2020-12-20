@@ -67,6 +67,7 @@ module MoanaTypes
              type = "",
              brick_fs = "",
              fs_opts = "",
+             options = {} of String => String,
              subvols = [] of Subvol
 
     def initialize

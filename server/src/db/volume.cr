@@ -5,6 +5,7 @@ require "moana_types"
 require "sqlite3"
 
 require "./node"
+require "./option"
 
 VOLUME_SELECT_QUERY = <<-SQL
     SELECT volumes.id,
@@ -123,6 +124,8 @@ module MoanaDB
       volume.disperse_count = rows[0].disperse_count
       volume.brick_fs = rows[0].brick_fs
       volume.fs_opts = rows[0].fs_opts
+      # Options from Options table
+      volume.options = list_options(volume.id)
 
       volume
     end
