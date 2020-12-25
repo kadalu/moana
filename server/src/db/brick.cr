@@ -56,7 +56,7 @@ module MoanaDB
       brk.state = brick.state
       brk.type = brick.type
 
-      brick
+      brk
     end
   end
 end
