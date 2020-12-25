@@ -6,13 +6,6 @@ require "./volumes"
 require "./tasks"
 require "./helpers"
 
-struct NoCmdArgs < Args
-  def handle(gflags : Gflags)
-    STDERR.puts "No command specified"
-    exit 1
-  end
-end
-
 class MoanaCommands
   @args : Args = NoCmdArgs.new
   @pos_args = [] of String
@@ -55,9 +48,13 @@ class MoanaCommands
       end
     end
 
-    if !@args.nil?
-      @args.not_nil!.pos_args(@pos_args)
-      @args.not_nil!.handle(@gflags)
+    @args.pos_args(@pos_args)
+
+    begin
+      @args.handle(@gflags)
+    rescue Socket::ConnectError
+      STDERR.puts "Moana Server is not reachable. Please make sure environment variable MOANA_URL=#{@gflags.moana_url} is correct"
+      exit 1
     end
   end
 end

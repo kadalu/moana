@@ -43,6 +43,13 @@ abstract struct Args
   end
 end
 
+struct NoCmdArgs < Args
+  def handle(gflags : Gflags)
+    STDERR.puts "No command specified"
+    exit 1
+  end
+end
+
 def cluster_id_from_name(name)
   filename = Path.home.join(".moana", "clusters.json")
   content = File.read(filename)
