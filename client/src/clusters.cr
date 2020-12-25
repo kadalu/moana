@@ -13,7 +13,7 @@ module MoanaClient
     end
 
     def self.create(ctx : ClientContext, name : String)
-      response = http_post(
+      response = MoanaClient.http_post(
         "#{ctx.url}/api/v1/clusters",
         {name: name}.to_json
       )
@@ -26,7 +26,7 @@ module MoanaClient
 
     def get
       url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}"
-      response = http_get url
+      response = MoanaClient.http_get url
       if response.status_code == 200
         MoanaTypes::Cluster.from_json(response.body)
       else
@@ -36,7 +36,7 @@ module MoanaClient
 
     def self.all(ctx : ClientContext)
       url = "#{ctx.url}/api/v1/clusters"
-      response = http_get url
+      response = MoanaClient.http_get url
       if response.status_code == 200
         Array(MoanaTypes::Cluster).from_json(response.body)
       else
@@ -46,7 +46,7 @@ module MoanaClient
 
     def update(name)
       url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}"
-      response = http_put(url, {name: name}.to_json)
+      response = MoanaClient.http_put(url, {name: name}.to_json)
 
       if response.status_code == 200
         MoanaTypes::Cluster.from_json(response.body)
@@ -57,7 +57,7 @@ module MoanaClient
 
     def delete
       url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}"
-      response = http_delete url
+      response = MoanaClient.http_delete url
 
       if response.status_code != 204
         MoanaClient.error_response(response)

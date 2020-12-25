@@ -8,24 +8,31 @@ module MoanaTypes
   struct BrickRequest
     include JSON::Serializable
 
-    property node_id : String,
-             path : String,
-             device : String,
+    property node_id = "",
+             path = "",
+             device = "",
              port : Int32 = 0,
              node_hostname = "",
              node_endpoint = ""
+
+    def initialize
+    end
   end
 
   struct VolumeCreateRequest
     include JSON::Serializable
 
-    property name : String,
+    property name = "",
              replica_count : Int32 = 1,
              disperse_count : Int32 = 1,
-             bricks : Array(BrickRequest),
-             brick_fs : String = "",
-             fs_opts : String = "",
-             start : Bool = true
+             bricks = [] of MoanaTypes::BrickRequest,
+             brick_fs = "",
+             fs_opts = "",
+             start = true,
+             cluster_id = ""
+
+    def initialize
+    end
 
     def find_free_port(node_id)
       # TODO: Also check from tasks table

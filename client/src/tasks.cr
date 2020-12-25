@@ -11,7 +11,7 @@ module MoanaClient
 
     def get
       url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}/tasks/#{@id}"
-      response = http_get url
+      response = MoanaClient.http_get url
       if response.status_code == 200
         MoanaTypes::Task.from_json(response.body)
       else
@@ -21,7 +21,7 @@ module MoanaClient
 
     def self.all(ctx : ClientContext, cluster_id : String)
       url = "#{ctx.url}/api/v1/clusters/#{cluster_id}/tasks"
-      response = http_get url
+      response = MoanaClient.http_get url
       if response.status_code == 200
         Array(MoanaTypes::Task).from_json(response.body)
       else
@@ -31,7 +31,7 @@ module MoanaClient
 
     def self.all(ctx : ClientContext, cluster_id : String, node_id : String)
       url = "#{ctx.url}/api/v1/tasks/#{cluster_id}/#{node_id}"
-      response = http_get url
+      response = MoanaClient.http_get url
       if response.status_code == 200
         Array(MoanaTypes::Task).from_json(response.body)
       else
@@ -41,7 +41,7 @@ module MoanaClient
 
     def update(state : String, response : String)
       url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}/tasks/#{@id}"
-      response = http_put(
+      response = MoanaClient.http_put(
         url,
         {state: state, response: response}.to_json
       )
@@ -54,7 +54,7 @@ module MoanaClient
 
     def delete
       url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}/tasks/#{@id}"
-      response = http_delete url
+      response = MoanaClient.http_delete url
 
       if response.status_code != 204
         MoanaClient.error_response(response)

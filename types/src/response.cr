@@ -8,7 +8,7 @@ module MoanaTypes
 
     property id = "", hostname = "", endpoint = "", cluster_id = ""
 
-    def initialize(@id : String = "", @hostname : String = "", @endpoint : String = "", @cluster_id : String = "")
+    def initialize
     end
   end
 
@@ -16,7 +16,7 @@ module MoanaTypes
     include JSON::Serializable
 
     getter id, name
-    property nodes = [] of Node
+    property nodes = [] of MoanaTypes::Node
 
     def initialize(@id : String, @name : String)
     end
@@ -26,7 +26,7 @@ module MoanaTypes
     include JSON::Serializable
     include DB::Serializable
 
-    property id : String, node_id : String, type : String, state : String, data : String, response : String
+    property id : String, node_id : String, type : String, state : String, data : String, response : String, node = MoanaTypes::Node.new
   end
 
   struct Brick
@@ -35,7 +35,7 @@ module MoanaTypes
     property id = "",
              path = "",
              device = "",
-             node = Node.new,
+             node = MoanaTypes::Node.new,
              port : Int32 = 0,
              state = "",
              type = ""
@@ -50,7 +50,7 @@ module MoanaTypes
     property replica_count : Int32 = 1,
              disperse_count : Int32 = 1,
              type = "",
-             bricks = [] of Brick
+             bricks = [] of MoanaTypes::Brick
 
     def initialize
     end
@@ -68,7 +68,7 @@ module MoanaTypes
              brick_fs = "",
              fs_opts = "",
              options = {} of String => String,
-             subvols = [] of Subvol
+             subvols = [] of MoanaTypes::Subvol
 
     def initialize
     end

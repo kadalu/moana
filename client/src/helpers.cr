@@ -18,7 +18,7 @@ module MoanaClient
     raise MoanaClientException.new(err.error, response.status_code)
   end
 
-  private def self.http_put(url, body_json)
+  def http_put(url, body_json)
     HTTP::Client.put(
       url,
       body: body_json,
@@ -26,7 +26,7 @@ module MoanaClient
     )
   end
 
-  private def self.http_post(url, body_json)
+  def http_post(url, body_json)
     HTTP::Client.post(
       url,
       body: body_json,
@@ -34,11 +34,11 @@ module MoanaClient
     )
   end
 
-  private def self.http_get(url)
+  def http_get(url)
     HTTP::Client.get url
   end
 
-  private def self.http_delete(url)
+  def http_delete(url)
     HTTP::Client.delete url
   end
 end
