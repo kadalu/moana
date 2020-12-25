@@ -1,5 +1,9 @@
 version: 2.0
 shards:
+  db:
+    git: https://github.com/crystal-lang/crystal-db.git
+    version: 0.10.0
+
   moana_types:
     path: ../types
     version: 0.1.0
