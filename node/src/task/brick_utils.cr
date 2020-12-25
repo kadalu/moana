@@ -1,4 +1,7 @@
+require "json"
+
 require "xattr"
+require "moana_types"
 
 class SystemctlException < Exception
 end
@@ -45,17 +48,41 @@ def execute(cmd, args)
   end
 end
 
-class Brick
-  def initialize(@volume : MoanaTypes::VolumeRequest, @request : MoanaTypes::BrickRequest)
-  end
+abstract struct Brick
+  include JSON::Serializable
+
+  @mount_path = ""
+
+  property volume : MoanaTypes::Volume,
+           brick : MoanaTypes::Brick,
+           brick_fs = ""
+
+
+  use_json_discriminator "brick_fs", {
+    xfs: XfsBrick,
+    zfs: ZfsBrick,
+    ext4: Ext4Brick,
+    dir: DirBrick
+  }
 
   def mkfs
   end
 
-  def mount
-    Dir.mkdir @request.mount_path
+  def mount_path
+    return @mount_path if @mount_path != ""
 
-    args = ["-t", @volume.brick_fs, @request.device, @request.mount_path]
+    @mount_path = @brick.path
+    if @brick.device != ""
+      @mount_path = Path[@brick.path].parent.to_s
+    end
+
+    @mount_path
+  end
+
+  def mount
+    Dir.mkdir mount_path
+
+    args = ["-t", @volume.brick_fs, @brick.device, mount_path]
     ret, resp = execute(MOUNT_CMD, args)
     if ret != 0
       raise MountException.new(resp)
@@ -63,7 +90,7 @@ class Brick
   end
 
   def unmount
-    args = [@request.mount_path]
+    args = [mount_path]
     ret, resp = execute(UMOUNT_CMD, args)
     if ret != 0
       raise UnmountException.new(resp)
@@ -79,7 +106,7 @@ class Brick
     test_xattr_value = "testvalue"
 
     begin
-      xattr = XAttr.new(@request.path)
+      xattr = XAttr.new(@brick.path)
       xattr[test_xattr_name] = test_xattr_value
       val = xattr[test_xattr_name]
       if val != test_xattr_value
@@ -93,7 +120,7 @@ class Brick
   def set_xattrs
     volume_id = UUID.new(@volume.id)
     begin
-      xattr = XAttr.new(@request.path)
+      xattr = XAttr.new(@brick.path)
       # if xattr[VOLUME_ID_XATTR_NAME] != volume_id.bytes
       #   raise BrickXattrException.new("Brick is already used with another Volume")
       # end
@@ -105,18 +132,18 @@ class Brick
 
   def create_dirs
     # TODO: Handle Error
-    Dir.mkdir "#{@request.path}/.glusterfs"
+    Dir.mkdir "#{@brick.path}/.glusterfs"
   end
 
   def remove_xattrs
   end
 end
 
-class XfsBrick < Brick
+struct XfsBrick < Brick
   def mkfs
     cmd = "mkfs.xfs"
-    args = @volume.xfs_opts.split
-    args << @request.device
+    args = @volume.fs_opts.split
+    args << @brick.device
     ret, resp = execute(cmd, args)
     if ret != 0
       raise MkfsException.new(resp)
@@ -124,14 +151,14 @@ class XfsBrick < Brick
   end
 end
 
-class ZfsBrick < Brick
+struct ZfsBrick < Brick
   def mkfs
-    dev_name = @request.device.sub("/", "_").strip("_")
+    dev_name = @brick.device.sub("/", "_").strip("_")
     cmd = "zpool"
     args = ["create"]
-    args += @volume.zfs_opts.split
+    args += @volume.fs_opts.split
     args << dev_name
-    args << @request.device
+    args << @brick.device
     ret, resp = execute(cmd, args)
     if ret != 0
       raise MkfsException.new(resp)
@@ -139,11 +166,11 @@ class ZfsBrick < Brick
   end
 end
 
-class Ext4Brick < Brick
+struct Ext4Brick < Brick
   def mkfs
     cmd = "mkfs.ext4"
-    args = @volume.xfs_opts.split
-    args << @request.device
+    args = @volume.fs_opts.split
+    args << @brick.device
     ret, resp = execute(cmd, args)
     if ret != 0
       raise MkfsException.new(resp)
@@ -151,12 +178,12 @@ class Ext4Brick < Brick
   end
 end
 
-class DirBrick < Brick
+struct DirBrick < Brick
   def mkfs
   end
 
   def mount
-    Dir.mkdir @request.path
+    Dir.mkdir @brick.path
   end
 
   def unmount
@@ -166,21 +193,17 @@ class DirBrick < Brick
   end
 end
 
-def brick_object(volreq, brickreq)
-  case volreq.brick_fs
-  when "xfs"
-    XfsBrick.new volreq, brickreq
-  when "zfs"
-    ZfsBrick.new volreq, brickreq
-  when "ext4"
-    Ext4Brick.new volreq, brickreq
-  else
-    DirBrick.new volreq, brickreq
-  end
-end
-
-def create_brick(volreq, brickreq)
-  brick = brick_object(volreq, brickreq)
+def create_brick(volume, brickdata)
+  # Convert to JSON and then Deserialize to avoid multiple
+  # switch statements. This method will automatically create
+  # respective instance(XfsBrick, ZfsBrick, Ext4Brick and DirBrick)
+  brick = Brick.from_json(
+    {
+      volume: volume,
+      brick: brickdata,
+      brick_fs: volume.brick_fs
+    }.to_json
+  )
 
   # Try Creating Filesystem if not already Created
   # Do not use Force so that existing FS will not get overwritten
@@ -192,7 +215,7 @@ def create_brick(volreq, brickreq)
 
   # Create essential directories required for GlusterFS Brick
   brick.create_dirs
-  
+
   brick.verify_xattr_support
 
   # Verify that the Volume ID is same as the input Volume ID

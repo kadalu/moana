@@ -1,9 +1,54 @@
+require "./node_conf"
+
+TASK_STATE_COMPLETED = "Completed"
+TASK_STATE_FAILED = "Failed"
+TASK_STATE_RECEIVED = "Received"
+
+TASK_VOLUME_CREATE = "volume_create"
+TASK_VOLUME_START = "volume_start"
+TASK_VOLUME_STOP = "volume_stop"
+
+struct TaskError
+  include JSON::Serializable
+  property error, node, status_code
+
+  def initialize(@error : String, @node : MoanaTypes::Node, @status_code : Int32)
+  end
+end
+
+struct ApiError
+  property error = ""
+  include JSON::Serializable
+end
+
 class Watcher
+  def initialize(@node_conf : NodeConf)
+  end
+
+  def participating_nodes(task)
+    case task.type
+    when TASK_VOLUME_CREATE, TASK_VOLUME_START, TASK_VOLUME_STOP
+      vol = MoanaTypes::Volume.from_json(task.data)
+
+      nodes = [] of MoanaTypes::Node
+      vol.subvols.each do |subvol|
+        subvol.bricks.each do |brick|
+          nodes << brick.node
+        end
+      end
+
+      nodes
+
+    else
+      [] of MoanaTypes::Node
+    end
+  end
+
   # Update the status of Task, before and after the execution.
   # Queued -> Received -> Success|Failure
   def update_task_state(task_id, resp_status, reply)
-    client = MoanaClient::Client.new(@moana_url)
-    task = client.cluster(@cluster_id).task(task_id)
+    client = MoanaClient::Client.new(@node_conf.moana_url)
+    task = client.cluster(@node_conf.cluster_id).task(task_id)
     begin
       task.update(resp_status, reply)
     rescue ex : MoanaClient::MoanaClientException
@@ -12,11 +57,6 @@ class Watcher
   end
   
   def handle_task(client, task)
-    if !SUPPORTED_TASK_TYPES.includes?(task.type)
-      STDERR.puts "Unsupported Task Type: #{task.type}"
-      return
-    end
-
     # Do not Look again if already processed
     if task.state == TASK_STATE_COMPLETED || task.state == TASK_STATE_FAILED
       return
@@ -25,12 +65,12 @@ class Watcher
     # Updating status as RECEIVED helps the users
     # to know that a task is picked up.
     # Also helps to Timeout an action from Server
-    update_task_state(task.id, TASK_STATUS_RECEIVED, "{}")
+    update_task_state(task.id, TASK_STATE_RECEIVED, "{}")
 
     errors = [] of TaskError
 
     # TODO: Execute the HTTP calls concurrently
-    nodes = task.participating_nodes
+    nodes = participating_nodes(task)
 
     nodes.each do |node|
       begin
@@ -50,9 +90,9 @@ class Watcher
       end
     end
 
-    resp_status = TASK_STATUS_COMPLETED
+    resp_status = TASK_STATE_COMPLETED
     if errors.size > 0
-      resp_status = TASK_STATUS_FAILED
+      resp_status = TASK_STATE_FAILED
     end
 
     # Two possible Status: TASK_STATE_COMPLETED and TASK_STATE_FAILED
@@ -65,15 +105,13 @@ class Watcher
     # generated and saved in a specific directory.
     # If Config file not exists, then that means Moana
     # node agent is started but no Join request is received.
-    workdir = ENV.fetch("WORKDIR", "")
-    @node_conf = NodeConfig.new(workdir, ENV["NODENAME"])
     @node_conf.wait()
 
     # Initialize a Client that connects to Moana Server.
     # Moana Server URL is received from the Configuration
     # file.
     client = MoanaClient::Client.new(@node_conf.moana_url).cluster(@node_conf.cluster_id)
-    node = client.node(@node_conf.node_id)
+    node_client = client.node(@node_conf.node_id)
 
     loop do
       # Now get the list of latest tasks from Moana Server
@@ -82,7 +120,7 @@ class Watcher
       # errors to get the list of tasks then wait for some time.
       begin
         # TODO: Remember last task time
-        node.latest_tasks().each do |task|
+        node_client.tasks().each do |task|
           handle_task(client, task)
         end
       rescue Socket::ConnectError

@@ -5,6 +5,18 @@ module MoanaTypes
   class VolumeException < Exception
   end
 
+  struct NodeJoinRequest
+    include JSON::Serializable
+
+    property moana_url = "",
+             cluster_id = "",
+             hostname = "",
+             endpoint = ""
+
+    def initialize
+    end
+  end
+
   struct BrickRequest
     include JSON::Serializable
 

@@ -1,9 +1,0 @@
-name: xattr
-version: 0.6.1
-
-authors:
-  - Ettore Berardi <ettore.berardi@outlook.com>
-
-crystal: 0.35.0
-
-license: MIT
