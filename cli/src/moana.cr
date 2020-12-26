@@ -7,9 +7,11 @@ require "./tasks"
 require "./helpers"
 
 class MoanaCommands
-  @args : Args = NoCmdArgs.new
+  @args = Args.new
   @pos_args = [] of String
   @gflags = Gflags.new ENV.fetch("MOANA_URL", "")
+  @command_type = CommandType::Unknown
+  @command : Command = UnknownCommand.new
 
   def parse
     parser = OptionParser.new do |parser|
@@ -48,10 +50,29 @@ class MoanaCommands
       end
     end
 
-    @args.pos_args(@pos_args)
+    # Macro to create respective instance of Command struct and
+    # call respective handle method. For example,
+    # if @command_type == CommandType::VolumeCreate
+    # then it creates @command = VolumeCreateCommand.new
+    # Below things will be expanded as case statement like
+    # case @command_type
+    #   when Command::VolumeCreate
+    #     @command = VolumeCreateCommand.new
+    #   ...
+    # end
+    {% begin %}
+      case @command_type
+           {% for value in CommandType.constants %}
+           when CommandType::{{ value }}
+             @command = {{ value }}Command.new
+           {% end %}
+      end
+    {% end %}
 
+    # Pass global flags and arguments to respective Command instance
+    @command.set_args(@gflags, @args, @pos_args)
     begin
-      @args.handle(@gflags)
+      @command.handle
     rescue Socket::ConnectError
       STDERR.puts "Moana Server is not reachable. Please make sure environment variable MOANA_URL=#{@gflags.moana_url} is correct"
       exit 1

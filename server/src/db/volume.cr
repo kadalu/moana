@@ -139,7 +139,7 @@ module MoanaDB
 
   def self.list_volumes(cluster_id : String, conn = @@conn)
     grouped_volumes(
-      conn.not_nil!.query_all("#{VOLUME_SELECT_QUERY} WHERE cluster_id = ?", cluster_id, as: VolumeView)
+      conn.not_nil!.query_all("#{VOLUME_SELECT_QUERY} WHERE volumes.cluster_id = ?", cluster_id, as: VolumeView)
     )
   end
 
@@ -156,8 +156,8 @@ module MoanaDB
     v_query = "INSERT INTO volumes(id, cluster_id, name, type, state, replica_count, disperse_count, brick_fs, fs_opts, created_at, updated_at)
                VALUES             (?,  ?,          ?,    ?,    ?,     ?,             ?,              ?,        ?,       datetime(), datetime());"
 
-    b_query = "INSERT INTO bricks(id, cluster_id, volume_id, order, node_id, path, created_at, updated_at)
-               VALUES            (?,  ?,          ?,         ?,     ?,       ?,    datetime(), datetime());"
+    b_query = "INSERT INTO bricks(id, cluster_id, volume_id, idx, node_id, path, created_at, updated_at)
+               VALUES            (?,  ?,          ?,         ?,   ?,       ?,    datetime(), datetime());"
 
     conn.not_nil!.transaction do |tx|
       cnn = tx.connection

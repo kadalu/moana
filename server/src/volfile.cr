@@ -1,15 +1,15 @@
 require "kemal"
 require "moana_volgen"
 
-require "./db/volume"
+require "./db/*"
 require "./default_volfiles"
 
-get "/volfiles/:cluster_id/:name" do |env|
+get "/api/v1/clusters/:cluster_id/volfiles/:name" do |env|
   env.response.status_code = 500
   {status: "not implemented"}.to_json
 end
 
-get "/volfiles/:cluster_id/:name/:volume_id" do |env|
+get "/api/v1/clusters/:cluster_id/volfiles/:name/:volume_id" do |env|
   volume = MoanaDB.get_volume(env.params.url["volume_id"])
   if volume.nil?
     env.response.status_code = 500
@@ -26,7 +26,7 @@ get "/volfiles/:cluster_id/:name/:volume_id" do |env|
   end
 end
 
-get "/volfiles/:cluster_id/:name/:volume_id/:brick_id" do |env|
+get "/api/v1/clusters/:cluster_id/volfiles/:name/:volume_id/:brick_id" do |env|
   volume = MoanaDB.get_volume(env.params.url["volume_id"])
   if volume.nil?
     env.response.status_code = 500

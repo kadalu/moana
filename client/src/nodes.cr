@@ -27,14 +27,18 @@ module MoanaClient
     def self.join(ctx : ClientContext, cluster_id : String, endpoint : String, token : String)
       # Connect to node endpoint and ask to Join
       url = "#{endpoint}/api/v1/join"
-      response = MoanaClient.http_post(
-        url,
-        {cluster_id: cluster_id, moana_url: ctx.url, token: token}.to_json
-      )
-      if response.status_code == 201
-        MoanaTypes::Node.from_json(response.body)
-      else
-        MoanaClient.error_response(response)
+      begin
+        response = MoanaClient.http_post(
+          url,
+          {cluster_id: cluster_id, moana_url: ctx.url, token: token}.to_json
+        )
+        if response.status_code == 201
+          MoanaTypes::Node.from_json(response.body)
+        else
+          MoanaClient.error_response(response)
+        end
+      rescue Socket::ConnectError
+        raise MoanaClientException.new("Node endpoint(#{endpoint}) is not reachable.", -1)
       end
     end
 

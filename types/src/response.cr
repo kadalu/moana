@@ -10,6 +10,9 @@ module MoanaTypes
 
     def initialize
     end
+
+    def initialize(@id, @hostname, @endpoint)
+    end
   end
 
   struct Cluster

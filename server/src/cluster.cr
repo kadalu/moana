@@ -1,13 +1,13 @@
 require "kemal"
 
-require "./db/cluster"
+require "./db/*"
 
 get "/api/v1/clusters" do
   MoanaDB.list_clusters.to_json
 end
 
-get "/api/v1/clusters/:id" do |env|
-  cluster = MoanaDB.get_cluster(env.params.url["id"])
+get "/api/v1/clusters/:cluster_id" do |env|
+  cluster = MoanaDB.get_cluster(env.params.url["cluster_id"])
 
   if cluster.nil?
     env.response.status_code = 400
@@ -24,13 +24,13 @@ post "/api/v1/clusters" do |env|
   MoanaDB.create_cluster(name).to_json
 end
 
-put "/api/v1/clusters/:id" do |env|
+put "/api/v1/clusters/:cluster_id" do |env|
   name = env.params.json["name"].as(String)
-  MoanaDB.update_cluster(env.params.url["id"], name).to_json
+  MoanaDB.update_cluster(env.params.url["cluster_id"], name).to_json
 end
 
-delete "/api/v1/clusters/:id" do |env|
-  MoanaDB.delete_cluster(env.params.url["id"])
+delete "/api/v1/clusters/:cluster_id" do |env|
+  MoanaDB.delete_cluster(env.params.url["cluster_id"])
 
   env.response.status_code = 204
   nil

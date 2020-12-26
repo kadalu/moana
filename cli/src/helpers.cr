@@ -6,19 +6,88 @@ require "http/client"
 
 require "moana_types"
 
+enum CommandType
+  Unknown
+  ClusterCreate
+  ClusterList
+  ClusterUpdate
+  ClusterSetDefault
+  ClusterDelete
+
+  NodeJoin
+  NodeUpdate
+  NodeLeave
+  NodeList
+
+  VolumeCreate
+  VolumeStart
+  VolumeStop
+  VolumeSet
+  VolumeReset
+  VolumeDelete
+  VolumeInfo
+  VolumeList
+
+  TaskList
+end
+
 struct Gflags
-  property moana_url
+  property moana_url = ""
+
+  def initialize
+  end
 
   def initialize(@moana_url : String)
   end
 end
 
-# Each subcommand will have a Struct for Arguments.
-# The Struct type will be used to dispatch the Subcommand Request.
-abstract struct Args
-  property cluster_name = ""
+struct ClusterArgs
+  property name = "",
+           newname = ""
+end
 
-  abstract def handle(gflags : Gflags)
+struct NodeArgs
+  property hostname = "",
+           new_hostname = "",
+           endpoint = "",
+           token = ""
+end
+
+struct VolumeArgs
+  property name : String = "",
+           replica_count : Int32 = 1,
+           disperse_count : Int32 = 1,
+           brick_fs : String = "dir",
+           fs_opts : String = "",
+           use_lvm = false,
+           size : UInt64 = 0,
+           start = false,
+           options = {} of String => String,
+           option_names = [] of String,
+           bricks = [] of String
+end
+
+struct TaskArgs
+  property id : String = ""
+end
+
+struct Args
+  property cluster = ClusterArgs.new,
+           node = NodeArgs.new,
+           volume = VolumeArgs.new,
+           task = TaskArgs.new
+  
+end
+
+abstract struct Command
+  property args = Args.new,
+           gflags = Gflags.new
+
+  abstract def handle
+
+  def set_args(@gflags : Gflags, @args : Args, pargs : Array(String))
+      pos_args(pargs)
+  end
 
   def cluster_name_from_pos_args(args)
     if args.size != 1
@@ -30,7 +99,7 @@ abstract struct Args
   end
 
   def pos_args(args : Array(String))
-    return if @cluster_name != ""
+    return if @args.cluster.name != ""
 
     cluster = default_cluster()
     if cluster == ""
@@ -39,12 +108,12 @@ abstract struct Args
       exit 1
     end
 
-    @cluster_name = cluster
+    @args.cluster.name = cluster
   end
 end
 
-struct NoCmdArgs < Args
-  def handle(gflags : Gflags)
+struct UnknownCommand < Command
+  def handle
     STDERR.puts "No command specified"
     exit 1
   end

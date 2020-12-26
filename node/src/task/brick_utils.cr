@@ -204,7 +204,7 @@ def create_brick(volume, brickdata)
       brick_fs: volume.brick_fs
     }.to_json
   )
-
+  
   # Try Creating Filesystem if not already Created
   # Do not use Force so that existing FS will not get overwritten
   brick.mkfs

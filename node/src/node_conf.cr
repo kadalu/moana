@@ -4,7 +4,7 @@
 # environment variables or by default configurations.
 #
 # * **workdir** - Working directory for managing config files
-#   and temporary files. env.WORKDIR or default(`/var/lib/moana`)
+#   and temporary files. env.WORKDIR or default(`/var/lib/kadalu`)
 # * **hostname** - Hostname to use in all Operations, Volfiles etc.
 #   `env.HOSTNAME` or default(`hostname` command).
 # * **port** - Port for Node agent. `env.PORT` or default(`5001`).
@@ -75,7 +75,7 @@ class NodeConf
     end
 
     # Working directory to look for node config file
-    @workdir = ENV.fetch("WORKDIR", "/var/lib/moana")
+    @workdir = ENV.fetch("WORKDIR", "/var/lib/kadalu")
 
     # Node Config file
     @config_file = "#{@workdir}/#{@hostname}.json"
@@ -88,11 +88,11 @@ class NodeConf
     # TODO: Enable Token save once available
     # @token = node.token
 
-    if node.hostname != @hostname
+    if node.hostname != "" && node.hostname != @hostname
       raise NodeConfException.new("Node agent hostname(#{@hostname}) is different than joined node(#{node.hostname})")
     end
 
-    if node.endpoint != @endpoint
+    if node.endpoint != "" && node.endpoint != @endpoint
       raise NodeConfException.new("Node agent endpoint(#{@endpoint}) is different than joined node(#{node.endpoint})")
     end
 

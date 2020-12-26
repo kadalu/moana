@@ -77,7 +77,7 @@ class Watcher
         # All task handlers are POST /api/<task_type>
         # and returns 200 as Response.
         response = HTTP::Client.post(
-          "#{node.endpoint}/api/v1/#{task.type}",
+          "#{node.endpoint}/api/v1/tasks/#{task.type}",
           body: task.to_json,
           headers: HTTP::Headers{"Content-Type" => "application/json"}
         )
