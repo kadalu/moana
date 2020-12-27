@@ -10,52 +10,51 @@ module MoanaClient
     end
 
     def get
-      url = "#{@ctx.url}/api/clusters/#{@cluster_id}/tasks/#{@id}"
-      response = HTTP::Client.get url
+      url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}/tasks/#{@id}"
+      response = MoanaClient.http_get url
       if response.status_code == 200
-        MoanaTypes::TaskResponse.from_json(response.body)
+        MoanaTypes::Task.from_json(response.body)
       else
         MoanaClient.error_response(response)
       end
     end
 
     def self.all(ctx : ClientContext, cluster_id : String)
-      url = "#{ctx.url}/api/clusters/#{cluster_id}/tasks"
-      response = HTTP::Client.get url
+      url = "#{ctx.url}/api/v1/clusters/#{cluster_id}/tasks"
+      response = MoanaClient.http_get url
       if response.status_code == 200
-        Array(MoanaTypes::TaskResponse).from_json(response.body)
+        Array(MoanaTypes::Task).from_json(response.body)
       else
         MoanaClient.error_response(response)
       end
     end
 
     def self.all(ctx : ClientContext, cluster_id : String, node_id : String)
-      url = "#{ctx.url}/api/tasks/#{cluster_id}/#{node_id}"
-      response = HTTP::Client.get url
+      url = "#{ctx.url}/api/v1/tasks/#{cluster_id}/#{node_id}"
+      response = MoanaClient.http_get url
       if response.status_code == 200
-        Array(MoanaTypes::TaskResponse).from_json(response.body)
+        Array(MoanaTypes::Task).from_json(response.body)
       else
         MoanaClient.error_response(response)
       end
     end
 
     def update(state : String, response : String)
-      url = "#{@ctx.url}/api/clusters/#{@cluster_id}/tasks/#{@id}"
-      response = HTTP::Client.put(
+      url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}/tasks/#{@id}"
+      response = MoanaClient.http_put(
         url,
-        body: {state: state, response: response}.to_json,
-        headers: HTTP::Headers{"Content-Type" => "application/json"}
+        {state: state, response: response}.to_json
       )
       if response.status_code == 200
-        MoanaTypes::TaskResponse.from_json(response.body)
+        MoanaTypes::Task.from_json(response.body)
       else
         MoanaClient.error_response(response)
       end
     end
 
     def delete
-      url = "#{@ctx.url}/api/clusters/#{@cluster_id}/tasks/#{@id}"
-      response = HTTP::Client.delete url
+      url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}/tasks/#{@id}"
+      response = MoanaClient.http_delete url
 
       if response.status_code != 204
         MoanaClient.error_response(response)
