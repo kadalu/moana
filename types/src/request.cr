@@ -2,36 +2,49 @@ require "json"
 require "uuid"
 
 module MoanaTypes
-  class NodeRequest
+  class VolumeException < Exception
+  end
+
+  struct NodeJoinRequest
     include JSON::Serializable
 
-    property id, hostname, endpoint
+    property moana_url = "",
+             cluster_id = "",
+             hostname = "",
+             endpoint = "",
+             token = ""
 
-    def initialize(@id : String = "", @hostname : String = "", @endpoint : String = "")
+    def initialize
     end
   end
 
-  class BrickRequest
+  struct BrickRequest
     include JSON::Serializable
 
-    property node_id : String|Nil,
-             path : String,
-             device : String,
-             mount_path : String,
-             port : Int32?,
-             node : NodeRequest
+    property node_id = "",
+             path = "",
+             device = "",
+             port : Int32 = 0,
+             node_hostname = "",
+             node_endpoint = ""
 
-    def initialize(@node_id = "", @path = "", @device = "", @mount_path = "", @node = NodeRequest.new)
+    def initialize
     end
   end
 
-  class VolumeRequest
+  struct VolumeCreateRequest
     include JSON::Serializable
 
-    property id, name, brick_fs, bricks, xfs_opts, zfs_opts, ext4_opts, replica_count, disperse_count, start, cluster_id : String?, type
+    property name = "",
+             replica_count : Int32 = 1,
+             disperse_count : Int32 = 1,
+             bricks = [] of MoanaTypes::BrickRequest,
+             brick_fs = "",
+             fs_opts = "",
+             start = true,
+             cluster_id = ""
 
-    # Generate Volume ID server side
-    def initialize(@id : String = UUID.random.to_s, @name = "", @brick_fs = "dir", @bricks = [] of BrickRequest, @xfs_opts = "", @zfs_opts = "", @ext4_opts = "", @replica_count = 1, @disperse_count = 1, @start = false, @type = "Distribute")
+    def initialize
     end
   end
 end
