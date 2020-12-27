@@ -8,6 +8,7 @@ require "./node"
 require "./task"
 require "./volume"
 require "./option"
+require "./volfile"
 
 # Set the content type for all APIs
 before_all do |env|
