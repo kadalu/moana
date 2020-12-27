@@ -4,6 +4,7 @@ require "kemal"
 
 require "./db/db"
 require "./cluster"
+require "./node"
 
 # Set the content type for all APIs
 before_all do |env|
