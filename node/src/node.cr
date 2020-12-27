@@ -1,10 +1,18 @@
 require "kemal"
 
+require "./watcher"
 require "./routes"
 require "./node_conf"
 
 # Initialize the node configuration
 node_conf = NodeConf.new
+
+# Run in periodic interval to get latest tasks from
+# Moana Server and handle each task
+watcher = Watcher.new(node_conf)
+spawn do
+  watcher.start
+end
 
 # Run the Web service to receive Tasks from different nodes.
 # Moana server will not contact the node agent directly. Instead,
