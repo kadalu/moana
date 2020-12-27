@@ -1,5 +1,6 @@
 require "kemal"
 
+require "./routes"
 require "./node_conf"
 
 # Initialize the node configuration
