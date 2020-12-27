@@ -4,6 +4,8 @@ require "sqlite3"
 
 require "./cluster"
 require "./node"
+require "./volume"
+require "./brick"
 
 module MoanaDB
   @@conn : DB::Database | Nil = nil
@@ -17,5 +19,7 @@ module MoanaDB
     @@conn.not_nil!.exec "PRAGMA journal_mode=WAL;"
     create_table_clusters
     create_table_nodes
+    create_table_volumes
+    create_table_bricks
   end
 end
