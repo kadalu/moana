@@ -11,6 +11,7 @@ SQL
 
 module MoanaDB
   struct OptionView
+    include JSON::Serializable
     include DB::Serializable
 
     property name = "",
