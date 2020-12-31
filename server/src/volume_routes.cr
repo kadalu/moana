@@ -17,8 +17,8 @@ get "/api/v1/clusters/:cluster_id/volumes" do |env|
   MoanaDB.list_volumes(env.params.url["cluster_id"]).to_json
 end
 
-get "/api/v1/clusters/:cluster_id/volumes/:id" do |env|
-  volume = MoanaDB.get_volume(env.params.url["id"])
+get "/api/v1/clusters/:cluster_id/volumes/:volume_id" do |env|
+  volume = MoanaDB.get_volume(env.params.url["volume_id"])
   if volume.nil?
     env.response.status_code = 400
     {"error": "Invalid Volume ID"}.to_json
@@ -53,12 +53,12 @@ post "/api/v1/clusters/:cluster_id/volumes" do |env|
   end
 end
 
-post "/api/v1/clusters/:cluster_id/volumes/:id/:action" do |env|
+def volume_action(env, cluster_id, volume_id, action)
   # TODO: Handle Unknown action
   task_type = TASK_VOLUME_START
-  task_type = TASK_VOLUME_STOP if env.params.url["action"] == "stop"
+  task_type = TASK_VOLUME_STOP if action == "stop"
 
-  volume = MoanaDB.get_volume(env.params.url["id"])
+  volume = MoanaDB.get_volume(volume_id)
   if volume.nil?
     env.response.status_code = 400
     {"error": "Invalid Volume ID"}.to_json
@@ -66,14 +66,22 @@ post "/api/v1/clusters/:cluster_id/volumes/:id/:action" do |env|
     # First participating node to assign task
     node_id = volume.first_node_id
 
-    MoanaDB.create_task(env.params.url["cluster_id"], node_id, task_type, volume.to_json).to_json
+    MoanaDB.create_task(cluster_id, node_id, task_type, volume.to_json).to_json
   end
 end
 
-delete "/api/v1/clusters/:cluster_id/volumes/:id" do |env|
+post "/api/v1/clusters/:cluster_id/volumes/:volume_id/start" do |env|
+  volume_action(env, env.params.url["cluster_id"], env.params.url["volume_id"], "start")
+end
+
+post "/api/v1/clusters/:cluster_id/volumes/:volume_id/stop" do |env|
+  volume_action(env, env.params.url["cluster_id"], env.params.url["volume_id"], "stop")
+end
+
+delete "/api/v1/clusters/:cluster_id/volumes/:volume_id" do |env|
   task_type = TASK_VOLUME_DELETE
 
-  volume = MoanaDB.get_volume(env.params.url["id"])
+  volume = MoanaDB.get_volume(env.params.url["volume_id"])
   if volume.nil?
     env.response.status_code = 400
     {"error": "Invalid Volume ID"}.to_json

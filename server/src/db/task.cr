@@ -6,6 +6,7 @@ require "sqlite3"
 
 TASK_SELECT_QUERY = <<-SQL
   SELECT id,
+         cluster_id,
          node_id,
          type,
          state,

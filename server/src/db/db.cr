@@ -7,6 +7,7 @@ require "./node"
 require "./task"
 require "./volume"
 require "./brick"
+require "./option"
 
 module MoanaDB
   @@conn : DB::Database | Nil = nil
@@ -23,5 +24,6 @@ module MoanaDB
     create_table_tasks
     create_table_volumes
     create_table_bricks
+    create_table_options
   end
 end
