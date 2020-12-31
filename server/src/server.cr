@@ -3,12 +3,12 @@ require "json"
 require "kemal"
 
 require "./db/db"
-require "./cluster"
-require "./node"
-require "./task"
-require "./volume"
-require "./option"
-require "./volfile"
+require "./cluster_routes"
+require "./node_routes"
+require "./task_routes"
+require "./volume_routes"
+require "./option_routes"
+require "./volfile_routes"
 
 # Set the content type for all APIs
 before_all do |env|
