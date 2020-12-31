@@ -65,7 +65,7 @@ module MoanaDB
        replica_count  INTEGER,
        disperse_count INTEGER,
        brick_fs       VARCHAR,
-       fs_opts        VARCHAR,
+       fs_opts        VARCHAR DEFAULT '-',
        created_at     TIMESTAMP,
        updated_at     TIMESTAMP
     );"
@@ -145,14 +145,14 @@ module MoanaDB
 
   def self.get_volume(id : String, conn = @@conn)
     volumes = grouped_volumes(
-      conn.not_nil!.query_all("#{VOLUME_SELECT_QUERY} WHERE id = ?", id, as: VolumeView)
+      conn.not_nil!.query_all("#{VOLUME_SELECT_QUERY} WHERE volumes.id = ?", id, as: VolumeView)
     )
 
     return nil if volumes.size == 0
     volumes[0]
   end
 
-  def self.create_volume(cluster_id : String, volume : Volume, conn = @@conn)
+  def self.create_volume(cluster_id : String, volume : MoanaTypes::Volume, conn = @@conn)
     v_query = "INSERT INTO volumes(id, cluster_id, name, type, state, replica_count, disperse_count, brick_fs, fs_opts, created_at, updated_at)
                VALUES             (?,  ?,          ?,    ?,    ?,     ?,             ?,              ?,        ?,       datetime(), datetime());"
 

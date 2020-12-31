@@ -34,9 +34,9 @@ module MoanaDB
        idx        INTEGER,
        node_id    UUID,
        path       VARCHAR,
-       device     VARCHAR,
-       port       INTEGER,
-       state      VARCHAR,
+       device     VARCHAR DEFAULT '-',
+       port       INTEGER DEFAULT -1,
+       state      VARCHAR DEFAULT '-',
        created_at TIMESTAMP,
        updated_at TIMESTAMP
     );"

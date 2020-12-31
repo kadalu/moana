@@ -23,7 +23,7 @@ module MoanaClient
     end
 
     private def action(name)
-      url = "#{@ctx.url}/api/clusters/#{@cluster_id}/volumes/#{@id}/#{name}"
+      url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}/volumes/#{@id}/#{name}"
       response = MoanaClient.http_post url, "{}"
 
       if response.status_code == 200
