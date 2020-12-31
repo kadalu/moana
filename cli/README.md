@@ -30,7 +30,7 @@ $ shards build
 Export the Moana URL and use the CLI from `bin/moana`
 
 ```
-$ export MOANA_URL=http://localhost:4000
+$ export KADALU_MGMT_SERVER=http://localhost:4000
 $ export PATH=$PATH:$(pwd)/bin
-$ moana cluster list
+$ kadalu cluster list
 ```

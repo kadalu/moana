@@ -28,7 +28,7 @@ struct VolumeCreateCommand < Command
     req.bricks = prepare_bricks_list(cluster_id, @args.volume.bricks, @args.volume.brick_fs)
     req.cluster_id = cluster_id
 
-    client = MoanaClient::Client.new(@gflags.moana_url)
+    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
     begin
       task = cluster.volume_create(req)
@@ -84,7 +84,7 @@ struct VolumeListCommand < Command
 
   def handle
     cluster_id = cluster_id_from_name(@args.cluster.name)
-    client = MoanaClient::Client.new(@gflags.moana_url)
+    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
     begin
       volume_data = cluster.volumes
@@ -109,7 +109,7 @@ struct VolumeInfoCommand < Command
   
   def handle
     cluster_id = cluster_id_from_name(@args.cluster.name)
-    client = MoanaClient::Client.new(@gflags.moana_url)
+    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
     begin
       volume_data = cluster.volumes
@@ -196,38 +196,38 @@ end
 
 class MoanaCommands
   def volume_commands(parser)
-    parser.on("volume", "Manage Kadalu Storage Volumes") do
-      parser.banner = "Usage: moana volume <subcommand> [arguments]"
-      parser.on("list", "List Kadalu Storage Volumes") do
+    parser.on("volume", "Manage #{PRODUCT} Volumes") do
+      parser.banner = "Usage: #{COMMAND} volume <subcommand> [arguments]"
+      parser.on("list", "List #{PRODUCT} Volumes") do
         @command_type = CommandType::VolumeList
-        parser.banner = "Usage: moana volume list [arguments]"
+        parser.banner = "Usage: #{COMMAND} volume list [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
         parser.on("-n NAME", "--volume=NAME", "Volume name") { |name| @args.volume.name = name }
       end
 
-      parser.on("info", "Kadalu Storage Volumes Info") do
+      parser.on("info", "#{PRODUCT} Volumes Info") do
         @command_type = CommandType::VolumeInfo
-        parser.banner = "Usage: moana volume list [arguments]"
+        parser.banner = "Usage: #{COMMAND} volume list [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
         parser.on("-n NAME", "--volume=NAME", "Volume name") { |name| @args.volume.name = name }
       end
 
-      parser.on("start", "Kadalu Storage Volumes Start") do
+      parser.on("start", "#{PRODUCT} Volumes Start") do
         @command_type = CommandType::VolumeStart
-        parser.banner = "Usage: moana volume start NAME [arguments]"
+        parser.banner = "Usage: #{COMMAND} volume start NAME [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
       end
 
-      parser.on("stop", "Kadalu Storage Volumes Stop") do
+      parser.on("stop", "#{PRODUCT} Volumes Stop") do
         @command_type = CommandType::VolumeStop
-        parser.banner = "Usage: moana volume stop NAME [arguments]"
+        parser.banner = "Usage: #{COMMAND} volume stop NAME [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
       end
 
-      parser.on("create", "Create Kadalu Storage Volume") do
+      parser.on("create", "Create #{PRODUCT} Volume") do
         @command_type = CommandType::VolumeCreate
 
-        parser.banner = "Usage: moana volume create NAME BRICKS [arguments]"
+        parser.banner = "Usage: #{COMMAND} volume create NAME BRICKS [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
         parser.on("--replica-count=COUNT", "Replica Count") { |cnt| @args.volume.replica_count = cnt.to_i }
         parser.on("--disperse-count=COUNT", "Disperse Count") { |cnt| @args.volume.disperse_count = cnt.to_i }
@@ -262,21 +262,21 @@ class MoanaCommands
         parser.on("--start", "Start Volume after Create") { @args.volume.start = true }
       end
 
-      parser.on("delete", "Delete Kadalu Storage Volume") do
+      parser.on("delete", "Delete #{PRODUCT} Volume") do
         @command_type = CommandType::VolumeDelete
-        parser.banner = "Usage: moana volume delete NAME [arguments]"
+        parser.banner = "Usage: #{COMMAND} volume delete NAME [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
       end
 
-      parser.on("set", "Set Kadalu Storage Volume Options") do
+      parser.on("set", "Set #{PRODUCT} Volume Options") do
         @command_type = CommandType::VolumeSet
-        parser.banner = "Usage: moana volume set OPTNAME1 OPTVALUE1 ... [arguments]"
+        parser.banner = "Usage: #{COMMAND} volume set OPTNAME1 OPTVALUE1 ... [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
       end
 
-      parser.on("reset", "Reset Kadalu Storage Volume Options") do
+      parser.on("reset", "Reset #{PRODUCT} Volume Options") do
         @command_type = CommandType::VolumeReset
-        parser.banner = "Usage: moana volume reset OPTNAME1 ... [arguments]"
+        parser.banner = "Usage: #{COMMAND} volume reset OPTNAME1 ... [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
       end
     end

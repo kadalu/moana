@@ -13,10 +13,10 @@ struct ClusterCreateCommand < Command
   end
 
   def handle
-    client = MoanaClient::Client.new(@gflags.moana_url)
+    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
     begin
       cluster = client.cluster_create(@args.cluster.name)
-      save_and_get_clusters_list(@gflags.moana_url)
+      save_and_get_clusters_list(@gflags.kadalu_mgmt_server)
       default_cluster_id = default_cluster()
       puts "Cluster created successfully."
       puts "ID: #{cluster.id}"
@@ -39,12 +39,12 @@ struct ClusterUpdateCommand < Command
 
   def handle
     cluster_id = cluster_id_from_name(@args.cluster.name)
-    client = MoanaClient::Client.new(@gflags.moana_url)
+    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
 
     begin
       cluster.update(@args.cluster.newname)
-      save_and_get_clusters_list(@gflags.moana_url)
+      save_and_get_clusters_list(@gflags.kadalu_mgmt_server)
       puts "Cluster updated successfully"
     rescue ex : MoanaClient::MoanaClientException
       STDERR.puts ex.status_code
@@ -58,7 +58,7 @@ struct ClusterListCommand < Command
   end
 
   def handle
-    cluster_data = save_and_get_clusters_list(@gflags.moana_url)
+    cluster_data = save_and_get_clusters_list(@gflags.kadalu_mgmt_server)
     default_cluster_id = default_cluster()
     if cluster_data
       printf(" %-36s  %-s\n", "ID", "Name")
@@ -81,13 +81,13 @@ struct ClusterDeleteCommand < Command
   
   def handle
     cluster_id = cluster_id_from_name(@args.cluster.name)
-    client = MoanaClient::Client.new(@gflags.moana_url)
+    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
 
     begin
       cluster.delete
       default_cluster_id = default_cluster()
-      save_and_get_clusters_list(@gflags.moana_url)
+      save_and_get_clusters_list(@gflags.kadalu_mgmt_server)
       # If the Cluster deleted is the default Cluster then
       # reset default cluster.
       if default_cluster_id == cluster_id
@@ -122,32 +122,32 @@ end
 
 class MoanaCommands
   def cluster_commands(parser)
-    parser.on("cluster", "Manage Moana Clusters") do
-      parser.banner = "Usage: moana cluster <subcommand> [arguments]"
-      parser.on("list", "List Moana Clusters") do
+    parser.on("cluster", "Manage #{PRODUCT} Clusters") do
+      parser.banner = "Usage: #{COMMAND} cluster <subcommand> [arguments]"
+      parser.on("list", "List Kadalu Storage Clusters") do
         @command_type = CommandType::ClusterList
-        parser.banner = "Usage: moana cluster list [arguments]"
+        parser.banner = "Usage: #{COMMAND} cluster list [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
       end
 
       parser.on("default", "Set default Cluster") do
         @command_type = CommandType::ClusterSetDefault
-        parser.banner = "Usage: moana cluster default NAME"
+        parser.banner = "Usage: #{COMMAND} cluster default NAME"
       end
 
-      parser.on("create", "Create Moana Cluster") do
+      parser.on("create", "Create #{PRODUCT} Cluster") do
         @command_type = CommandType::ClusterCreate
-        parser.banner = "Usage: moana cluster create NAME [arguments]"
+        parser.banner = "Usage: #{COMMAND} cluster create NAME [arguments]"
       end
 
-      parser.on("delete", "Delete Moana Cluster") do
+      parser.on("delete", "Delete #{PRODUCT} Cluster") do
         @command_type = CommandType::ClusterDelete
-        parser.banner = "Usage: moana cluster delete NAME [arguments]"
+        parser.banner = "Usage: #{COMMAND} cluster delete NAME [arguments]"
       end
 
-      parser.on("update", "Update Moana Cluster") do
+      parser.on("update", "Update #{PRODUCT} Cluster") do
         @command_type = CommandType::ClusterUpdate
-        parser.banner = "Usage: moana cluster update NEWNAME [arguments]"
+        parser.banner = "Usage: #{COMMAND} cluster update NEWNAME [arguments]"
         parser.on("-c NAME", "Cluster name") { |name| @args.cluster.name = name }
       end
     end
@@ -155,6 +155,6 @@ class MoanaCommands
 end
 
 def save_default_cluster(cluster_id)
-  filename = Path.home.join(".moana", "default_cluster")
+  filename = Path.home.join(".kadalu", "default_cluster")
   File.write(filename, cluster_id)
 end

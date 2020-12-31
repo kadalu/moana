@@ -1,18 +1,18 @@
-name: moana-node
+name: kadalu-node
 version: 0.1.0
 
 authors:
   - Kadalu.io <engineering@kadalu.io>
 
 description: |
-  Moana Node
+  Kadalu Storage Manager Node agent
 
 license: Apache-2.0
 
 crystal: 0.35.1
 
 targets:
-  moana-node:
+  kadalu-node:
     main: src/node.cr
 
 dependencies:

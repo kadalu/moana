@@ -1,11 +1,11 @@
-name: moana
+name: kadalu
 version: 0.1.0
 
 authors:
   - Kadalu.io <engineering@kadalu.io>
 
 description: |
-  Moana CLI
+  Kadalu Storage CLI
 
 dependencies:
   moana_types:
@@ -17,5 +17,5 @@ dependencies:
 license: Apache-2.0
 
 targets:
-  moana:
+  kadalu:
     main: src/moana.cr

@@ -23,11 +23,11 @@ struct NodeJoinCommand < Command
 
   def handle
     cluster_id = cluster_id_from_name(@args.cluster.name)
-    client = MoanaClient::Client.new(@gflags.moana_url)
+    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
     begin
       node = cluster.node_join(@args.node.endpoint, @args.node.token)
-      save_and_get_clusters_list(@gflags.moana_url)
+      save_and_get_clusters_list(@gflags.kadalu_mgmt_server)
       puts "Node joined successfully."
       puts "ID: #{node.id}"
     rescue ex : MoanaClient::MoanaClientException
@@ -43,11 +43,11 @@ struct NodeUpdateCommand < Command
 
   def handle
     cluster_id, node_id = cluster_and_node_id_from_name(@args.cluster.name, @args.node.hostname)
-    client = MoanaClient::Client.new(@gflags.moana_url)
+    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
     begin
       cluster.node(node_id).update(@args.node.new_hostname, @args.node.endpoint)
-      save_and_get_clusters_list(@gflags.moana_url)
+      save_and_get_clusters_list(@gflags.kadalu_mgmt_server)
       puts "Node updated successfully"
     rescue ex : MoanaClient::MoanaClientException
       STDERR.puts ex.status_code
@@ -61,7 +61,7 @@ struct NodeListCommand < Command
 
   def handle
     cluster_id = cluster_id_from_name(@args.cluster.name)
-    client = MoanaClient::Client.new(@gflags.moana_url)
+    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
     begin
       nodes_data = cluster.nodes
@@ -96,11 +96,11 @@ struct NodeLeaveCommand < Command
 
   def handle
     cluster_id, node_id = cluster_and_node_id_from_name(@args.cluster.name, @args.node.hostname)
-    client = MoanaClient::Client.new(@gflags.moana_url)
+    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
     begin
       cluster.node(node_id).delete
-      save_and_get_clusters_list(@gflags.moana_url)
+      save_and_get_clusters_list(@gflags.kadalu_mgmt_server)
       puts "Node removed from the Cluster"
     rescue ex : MoanaClient::MoanaClientException
       if ex.status_code == 404
@@ -115,11 +115,11 @@ end
 
 class MoanaCommands
   def node_commands(parser)
-    parser.on("node", "Manage Moana Nodes") do
-      parser.banner = "Usage: moana node <subcommand> [arguments]"
-      parser.on("list", "List Moana Nodes") do
+    parser.on("node", "Manage #{PRODUCT} Nodes") do
+      parser.banner = "Usage: #{COMMAND} node <subcommand> [arguments]"
+      parser.on("list", "List Kadalu Storage Nodes") do
         @command_type = CommandType::NodeList
-        parser.banner = "Usage: moana node list [arguments]"
+        parser.banner = "Usage: #{COMMAND} node list [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") do |name|
           @args.cluster.name = name
         end
@@ -128,9 +128,9 @@ class MoanaCommands
         end
       end
 
-      parser.on("join", "Join to a Moana Cluster") do
+      parser.on("join", "Join to a #{PRODUCT} Cluster") do
         @command_type = CommandType::NodeJoin
-        parser.banner = "Usage: moana node join ENDPOINT [arguments]"
+        parser.banner = "Usage: #{COMMAND} node join ENDPOINT [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") do |name|
           @args.cluster.name = name
         end
@@ -139,17 +139,17 @@ class MoanaCommands
         end
       end
 
-      parser.on("leave", "Leave from a Moana Cluster") do
+      parser.on("leave", "Leave from a #{PRODUCT} Cluster") do
         @command_type = CommandType::NodeLeave
-        parser.banner = "Usage: moana node leave NAME [arguments]"
+        parser.banner = "Usage: #{COMMAND} node leave NAME [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") do |name|
           @args.cluster.name = name
         end
       end
 
-      parser.on("update", "Update Moana Node") do
+      parser.on("update", "Update #{PRODUCT} Node") do
         @command_type = CommandType::NodeUpdate
-        parser.banner = "Usage: moana node update [arguments]"
+        parser.banner = "Usage: #{COMMAND} node update [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
         parser.on("-n NAME", "Node name") { |name| @args.node.hostname = name }
         parser.on("--new-name NAME", "New Node name") { |newname| @args.node.new_hostname = newname }
