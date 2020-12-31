@@ -1,19 +1,19 @@
-# moana-node
+# kadalu-node
 
 Clone the repo
 
 ```
 $ git clone https://github.com/kadalu/moana.git
-$ cd moana.cr
+$ cd moana
 ```
 
 Create Required directories in the node
 
 ```
-$ mkdir /var/lib/moana \
-    /var/run/moana \
-    /var/lib/moana/volfiles \
-    /var/log/moana
+$ mkdir /var/lib/kadalu \
+    /var/run/kadalu \
+    /var/lib/kadalu/volfiles \
+    /var/log/kadalu
 ```
 
 Copy Systemd unit template file
@@ -53,10 +53,10 @@ $ export PATH=$PATH:$(pwd)/bin
 $ shards build
 ```
 
-Start the moana-node service,
+Start the kadalu-node service,
 
 ```
-$ moana-node
+$ kadalu-node
 ```
 
 Options available are:
@@ -70,7 +70,7 @@ Options available are:
 To run with the above options,
 
 ```
-$ NODENAME=node1.example.com ENDPOINT=http://node1.local:4001 moana-node
+$ NODENAME=node1.example.com ENDPOINT=http://node1.local:4001 kadalu-node
 ```
 
-Now `moana-node` is ready for getting Join request.
+Now `kadalu-node` is ready for getting Join request.

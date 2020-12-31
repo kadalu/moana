@@ -9,13 +9,13 @@ require "./helpers"
 class MoanaCommands
   @args = Args.new
   @pos_args = [] of String
-  @gflags = Gflags.new ENV.fetch("MOANA_URL", "")
+  @gflags = Gflags.new ENV.fetch("KADALU_MGMT_SERVER", "")
   @command_type = CommandType::Unknown
   @command : Command = UnknownCommand.new
 
   def parse
     parser = OptionParser.new do |parser|
-      parser.banner = "Usage: moana <subcommand> [arguments]"
+      parser.banner = "Usage: #{COMMAND} <subcommand> [arguments]"
 
       cluster_commands parser
       node_commands parser
@@ -44,8 +44,8 @@ class MoanaCommands
 
       parser.parse
 
-      if @gflags.moana_url == ""
-        STDERR.puts "MOANA_URL environment variable is not set"
+      if @gflags.kadalu_mgmt_server == ""
+        STDERR.puts "KADALU_MGMT_SERVER environment variable is not set"
         exit 1
       end
     end
@@ -74,7 +74,7 @@ class MoanaCommands
     begin
       @command.handle
     rescue Socket::ConnectError
-      STDERR.puts "Moana Server is not reachable. Please make sure environment variable MOANA_URL=#{@gflags.moana_url} is correct"
+      STDERR.puts "Kadalu Management Server is not reachable. Please make sure environment variable KADALU_MGMT_SERVER=#{@gflags.kadalu_mgmt_server} is correct"
       exit 1
     end
   end

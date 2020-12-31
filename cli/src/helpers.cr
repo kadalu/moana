@@ -6,6 +6,9 @@ require "http/client"
 
 require "moana_types"
 
+COMMAND = "kadalu"
+PRODUCT = "Kadalu Storage"
+
 enum CommandType
   Unknown
   ClusterCreate
@@ -32,12 +35,12 @@ enum CommandType
 end
 
 struct Gflags
-  property moana_url = ""
+  property kadalu_mgmt_server = ""
 
   def initialize
   end
 
-  def initialize(@moana_url : String)
+  def initialize(@kadalu_mgmt_server : String)
   end
 end
 
@@ -104,7 +107,7 @@ abstract struct Command
     cluster = default_cluster()
     if cluster == ""
       STDERR.puts "Cluster name or ID not specified."
-      STDERR.puts "Use `moana cluster default <name>` to set default Cluster."
+      STDERR.puts "Use `#{COMMAND} cluster default <name>` to set default Cluster."
       exit 1
     end
 
@@ -120,7 +123,7 @@ struct UnknownCommand < Command
 end
 
 def cluster_id_from_name(name)
-  filename = Path.home.join(".moana", "clusters.json")
+  filename = Path.home.join(".kadalu", "clusters.json")
   content = File.read(filename)
   cluster_data = Array(MoanaTypes::Cluster).from_json(content)
   cluster_data.each do |cluster|
@@ -133,7 +136,7 @@ def cluster_id_from_name(name)
 end
 
 def cluster_and_node_id_from_name(cluster_name, name)
-  filename = Path.home.join(".moana", "clusters.json")
+  filename = Path.home.join(".kadalu", "clusters.json")
   content = File.read(filename)
   cluster_data = Array(MoanaTypes::Cluster).from_json(content)
   cluster_data.each do |cluster|
@@ -152,7 +155,7 @@ def cluster_and_node_id_from_name(cluster_name, name)
 end
 
 def nodes_by_cluster_id(cluster_id)
-  filename = Path.home.join(".moana", "clusters.json")
+  filename = Path.home.join(".kadalu", "clusters.json")
   content = File.read(filename)
   cluster_data = Array(MoanaTypes::Cluster).from_json(content)
   cluster_data.each do |cluster|
@@ -165,7 +168,7 @@ def nodes_by_cluster_id(cluster_id)
 end
 
 def save_and_get_clusters_list(base_url)
-  filename = Path.home.join(".moana", "clusters.json")
+  filename = Path.home.join(".kadalu", "clusters.json")
   client = MoanaClient::Client.new(base_url)
 
   begin
@@ -181,7 +184,7 @@ def save_and_get_clusters_list(base_url)
 end
 
 def default_cluster
-  filename = Path.home.join(".moana", "default_cluster")
+  filename = Path.home.join(".kadalu", "default_cluster")
   if File.exists?(filename)
     File.read(filename)
   else
@@ -244,7 +247,7 @@ end
 
 def start_stop_volume(gflags, cluster_name, name, action)
   cluster_id = cluster_id_from_name(cluster_name)
-  client = MoanaClient::Client.new(gflags.moana_url)
+  client = MoanaClient::Client.new(gflags.kadalu_mgmt_server)
 
   begin
     volume_id = volume_id_from_name(client, cluster_id, name)

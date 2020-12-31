@@ -19,17 +19,17 @@ cd server
 shards install --production
 VERSION=${VERSION} time -v shards build --static --release --stats --time
 chown 1000:1000 -R bin
-mv bin/moana-server bin/moana-server-arm64
+mv bin/kadalu-server bin/kadalu-server-arm64
 cd ../node
 shards install --production
 VERSION=${VERSION} time -v shards build --static --release --stats --time
 chown 1000:1000 -R bin
-mv bin/moana-node bin/moana-node-arm64
+mv bin/kadalu-node bin/kadalu-node-arm64
 cd ../cli
 shards install --production
 VERSION=${VERSION} time -v shards build --static --release --stats --time
 chown 1000:1000 -R bin
-mv bin/moana bin/moana-arm64
+mv bin/kadalu bin/kadalu-arm64
 "
 
 # Compile Crystal project statically for arm64 (aarch64)

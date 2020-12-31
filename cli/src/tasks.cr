@@ -3,7 +3,7 @@ require "./helpers"
 struct TaskListCommand < Command
   def handle
     cluster_id = cluster_id_from_name(@args.cluster.name)
-    client = MoanaClient::Client.new(@gflags.moana_url)
+    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
     begin
       if @args.task.id != ""
@@ -36,11 +36,11 @@ end
 
 class MoanaCommands
   def task_commands(parser)
-    parser.on("task", "Manage Tasks") do
+    parser.on("task", "Manage #{PRODUCT} Tasks") do
       @command_type = CommandType::TaskList
-      parser.banner = "Usage: moana task <subcommand> [arguments]"
+      parser.banner = "Usage: #{COMMAND} task <subcommand> [arguments]"
       parser.on("list", "List Tasks") do
-        parser.banner = "Usage: moana node list [arguments]"
+        parser.banner = "Usage: #{COMMAND} node list [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
         parser.on("-t TASK", "--task-id=TASK", "TASK Id") { |task_id| @args.task.id = task_id }
       end

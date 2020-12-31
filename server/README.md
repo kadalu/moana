@@ -16,8 +16,8 @@ $ export PATH=$PATH:$(pwd)/bin
 $ shards build
 ```
 
-Start the moana-server service,
+Start the kadalu-server service,
 
 ```
-$ moana-server
+$ kadalu-server
 ```
