@@ -28,15 +28,15 @@ module MoanaDB
   def self.create_table_bricks(conn = @@conn)
     conn.not_nil!.exec "CREATE TABLE IF NOT EXISTS bricks (
        id         UUID PRIMARY KEY,
-       cluster_id UUID,
-       volume_id  UUID,
-       type       VARCHAR,
-       idx        INTEGER,
-       node_id    UUID,
-       path       VARCHAR,
-       device     VARCHAR DEFAULT '-',
-       port       INTEGER DEFAULT -1,
-       state      VARCHAR DEFAULT '-',
+       cluster_id UUID NOT NULL,
+       volume_id  UUID NOT NULL,
+       type       VARCHAR NOT NULL,
+       idx        INTEGER NOT NULL,
+       node_id    UUID NOT NULL,
+       path       VARCHAR NOT NULL,
+       device     VARCHAR NOT NULL DEFAULT '-',
+       port       SMALLINT NOT NULL DEFAULT -1,
+       state      VARCHAR NOT NULL DEFAULT '-',
        created_at TIMESTAMP,
        updated_at TIMESTAMP
     );"
@@ -59,5 +59,10 @@ module MoanaDB
 
       brk
     end
+  end
+
+  def self.list_brick_ports_by_node(node_id : String, conn = @@conn)
+    query = "SELECT port FROM bricks WHERE node_id = ?"
+    conn.not_nil!.query_all(query, node_id, as: Int32)
   end
 end

@@ -58,14 +58,14 @@ module MoanaDB
   def self.create_table_volumes(conn = @@conn)
     conn.not_nil!.exec "CREATE TABLE IF NOT EXISTS volumes (
        id             UUID PRIMARY KEY,
-       cluster_id     UUID,
-       name           VARCHAR,
-       type           VARCHAR,
-       state          VARCHAR,
-       replica_count  INTEGER,
-       disperse_count INTEGER,
-       brick_fs       VARCHAR,
-       fs_opts        VARCHAR DEFAULT '-',
+       cluster_id     UUID NOT NULL,
+       name           VARCHAR NOT NULL,
+       type           VARCHAR NOT NULL,
+       state          VARCHAR NOT NULL,
+       replica_count  INTEGER NOT NULL,
+       disperse_count INTEGER NOT NULL,
+       brick_fs       VARCHAR NOT NULL,
+       fs_opts        VARCHAR NOT NULL DEFAULT '-',
        created_at     TIMESTAMP,
        updated_at     TIMESTAMP
     );"
@@ -156,8 +156,8 @@ module MoanaDB
     v_query = "INSERT INTO volumes(id, cluster_id, name, type, state, replica_count, disperse_count, brick_fs, fs_opts, created_at, updated_at)
                VALUES             (?,  ?,          ?,    ?,    ?,     ?,             ?,              ?,        ?,       datetime(), datetime());"
 
-    b_query = "INSERT INTO bricks(id, cluster_id, volume_id, idx, node_id, path, created_at, updated_at)
-               VALUES            (?,  ?,          ?,         ?,   ?,       ?,    datetime(), datetime());"
+    b_query = "INSERT INTO bricks(id, cluster_id, volume_id, idx, node_id, path, device, port, type, state, created_at, updated_at)
+               VALUES            (?,  ?,          ?,         ?,   ?,       ?,    ?,      ?,    ?,    ?,     datetime(), datetime());"
 
     conn.not_nil!.transaction do |tx|
       cnn = tx.connection
@@ -184,7 +184,11 @@ module MoanaDB
             volume.id,
             idx+1,
             brick.node.id,
-            brick.path
+            brick.path == "" ? "-" : brick.path,
+            brick.device == "" ? "-" : brick.device,
+            brick.port,
+            brick.type == "" ? "-" : brick.type,
+            brick.state == "" ? "-" : brick.state,
           )
         end
       end
