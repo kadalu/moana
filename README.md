@@ -5,9 +5,9 @@
 Download the latest release with the command
 
 ```
-curl -L https://github.com/kadalu/moana/releases/download/0.1.0/kadalu-server-`uname -m | sed 's|aarch64|arm64|' | sed 's|x86_64|amd64|'` -o kadalu-server
-curl -L https://github.com/kadalu/moana/releases/download/0.1.0/kadalu-node-`uname -m | sed 's|aarch64|arm64|' | sed 's|x86_64|amd64|'` -o kadalu-node
-curl -L https://github.com/kadalu/moana/releases/download/0.1.0/kadalu-`uname -m | sed 's|aarch64|arm64|' | sed 's|x86_64|amd64|'` -o kadalu
+curl -L https://github.com/kadalu/moana/releases/download/0.2.0/kadalu-server-`uname -m | sed 's|aarch64|arm64|' | sed 's|x86_64|amd64|'` -o kadalu-server
+curl -L https://github.com/kadalu/moana/releases/download/0.2.0/kadalu-node-`uname -m | sed 's|aarch64|arm64|' | sed 's|x86_64|amd64|'` -o kadalu-node
+curl -L https://github.com/kadalu/moana/releases/download/0.2.0/kadalu-`uname -m | sed 's|aarch64|arm64|' | sed 's|x86_64|amd64|'` -o kadalu
 ```
 
 Make the `kadalu-server`, `kadalu-node` and `kadalu` as binary executable.
