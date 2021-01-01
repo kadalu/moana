@@ -80,17 +80,17 @@ def start_brick_process(conf):
         [
             glusterfsd,
             "-N",
-            "-p", "/var/run/moana/%s.pid" % conf["name"],
-            "-S", "/var/run/moana/%s.socket" % conf["name"],
+            "-p", "/var/run/kadalu/%s.pid" % conf["name"],
+            "-S", "/var/run/kadalu/%s.socket" % conf["name"],
             "--brick-name", conf["path"],
-            "-l", "/var/log/moana/bricks/%s.log" % conf["name"],
+            "-l", "/var/log/kadalu/bricks/%s.log" % conf["name"],
             "--xlator-option",
             "*-posix.glusterd-uuid=%s" % conf["node.id"],
             "--process-name", "brick",
             "--brick-port", "%s" % conf["port"],
             "--xlator-option",
             "%s-server.listen-port=%s" % (conf["volume.name"], conf["port"]),
-            "-f", "/var/lib/moana/volfiles/%s.vol" % conf["name"]
+            "-f", "/var/lib/kadalu/volfiles/%s.vol" % conf["name"]
         ]
     )
 

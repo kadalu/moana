@@ -59,7 +59,7 @@ struct VolumeStartTask < Task
 
         # Download the Volfile
         begin
-          volfile = volume_client.brick_volfile(brick.id)
+          volfile = volume_client.brick_volfile(brick.id, "brick")
           filename = "#{node_conf.workdir}/volfiles/#{brick.node.hostname}:#{brick.path.gsub("/", "-")}.vol"
 
           # TODO: Handle file write error

@@ -36,7 +36,7 @@ Start the node agent in all Storage nodes.
 
 ```
 $ # Create Required directories in the node
-$ mkdir /var/lib/kadalu \
+$ mkdir -p /var/lib/kadalu \
     /var/run/kadalu \
     /var/lib/kadalu/volfiles \
     /var/log/kadalu
@@ -46,6 +46,12 @@ $ # Copy glusterfsd wrapper script
 $ cp extra/kadalu-brick /usr/sbin/
 $ # Start the Node agent
 $ sudo kadalu-node
+```
+
+If `glusterfsd` is installed in different directory than `/usr/sbin` then import the environment variable as below.
+
+```
+$ systemctl set-environment GLUSTERFSD=/usr/local/sbin/glusterfsd
 ```
 
 Run CLI from any node.
