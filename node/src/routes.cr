@@ -13,7 +13,7 @@ post "/api/v1/tasks/:task_type" do |env|
   begin
     task.run(NodeConf.from_conf)
     {"ok": true}.to_json
-  rescue ex : TaskException
+  rescue ex : Exception
     env.response.status_code = 500
     {"error": ex.message}.to_json
   end
@@ -43,7 +43,7 @@ post "/api/v1/join" do |env|
     node.hostname = conf.hostname
     node.endpoint = conf.endpoint
     node.to_json
-  rescue ex : TaskException
+  rescue ex : Exception
     env.response.status_code = 500
     {"error": ex.message}.to_json
   end
