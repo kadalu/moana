@@ -4,6 +4,7 @@ require "./clusters"
 require "./nodes"
 require "./volumes"
 require "./tasks"
+require "./volfile"
 require "./helpers"
 
 class MoanaCommands
@@ -21,6 +22,7 @@ class MoanaCommands
       node_commands parser
       volume_commands parser
       task_commands parser
+      volfile_commands parser
 
       #parser.on("-v", "--verbose", "Enabled servose output") { verbose = true }
       parser.on("-h", "--help", "Show this help") do

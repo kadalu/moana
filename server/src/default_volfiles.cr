@@ -18,6 +18,7 @@ brick:
     options:
       remote-subvolume: "{{ brick.path }}"
       remote-host: "{{ brick.node }}"
+      remote-port: "{{ brick.port }}"
 YAML
 
 BRICK_VOLFILE = <<-YAML

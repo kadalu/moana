@@ -120,3 +120,57 @@ $ kadalu volume list
 ID                                    Name            Type            State
 97a7546b-5ab5-45b0-9861-acd9b6097519  gvol1           Distribute      Created
 ```
+
+## Start the Volume
+
+Start the newly created Volume using the following command.
+
+```
+$ kadalu volume start gvol1
+Volume start request sent successfully.
+Task ID: 8ef44ebe-12ea-4bf2-b608-9d3cffb8d84a
+```
+
+Check the Task status using,
+
+```
+$ kadalu task list
+Task ID                               State       Assigned To           Type
+8ef44ebe-12ea-4bf2-b608-9d3cffb8d84a  Completed   node1.example.com     volume_start
+```
+
+## Mount the Volume
+
+Mount script will be introduced soon to automatically download the Volfile and mount. Now use `volfile get` command to download the Volfile and then mount the Volume using `glusterfs` command.
+
+```
+$ kadalu volfile get client -v 97a7546b-5ab5-45b0-9861-acd9b6097519 -o /root/gvol1.vol
+Volfile downloaded successfully. Volfile saved to /root/gvol1.vol
+```
+
+Run `glusterfs` command using the above downloaded Volfile.
+
+```
+$ mkdir /mnt/gvol1
+$ glusterfs --process-name fuse -l /var/log/kadalu/gvol1.log --volfile-id gvol1 -f /root/gvol1.vol /mnt/gvol1
+```
+
+Check if the mount is successful.
+
+```
+$ df /mnt/gvol1
+Filesystem                          Size   Used Avail Use%   Mounted on
+/tmp/gvol1.vol                      10.7G  5.0G 5.7G  46.72% /mnt/gvol1
+```
+
+## Hello World
+
+Create a file from the mount and verify that the file is created in both Mount and backend brick.
+
+```
+$ echo "Hello World" > /mnt/gvol1/f1
+$ cat /mnt/gvol1/f1
+Hello World
+$ cat /bricks/b1/f1
+Hello World
+```

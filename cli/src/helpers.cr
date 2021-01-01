@@ -32,6 +32,8 @@ enum CommandType
   VolumeList
 
   TaskList
+
+  VolfileGet
 end
 
 struct Gflags
@@ -70,6 +72,15 @@ struct VolumeArgs
            bricks = [] of String
 end
 
+struct BrickArgs
+  property name : String = ""
+end
+
+struct VolfileArgs
+  property name : String = "",
+           filename : String = ""
+end
+
 struct TaskArgs
   property id : String = ""
 end
@@ -78,8 +89,9 @@ struct Args
   property cluster = ClusterArgs.new,
            node = NodeArgs.new,
            volume = VolumeArgs.new,
-           task = TaskArgs.new
-  
+           task = TaskArgs.new,
+           brick = BrickArgs.new,
+           volfile = VolfileArgs.new
 end
 
 abstract struct Command
