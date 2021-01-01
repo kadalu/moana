@@ -70,8 +70,8 @@ module MoanaClient
       end
     end
 
-    def brick_volfile(brick_id : String)
-      url = "#{@ctx.url}/api/v1/volfiles/#{@cluster_id}/brick/#{@id}/#{brick_id}"
+    def brick_volfile(brick_id : String, name : String)
+      url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}/volfiles/#{name}/#{@id}/#{brick_id}"
       response = MoanaClient.http_get url
 
       if response.status_code == 200
