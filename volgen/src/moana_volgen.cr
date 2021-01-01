@@ -150,14 +150,14 @@ class Volfile
     {
       "volume.name" => volume.name,
       "volume.id" => volume.id,
-      "volume.type" => volume.type,
+      "volume.type" => volume.type.downcase,
       "volume.index" => "#{vidx}"
     }
   end
 
   def self.subvol_variables(volume, subvol, vidx, sidx)
     vars = volume_variables volume, vidx
-    vars["subvol.type"] = subvol.type
+    vars["subvol.type"] = subvol.type.downcase
     vars["subvol.index"] = "#{sidx}"
 
     vars
@@ -167,9 +167,10 @@ class Volfile
     vars = subvol_variables volume, subvol, vidx, sidx
     vars["brick.node"] = brick.node.hostname
     vars["brick.node_id"] = brick.node.id
-    vars["brick.type"] = brick.type
+    vars["brick.type"] = brick.type.downcase
     vars["brick.path"] = brick.path
     vars["brick.index"] = "#{bidx}"
+    vars["brick.port"] = "#{brick.port}"
 
     vars
   end

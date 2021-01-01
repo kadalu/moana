@@ -99,5 +99,16 @@ module MoanaClient
     def tasks
       Task.all(@ctx, @cluster_id)
     end
+
+    def volfile(name : String)
+      url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}/volfiles/#{name}"
+      response = MoanaClient.http_get url
+
+      if response.status_code == 200
+        MoanaTypes::Volfile.from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
   end
 end

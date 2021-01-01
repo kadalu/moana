@@ -40,7 +40,7 @@ class MoanaCommands
       @command_type = CommandType::TaskList
       parser.banner = "Usage: #{COMMAND} task <subcommand> [arguments]"
       parser.on("list", "List Tasks") do
-        parser.banner = "Usage: #{COMMAND} node list [arguments]"
+        parser.banner = "Usage: #{COMMAND} task list [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
         parser.on("-t TASK", "--task-id=TASK", "TASK Id") { |task_id| @args.task.id = task_id }
       end
