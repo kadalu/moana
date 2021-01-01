@@ -30,17 +30,26 @@ end
 
 struct MoanaTypes::VolumeCreateRequest
   def find_free_port(node_id)
-    # TODO: Also check from tasks table
+    # Delete the Expired reserved ports
+    MoanaDB.delete_expired_ports(node_id)
 
-    bricks = MoanaDB.list_bricks_by_node(node_id)
+    # Reserved by in-progress tasks
+    reserved_ports = MoanaDB.list_ports_by_node(node_id)
 
-    used_ports = bricks.map do |brick|
-      brick.port
+    # Used by Bricks
+    used_ports = MoanaDB.list_brick_ports_by_node(node_id)
+
+    # Search a Port which is not in used_ports or reserved_ports
+    port = (49252..49452).to_a.find do |port|
+      !used_ports.includes?(port) && !reserved_ports.includes?(port)
     end
 
-    (49252..49452).to_a.find do |port|
-      !used_ports.includes?(port)
+    if !port.nil?
+      # Reserve the Port for next 5 minutes
+      MoanaDB.create_port(node_id, port)
     end
+
+    port
   end
 
   def validate!(cluster_id)
@@ -103,6 +112,7 @@ struct MoanaTypes::VolumeCreateRequest
     # TODO: [Db] Brick device is not part of other bricks in same node
   end
 end
+
 def volume_from_request(req : MoanaTypes::VolumeCreateRequest)
   volume = MoanaTypes::Volume.new
   volume.id = UUID.random.to_s
@@ -135,6 +145,7 @@ def volume_from_request(req : MoanaTypes::VolumeCreateRequest)
       brick.node.id = brickreq.node_id
       brick.path = brickreq.path
       brick.device = brickreq.device
+      brick.port = brickreq.port
 
       brick
     end
