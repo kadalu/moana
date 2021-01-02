@@ -9,6 +9,8 @@ require "./volume"
 require "./brick"
 require "./option"
 require "./port"
+require "./user"
+require "./role"
 
 module MoanaDB
   @@conn : DB::Database | Nil = nil
@@ -27,5 +29,7 @@ module MoanaDB
     create_table_bricks
     create_table_options
     create_table_ports
+    create_table_users
+    create_table_roles
   end
 end

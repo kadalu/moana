@@ -111,4 +111,25 @@ module MoanaTypes
 
     property content : String
   end
+
+  struct Role
+    include JSON::Serializable
+
+    property cluster_id = "",
+             user_id = "",
+             volume_id = "",
+             name = ""
+  end
+
+  struct User
+    include JSON::Serializable
+
+    property id : String,
+             name : String,
+             email : String,
+             roles = [] of Role
+
+    def initialize(@id, @name, @email)
+    end
+  end
 end
