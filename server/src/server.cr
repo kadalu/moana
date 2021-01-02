@@ -9,6 +9,8 @@ require "./task_routes"
 require "./volume_routes"
 require "./option_routes"
 require "./volfile_routes"
+require "./user_routes"
+require "./role_routes"
 
 # Set the content type for all APIs
 before_all do |env|
