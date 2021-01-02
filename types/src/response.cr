@@ -119,6 +119,9 @@ module MoanaTypes
              user_id = "",
              volume_id = "",
              name = ""
+
+    def initialize(@cluster_id, @user_id, @volume_id, @name)
+    end
   end
 
   struct User
