@@ -2,15 +2,21 @@ require "./clusters"
 
 module MoanaClient
   struct ClientContext
-    property url : String = ""
+    property url, user_id, token
+
+    def initialize(@url : String, @user_id : String, @token : String)
+    end
   end
 
   class Client
-    def initialize(url : String)
-      @ctx = ClientContext.new
-      @ctx.url = url
+    def initialize(url : String, user_id : String, token : String)
+      @ctx = ClientContext.new(url, user_id, token)
     end
 
+    def initialize(url : String)
+      @ctx = ClientContext.new(url, "", "")
+    end
+    
     def cluster_create(name)
       Cluster.create(@ctx, name)
     end

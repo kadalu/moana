@@ -15,7 +15,8 @@ module MoanaClient
     def self.create(ctx : ClientContext, name : String)
       response = MoanaClient.http_post(
         "#{ctx.url}/api/v1/clusters",
-        {name: name}.to_json
+        {name: name}.to_json,
+        headers: MoanaClient.auth_header(ctx)
       )
       if response.status_code == 201
         MoanaTypes::Cluster.from_json(response.body)
@@ -26,7 +27,7 @@ module MoanaClient
 
     def get
       url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}"
-      response = MoanaClient.http_get url
+      response = MoanaClient.http_get(url, headers: MoanaClient.auth_header(@ctx))
       if response.status_code == 200
         MoanaTypes::Cluster.from_json(response.body)
       else
@@ -36,7 +37,7 @@ module MoanaClient
 
     def self.all(ctx : ClientContext)
       url = "#{ctx.url}/api/v1/clusters"
-      response = MoanaClient.http_get url
+      response = MoanaClient.http_get(url, headers: MoanaClient.auth_header(ctx))
       if response.status_code == 200
         Array(MoanaTypes::Cluster).from_json(response.body)
       else
@@ -46,7 +47,11 @@ module MoanaClient
 
     def update(name)
       url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}"
-      response = MoanaClient.http_put(url, {name: name}.to_json)
+      response = MoanaClient.http_put(
+        url,
+        {name: name}.to_json,
+        headers: MoanaClient.auth_header(@ctx)
+      )
 
       if response.status_code == 200
         MoanaTypes::Cluster.from_json(response.body)
@@ -57,7 +62,7 @@ module MoanaClient
 
     def delete
       url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}"
-      response = MoanaClient.http_delete url
+      response = MoanaClient.http_delete(url, headers: MoanaClient.auth_header(@ctx))
 
       if response.status_code != 204
         MoanaClient.error_response(response)
@@ -102,7 +107,7 @@ module MoanaClient
 
     def volfile(name : String)
       url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}/volfiles/#{name}"
-      response = MoanaClient.http_get url
+      response = MoanaClient.http_get(url, headers: MoanaClient.auth_header(@ctx))
 
       if response.status_code == 200
         MoanaTypes::Volfile.from_json(response.body)

@@ -15,7 +15,8 @@ module MoanaClient
       url = "#{ctx.url}/api/v1/clusters/#{cluster_id}/nodes"
       response = MoanaClient.http_post(
         url,
-        {hostname: hostname, endpoint: endpoint}.to_json
+        {hostname: hostname, endpoint: endpoint}.to_json,
+        headers: MoanaClient.auth_header(ctx)
       )
       if response.status_code == 201
         MoanaTypes::Node.from_json(response.body)
@@ -30,7 +31,8 @@ module MoanaClient
       begin
         response = MoanaClient.http_post(
           url,
-          {cluster_id: cluster_id, moana_url: ctx.url, token: token}.to_json
+          {cluster_id: cluster_id, moana_url: ctx.url, token: token}.to_json,
+          headers: MoanaClient.auth_header(ctx)
         )
         if response.status_code == 201
           MoanaTypes::Node.from_json(response.body)
@@ -44,7 +46,7 @@ module MoanaClient
 
     def get
       url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}/nodes/#{@id}"
-      response = MoanaClient.http_get url
+      response = MoanaClient.http_get(url, headers: MoanaClient.auth_header(@ctx))
       if response.status_code == 200
         MoanaTypes::Node.from_json(response.body)
       else
@@ -54,7 +56,7 @@ module MoanaClient
 
     def self.all(ctx : ClientContext, cluster_id : String)
       url = "#{ctx.url}/api/v1/clusters/#{cluster_id}/nodes"
-      response = MoanaClient.http_get url
+      response = MoanaClient.http_get(url, headers: MoanaClient.auth_header(ctx))
       if response.status_code == 200
         Array(MoanaTypes::Node).from_json(response.body)
       else
@@ -66,7 +68,8 @@ module MoanaClient
       url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}/nodes/#{@id}"
       response = MoanaClient.http_put(
         url,
-        {hostname: newname, endpoint: endpoint}.to_json
+        {hostname: newname, endpoint: endpoint}.to_json,
+        headers: MoanaClient.auth_header(@ctx)
       )
       if response.status_code == 200
         MoanaTypes::Node.from_json(response.body)
@@ -77,7 +80,7 @@ module MoanaClient
 
     def delete
       url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}/nodes/#{@id}"
-      response = MoanaClient.http_delete url
+      response = MoanaClient.http_delete(url, headers: MoanaClient.auth_header(@ctx))
 
       if response.status_code != 204
         MoanaClient.error_response(response)

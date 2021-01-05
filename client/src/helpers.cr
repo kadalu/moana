@@ -5,6 +5,15 @@ require "moana_types"
 module MoanaClient
   extend self
 
+  def auth_header(ctx)
+    return nil if (ctx.user_id == "" || ctx.token == "")
+
+    HTTP::Headers{
+      "X-User-ID" => ctx.user_id,
+      "Authorization" => "Bearer #{ctx.token}"
+    }
+  end
+
   class MoanaClientException < Exception
     property message, status_code
 
@@ -18,27 +27,25 @@ module MoanaClient
     raise MoanaClientException.new(err.error, response.status_code)
   end
 
-  def http_put(url, body_json)
-    HTTP::Client.put(
-      url,
-      body: body_json,
-      headers: HTTP::Headers{"Content-Type" => "application/json"}
-    )
+  def http_put(url, body_json, headers : HTTP::Headers? = nil)
+    headers = HTTP::Headers.new if headers.nil?
+    headers["Content-Type"] = "application/json"
+
+    HTTP::Client.put(url, body: body_json, headers: headers)
   end
 
-  def http_post(url, body_json)
-    HTTP::Client.post(
-      url,
-      body: body_json,
-      headers: HTTP::Headers{"Content-Type" => "application/json"}
-    )
+  def http_post(url, body_json, headers : HTTP::Headers? = nil)
+    headers = HTTP::Headers.new if headers.nil?
+    headers["Content-Type"] = "application/json"
+
+    HTTP::Client.post(url, body: body_json, headers: headers)
   end
 
-  def http_get(url)
-    HTTP::Client.get url
+  def http_get(url, headers : HTTP::Headers? = nil)
+    HTTP::Client.get(url, headers: headers)
   end
 
-  def http_delete(url)
-    HTTP::Client.delete url
+  def http_delete(url, headers : HTTP::Headers? = nil)
+    HTTP::Client.delete(url, headers: headers)
   end
 end
