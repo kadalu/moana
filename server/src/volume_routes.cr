@@ -5,6 +5,7 @@ require "moana_types"
 
 require "./db/*"
 require "./volume_utils"
+require "./helpers"
 
 TASK_VOLUME_CREATE = "volume_create"
 TASK_VOLUME_CREATE_START = "volume_create_start"
@@ -14,10 +15,14 @@ TASK_VOLUME_DELETE = "volume_delete"
 
 
 get "/api/v1/clusters/:cluster_id/volumes" do |env|
-  MoanaDB.list_volumes(env.params.url["cluster_id"]).to_json
+  MoanaDB.list_volumes(env.get("user_id").as(String), env.params.url["cluster_id"]).to_json
 end
 
 get "/api/v1/clusters/:cluster_id/volumes/:volume_id" do |env|
+  if !volume_viewer?(env)
+    halt(env, status_code: 403, response: forbidden_response)
+  end
+
   volume = MoanaDB.get_volume(env.params.url["volume_id"])
   if volume.nil?
     env.response.status_code = 400
@@ -28,6 +33,10 @@ get "/api/v1/clusters/:cluster_id/volumes/:volume_id" do |env|
 end
 
 post "/api/v1/clusters/:cluster_id/volumes" do |env|
+  if !cluster_maintainer?(env)
+    halt(env, status_code: 403, response: forbidden_response)
+  end
+
   req = MoanaTypes::VolumeCreateRequest.from_json(env.request.body.not_nil!)
 
   begin
@@ -71,14 +80,26 @@ def volume_action(env, cluster_id, volume_id, action)
 end
 
 post "/api/v1/clusters/:cluster_id/volumes/:volume_id/start" do |env|
+  if !volume_maintainer?(env)
+    halt(env, status_code: 403, response: forbidden_response)
+  end
+
   volume_action(env, env.params.url["cluster_id"], env.params.url["volume_id"], "start")
 end
 
 post "/api/v1/clusters/:cluster_id/volumes/:volume_id/stop" do |env|
+  if !volume_maintainer?(env)
+    halt(env, status_code: 403, response: forbidden_response)
+  end
+
   volume_action(env, env.params.url["cluster_id"], env.params.url["volume_id"], "stop")
 end
 
 delete "/api/v1/clusters/:cluster_id/volumes/:volume_id" do |env|
+  if !volume_admin?(env)
+    halt(env, status_code: 403, response: forbidden_response)
+  end
+
   task_type = TASK_VOLUME_DELETE
 
   volume = MoanaDB.get_volume(env.params.url["volume_id"])

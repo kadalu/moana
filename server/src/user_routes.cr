@@ -1,5 +1,3 @@
-require "openssl"
-
 require "kemal"
 
 require "./db/*"
@@ -20,11 +18,8 @@ post "/api/v1/users" do |env|
   email = env.params.json["email"].as(String)
   password = env.params.json["password"].as(String)
 
-  password_hash = OpenSSL::Digest.new("SHA256")
-  password_hash.update(password)
-
   env.response.status_code = 201
-  MoanaDB.create_user(name, email, password_hash.hexdigest).to_json
+  MoanaDB.create_user(name, email, password).to_json
 end
 
 delete "/api/v1/users/:user_id" do |env|

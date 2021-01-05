@@ -3,13 +3,19 @@ require "moana_volgen"
 
 require "./db/*"
 require "./default_volfiles"
+require "./helpers"
 
 get "/api/v1/clusters/:cluster_id/volfiles/:name" do |env|
+  # TODO: Validate Node Auth
   env.response.status_code = 500
   {status: "not implemented"}.to_json
 end
 
 get "/api/v1/clusters/:cluster_id/volfiles/:name/:volume_id" do |env|
+  if !volume_client?(env)
+    halt(env, status_code: 403, response: forbidden_response)
+  end
+
   volume = MoanaDB.get_volume(env.params.url["volume_id"])
   if volume.nil?
     env.response.status_code = 500
@@ -27,6 +33,7 @@ get "/api/v1/clusters/:cluster_id/volfiles/:name/:volume_id" do |env|
 end
 
 get "/api/v1/clusters/:cluster_id/volfiles/:name/:volume_id/:brick_id" do |env|
+  # TODO: Validate Node Auth
   volume = MoanaDB.get_volume(env.params.url["volume_id"])
   if volume.nil?
     env.response.status_code = 500
