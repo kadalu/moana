@@ -19,6 +19,9 @@ post "/api/v1/apps" do |env|
     remote_address = "-"
     remote_address = "#{env.request.remote_address.not_nil!}" if !env.request.remote_address.nil?
 
+    # Delete the Old apps which are not accessed for a week
+    MoanaDB.delete_unused_apps(user.id)
+
     MoanaDB.create_app(
       user.id,
       token,
