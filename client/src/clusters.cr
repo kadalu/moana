@@ -69,7 +69,7 @@ module MoanaClient
       end
     end
 
-    def volume_create(req)
+    def create_volume(req)
       Volume.create(@ctx, req)
     end
 
@@ -81,11 +81,11 @@ module MoanaClient
       Volume.all(@ctx, @cluster_id)
     end
 
-    def node_join(endpoint : String, token : String)
+    def join_node(endpoint : String, token : String)
       Node.join(@ctx, @cluster_id, endpoint, token)
     end
 
-    def node_create(hostname : String, endpoint : String)
+    def create_node(hostname : String, endpoint : String)
       Node.create(@ctx, @cluster_id, hostname, endpoint)
     end
 

@@ -181,7 +181,7 @@ end
 
 def save_and_get_clusters_list(base_url)
   filename = Path.home.join(".kadalu", "clusters.json")
-  client = MoanaClient::Client.new(base_url)
+  client = moana_client(base_url)
 
   begin
     clusters = client.clusters
@@ -259,7 +259,7 @@ end
 
 def start_stop_volume(gflags, cluster_name, name, action)
   cluster_id = cluster_id_from_name(cluster_name)
-  client = MoanaClient::Client.new(gflags.kadalu_mgmt_server)
+  client = moana_client(gflags.kadalu_mgmt_server)
 
   begin
     volume_id = volume_id_from_name(client, cluster_id, name)
@@ -275,4 +275,27 @@ def start_stop_volume(gflags, cluster_name, name, action)
     STDERR.puts ex.status_code
     exit 1
   end
+end
+
+struct App
+  include JSON::Serializable
+
+  property id = "", user_id = "", token = ""
+
+  def initialize(@id, @user_id, @token)
+  end
+
+  def initialize
+  end
+end
+
+def moana_client(url : String)
+  filename = Path.home.join(".kadalu", "app")
+  app = if File.exists?(filename)
+           App.from_json(File.read(filename))
+         else
+           App.new
+        end
+
+  MoanaClient::Client.new(url, app.user_id, app.token)
 end
