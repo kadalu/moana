@@ -6,6 +6,7 @@ require "./volumes"
 require "./tasks"
 require "./volfile"
 require "./helpers"
+require "./users"
 
 class MoanaCommands
   @args = Args.new
@@ -23,6 +24,11 @@ class MoanaCommands
       volume_commands parser
       task_commands parser
       volfile_commands parser
+      register_commands parser
+      login_commands parser
+      logout_commands parser
+      apps_commands parser
+      role_commands parser
 
       #parser.on("-v", "--verbose", "Enabled servose output") { verbose = true }
       parser.on("-h", "--help", "Show this help") do

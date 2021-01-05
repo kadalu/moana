@@ -129,7 +129,7 @@ module MoanaTypes
 
     property id : String,
              name : String,
-             roles = [] of Role
+             roles = [] of MoanaTypes::Role
 
     def initialize(@id, @name)
     end
