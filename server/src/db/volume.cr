@@ -131,16 +131,39 @@ module MoanaDB
     end
   end
 
-  def self.list_volumes(conn = @@conn)
-    grouped_volumes(
-      conn.not_nil!.query_all(VOLUME_SELECT_QUERY, as: VolumeView)
-    )
-  end
+  def self.list_volumes(user_id : String, cluster_id : String, conn = @@conn)
+    query = "SELECT DISTINCT volume_id FROM roles WHERE cluster_id = ? AND
+             user_id = ? AND name IN [?, ?, ?]"
+    params = [] of DB::Any
+    params << cluster_id
+    params << user_id
+    params << "admin"
+    params << "maintainer"
+    params << "viewer"
 
-  def self.list_volumes(cluster_id : String, conn = @@conn)
-    grouped_volumes(
-      conn.not_nil!.query_all("#{VOLUME_SELECT_QUERY} WHERE volumes.cluster_id = ?", cluster_id, as: VolumeView)
+    volume_ids = conn.not_nil!.query_all(query, args: params, as: String)
+    show_all_volumes = volume_ids.includes?("all")
+
+    query = "#{VOLUME_SELECT_QUERY} WHERE volumes.cluster_id = ?"
+
+    volumes = grouped_volumes(
+      conn.not_nil!.query_all(query, cluster_id, as: VolumeView)
     )
+
+    if show_all_volumes
+      volumes
+    else
+      # Only show Volumes that user is having permission
+      # to view/maintain/Admin
+      vols = [] of MoanaTypes::Volume
+      volumes.each do |volume|
+        if volume_ids.includes?(volume.id)
+          vols << volume
+        end
+      end
+
+      vols
+    end
   end
 
   def self.get_volume(id : String, conn = @@conn)
