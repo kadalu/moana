@@ -32,7 +32,7 @@ struct NodeJoinTask < Task
       endpoint = node_conf.endpoint if endpoint == ""
 
       # TODO: Also pass Token
-      node = cluster.node_create(hostname, endpoint)
+      node = cluster.create_node(hostname, endpoint)
       node_conf.save(parsed.moana_url, parsed.cluster_id, node)
     rescue ex : MoanaClient::MoanaClientException
       raise TaskException.new("Failed to Join the cluster", ex.status_code)

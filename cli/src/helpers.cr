@@ -11,6 +11,15 @@ PRODUCT = "Kadalu Storage"
 
 enum CommandType
   Unknown
+
+  Register
+
+  Login
+  Logout
+  Apps
+  RoleAdd
+  RoleDelete
+
   ClusterCreate
   ClusterList
   ClusterUpdate
@@ -85,13 +94,26 @@ struct TaskArgs
   property id : String = ""
 end
 
+struct UserArgs
+  property name = "",
+           email = "",
+           password = "",
+           role = ""
+end
+
+struct AppArgs
+  property id = ""
+end
+
 struct Args
   property cluster = ClusterArgs.new,
            node = NodeArgs.new,
            volume = VolumeArgs.new,
            task = TaskArgs.new,
            brick = BrickArgs.new,
-           volfile = VolfileArgs.new
+           volfile = VolfileArgs.new,
+           user = UserArgs.new,
+           app = AppArgs.new
 end
 
 abstract struct Command
@@ -290,7 +312,7 @@ struct App
 end
 
 def moana_client(url : String)
-  filename = Path.home.join(".kadalu", "app")
+  filename = Path.home.join(".kadalu", "app.json")
   app = if File.exists?(filename)
            App.from_json(File.read(filename))
          else
