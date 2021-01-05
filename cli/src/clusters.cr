@@ -13,9 +13,9 @@ struct ClusterCreateCommand < Command
   end
 
   def handle
-    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
+    client = moana_client(@gflags.kadalu_mgmt_server)
     begin
-      cluster = client.cluster_create(@args.cluster.name)
+      cluster = client.create_cluster(@args.cluster.name)
       save_and_get_clusters_list(@gflags.kadalu_mgmt_server)
       default_cluster_id = default_cluster()
       puts "Cluster created successfully."
@@ -39,7 +39,7 @@ struct ClusterUpdateCommand < Command
 
   def handle
     cluster_id = cluster_id_from_name(@args.cluster.name)
-    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
+    client = moana_client(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
 
     begin
@@ -81,7 +81,7 @@ struct ClusterDeleteCommand < Command
   
   def handle
     cluster_id = cluster_id_from_name(@args.cluster.name)
-    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
+    client = moana_client(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
 
     begin

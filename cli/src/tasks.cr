@@ -3,7 +3,7 @@ require "./helpers"
 struct TaskListCommand < Command
   def handle
     cluster_id = cluster_id_from_name(@args.cluster.name)
-    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
+    client = moana_client(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
     begin
       if @args.task.id != ""

@@ -93,7 +93,7 @@ module MoanaClient
       end
     end
 
-    def setopt(req : Hash(String, String))
+    def set_option(req : Hash(String, String))
       url = "#{ctx.url}/api/v1/clusters/#{req.cluster_id}/volumes/#{@id}/options/set"
       response = MoanaClient.http_post(
         url,
@@ -107,7 +107,7 @@ module MoanaClient
       end
     end
 
-    def resetopt(req : Array(String))
+    def reset_option(req : Array(String))
       url = "#{ctx.url}/api/v1/clusters/#{req.cluster_id}/volumes/#{@id}/options/reset"
       response = MoanaClient.http_post(
         url,

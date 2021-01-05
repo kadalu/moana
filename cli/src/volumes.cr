@@ -28,10 +28,10 @@ struct VolumeCreateCommand < Command
     req.bricks = prepare_bricks_list(cluster_id, @args.volume.bricks, @args.volume.brick_fs)
     req.cluster_id = cluster_id
 
-    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
+    client = moana_client(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
     begin
-      task = cluster.volume_create(req)
+      task = cluster.create_volume(req)
       puts "Volume creation request sent successfully."
       puts "Task ID: #{task.id}"
     rescue ex : MoanaClient::MoanaClientException
@@ -84,7 +84,7 @@ struct VolumeListCommand < Command
 
   def handle
     cluster_id = cluster_id_from_name(@args.cluster.name)
-    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
+    client = moana_client(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
     begin
       volume_data = cluster.volumes
@@ -109,7 +109,7 @@ struct VolumeInfoCommand < Command
   
   def handle
     cluster_id = cluster_id_from_name(@args.cluster.name)
-    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
+    client = moana_client(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
     begin
       volume_data = cluster.volumes

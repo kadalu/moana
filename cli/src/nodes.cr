@@ -23,10 +23,10 @@ struct NodeJoinCommand < Command
 
   def handle
     cluster_id = cluster_id_from_name(@args.cluster.name)
-    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
+    client = moana_client(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
     begin
-      node = cluster.node_join(@args.node.endpoint, @args.node.token)
+      node = cluster.join_node(@args.node.endpoint, @args.node.token)
       save_and_get_clusters_list(@gflags.kadalu_mgmt_server)
       puts "Node joined successfully."
       puts "ID: #{node.id}"
@@ -43,7 +43,7 @@ struct NodeUpdateCommand < Command
 
   def handle
     cluster_id, node_id = cluster_and_node_id_from_name(@args.cluster.name, @args.node.hostname)
-    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
+    client = moana_client(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
     begin
       cluster.node(node_id).update(@args.node.new_hostname, @args.node.endpoint)
@@ -61,7 +61,7 @@ struct NodeListCommand < Command
 
   def handle
     cluster_id = cluster_id_from_name(@args.cluster.name)
-    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
+    client = moana_client(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
     begin
       nodes_data = cluster.nodes
@@ -96,7 +96,7 @@ struct NodeLeaveCommand < Command
 
   def handle
     cluster_id, node_id = cluster_and_node_id_from_name(@args.cluster.name, @args.node.hostname)
-    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
+    client = moana_client(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
     begin
       cluster.node(node_id).delete

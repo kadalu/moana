@@ -19,7 +19,7 @@ struct VolfileGetCommand < Command
     end
 
     cluster_id = cluster_id_from_name(@args.cluster.name)
-    client = MoanaClient::Client.new(@gflags.kadalu_mgmt_server)
+    client = moana_client(@gflags.kadalu_mgmt_server)
     volume_client = client.cluster(cluster_id).volume(@args.volume.name)
 
     if @args.brick.name != "" && @args.volume.name == ""
