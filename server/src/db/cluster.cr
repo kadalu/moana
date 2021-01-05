@@ -4,6 +4,19 @@ require "uuid"
 require "sqlite3"
 require "moana_types"
 
+CLUSTER_LIST_QUERY = <<-SQL
+  SELECT clusters.id AS id,
+       clusters.name AS name,
+       nodes.id AS node_id,
+       nodes.hostname AS node_hostname,
+       nodes.endpoint AS node_endpoint
+  FROM clusters
+  LEFT OUTER JOIN nodes
+  ON clusters.id = nodes.cluster_id
+  INNER JOIN roles
+  ON clusters.id = roles.cluster_id
+SQL
+
 CLUSTER_SELECT_QUERY = <<-SQL
   SELECT clusters.id AS id,
        clusters.name AS name,
@@ -28,8 +41,9 @@ module MoanaDB
 
   def self.create_table_clusters(conn = @@conn)
     conn.not_nil!.exec "CREATE TABLE IF NOT EXISTS clusters (
-        id UUID PRIMARY KEY,
-        name VARCHAR,
+        id         UUID PRIMARY KEY,
+        name       VARCHAR,
+        created_by VARCHAR,
         created_at TIMESTAMP,
         updated_at TIMESTAMP
     );"
@@ -57,9 +71,17 @@ module MoanaDB
     end
   end
 
-  def self.list_clusters(conn = @@conn)
+  def self.list_clusters(user_id : String, conn = @@conn)
+    query = "#{CLUSTER_LIST_QUERY} WHERE roles.name IN (?, ?, ?) AND user_id = ? AND volume_id = ?"
+    params = [] of DB::Any
+    params << "admin"
+    params << "maintainer"
+    params << "viewer"
+    params << user_id
+    params << "all"
+
     grouped_clusters(
-      conn.not_nil!.query_all(CLUSTER_SELECT_QUERY, as: ClusterView)
+      conn.not_nil!.query_all(query, args: params, as: ClusterView)
     )
   end
 
@@ -73,16 +95,19 @@ module MoanaDB
     clusters[0]
   end
 
-  def self.create_cluster(name : String, conn = @@conn)
-    query = "INSERT INTO clusters(id, name, created_at, updated_at)
-             VALUES              (?,  ?,    datetime(), datetime());"
+  def self.create_cluster(user_id : String, name : String, conn = @@conn)
+    query = "INSERT INTO clusters(id, name, created_by, created_at, updated_at)
+             VALUES              (?,  ?,    ?,          datetime(), datetime());"
 
     cluster_id = UUID.random.to_s
-    conn.not_nil!.exec(
-      query,
-      cluster_id,
-      name
-    )
+    conn.not_nil!.transaction do |tx|
+      cnn = tx.connection
+
+      cnn.exec(query, cluster_id, name, user_id)
+
+      # Those who creates Cluster becomes Admin
+      create_role(user_id, cluster_id, "all", "admin", conn: cnn)
+    end
 
     MoanaTypes::Cluster.new(cluster_id, name)
   end

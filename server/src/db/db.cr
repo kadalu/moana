@@ -11,6 +11,7 @@ require "./option"
 require "./port"
 require "./user"
 require "./role"
+require "./app"
 
 module MoanaDB
   @@conn : DB::Database | Nil = nil
@@ -31,5 +32,6 @@ module MoanaDB
     create_table_ports
     create_table_users
     create_table_roles
+    create_table_apps
   end
 end
