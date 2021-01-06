@@ -6,12 +6,12 @@ require "moana_types"
 
 require "./helpers"
 
+# TODO: Add created_at field
 APP_SELECT_QUERY = <<-SQL
   SELECT id,
          user_id,
          remote_ip,
-         user_agent,
-         created_at
+         user_agent
   FROM apps
   WHERE user_id = ?
 SQL
@@ -31,7 +31,7 @@ module MoanaDB
   end
 
   def self.list_apps(user_id : String, conn = @@conn)
-    conn.not_nil!.query_all(APP_SELECT_QUERY, as: MoanaTypes::App)
+    conn.not_nil!.query_all(APP_SELECT_QUERY, user_id, as: MoanaTypes::App)
   end
 
   def self.valid_token?(user_id : String, token : String, conn = @@conn)

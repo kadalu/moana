@@ -33,7 +33,7 @@ struct NodeJoinCommand < Command
       puts "Node joined successfully."
       puts "ID: #{node.id}"
     rescue ex : MoanaClient::MoanaClientException
-      STDERR.puts "#{ex.message}(Code: #{ex.status_code})"
+      handle_moana_client_exception(ex)
     end
   end
 end
@@ -52,7 +52,7 @@ struct NodeUpdateCommand < Command
       save_and_get_clusters_list(@gflags.kadalu_mgmt_server)
       puts "Node updated successfully"
     rescue ex : MoanaClient::MoanaClientException
-      STDERR.puts ex.status_code
+      handle_moana_client_exception(ex)
     end
   end
 
@@ -67,7 +67,7 @@ struct NodeListCommand < Command
     cluster = client.cluster(cluster_id)
     begin
       nodes_data = cluster.nodes
-      if nodes_data
+      if nodes_data.size > 0
         printf("%-36s  %-25s  %-s\n", "ID", "Name", "Endpoint")
       end
       nodes_data.each do |node|
@@ -76,8 +76,7 @@ struct NodeListCommand < Command
         end
       end
     rescue ex : MoanaClient::MoanaClientException
-      STDERR.puts ex.status_code
-      exit 1
+      handle_moana_client_exception(ex)
     end
   end
 end
@@ -108,9 +107,8 @@ struct NodeLeaveCommand < Command
       if ex.status_code == 404
         STDERR.puts "Invalid Cluster/Node name"
         exit
-      else
-        STDERR.puts ex.status_code
       end
+      handle_moana_client_exception(ex)
     end
   end
 end

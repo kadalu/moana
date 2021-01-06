@@ -106,7 +106,7 @@ module MoanaDB
       password_hash
     )
 
-    MoanaTypes::User.new(name, email)
+    MoanaTypes::User.new(email, name)
   end
 
   def self.update_user(id : String, name : String, conn = @@conn)

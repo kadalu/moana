@@ -31,7 +31,7 @@ struct RegisterCommand < Command
       puts "User registered successfully."
       puts "ID: #{user.id}"
     rescue ex : MoanaClient::MoanaClientException
-      STDERR.puts ex.status_code
+      handle_moana_client_exception(ex)
     end
   end
 end
@@ -69,7 +69,7 @@ struct LoginCommand < Command
       puts "Token saved to `~/.kadalu/app.json` Run `#{COMMAND} logout` "
       puts "to logout from the Server or delete the `~/.kadalu/app.json` file."
     rescue ex : MoanaClient::MoanaClientException
-      STDERR.puts ex.status_code
+      handle_moana_client_exception(ex)
     end
   end
 end
@@ -88,7 +88,7 @@ struct LogoutCommand < Command
       File.delete(filename)
       puts "Successfully logged out from the Kadalu Storage Server."
     rescue ex : MoanaClient::MoanaClientException
-      STDERR.puts ex.status_code
+      handle_moana_client_exception(ex)
     end
   end
 end
@@ -105,7 +105,7 @@ struct AppsCommand < Command
       apps = client.user(app.user_id).apps
       puts apps
     rescue ex : MoanaClient::MoanaClientException
-      STDERR.puts ex.status_code
+      handle_moana_client_exception(ex)
     end
   end
 end
@@ -130,7 +130,7 @@ struct RoleAddCommand < Command
       role = client.add_role(@args.user.name, cluster_id, @args.volume.name, @args.user.role)
       puts "Successfully set Role"
     rescue ex : MoanaClient::MoanaClientException
-      STDERR.puts ex.status_code
+      handle_moana_client_exception(ex)
     end
   end
 end
@@ -155,7 +155,7 @@ struct RoleDeleteCommand < Command
       role = client.role(@args.user.email, cluster_id, @args.volume.name, @args.user.role).delete
       puts "Successfully deleted the Role"
     rescue ex : MoanaClient::MoanaClientException
-      STDERR.puts ex.status_code
+      handle_moana_client_exception(ex)
     end
   end
 end

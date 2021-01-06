@@ -35,7 +35,7 @@ struct VolumeCreateCommand < Command
       puts "Volume creation request sent successfully."
       puts "Task ID: #{task.id}"
     rescue ex : MoanaClient::MoanaClientException
-      STDERR.puts ex.status_code
+      handle_moana_client_exception(ex)
     end
   end
 
@@ -88,7 +88,7 @@ struct VolumeListCommand < Command
     cluster = client.cluster(cluster_id)
     begin
       volume_data = cluster.volumes
-      if volume_data
+      if volume_data.size > 0
         printf("%-36s  %-15s %-15s %s\n", "ID", "Name", "Type", "State")
       end
       volume_data.each do |volume|
@@ -97,8 +97,7 @@ struct VolumeListCommand < Command
         end
       end
     rescue ex : MoanaClient::MoanaClientException
-      STDERR.puts ex.status_code
-      exit 1
+      handle_moana_client_exception(ex)
     end
   end
 end
@@ -139,8 +138,7 @@ struct VolumeInfoCommand < Command
         end
       end
     rescue ex : MoanaClient::MoanaClientException
-      STDERR.puts ex.status_code
-      exit 1
+      handle_moana_client_exception(ex)
     end
   end
 end

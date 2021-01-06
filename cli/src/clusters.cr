@@ -25,7 +25,7 @@ struct ClusterCreateCommand < Command
         puts "\nSaved as default Cluster"
       end
     rescue ex : MoanaClient::MoanaClientException
-      STDERR.puts ex.status_code
+      handle_moana_client_exception(ex)
     end
   end
 end
@@ -47,7 +47,7 @@ struct ClusterUpdateCommand < Command
       save_and_get_clusters_list(@gflags.kadalu_mgmt_server)
       puts "Cluster updated successfully"
     rescue ex : MoanaClient::MoanaClientException
-      STDERR.puts ex.status_code
+      handle_moana_client_exception(ex)
     end
   end
 end
@@ -60,7 +60,7 @@ struct ClusterListCommand < Command
   def handle
     cluster_data = save_and_get_clusters_list(@gflags.kadalu_mgmt_server)
     default_cluster_id = default_cluster()
-    if cluster_data
+    if cluster_data.size > 0
       printf(" %-36s  %-s\n", "ID", "Name")
     end
     cluster_data.each do |cluster|
@@ -98,10 +98,10 @@ struct ClusterDeleteCommand < Command
       if ex.status_code == 404
         STDERR.puts "Invalid Cluster name"
         exit
-      else
-        STDERR.puts ex.status_code
-        exit
       end
+
+      handle_moana_client_exception(ex)
+
     end
   end
 end

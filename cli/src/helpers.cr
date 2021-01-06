@@ -166,7 +166,8 @@ def cluster_id_from_name(name)
     end
   end
 
-  return ""
+  STDERR.puts "Failed to find Cluster ID from name(#{name})"
+  exit 1
 end
 
 def cluster_and_node_id_from_name(cluster_name, name)
@@ -185,7 +186,8 @@ def cluster_and_node_id_from_name(cluster_name, name)
     end
   end
 
-  return ["", ""]
+  STDERR.puts "Failed to find Cluster ID/Node ID from name(Cluster name=#{name}, Hostname=#{name})"
+  exit 1
 end
 
 def nodes_by_cluster_id(cluster_id)
@@ -212,8 +214,7 @@ def save_and_get_clusters_list(base_url)
 
     clusters
   rescue ex : MoanaClient::MoanaClientException
-    STDERR.puts "[#{ex.status_code}] #{ex.message}"
-    exit
+    handle_moana_client_exception(ex)
   end
 end
 
@@ -294,8 +295,7 @@ def start_stop_volume(gflags, cluster_name, name, action)
     puts "Volume #{action} request sent successfully."
     puts "Task ID: #{task.id}"
   rescue ex : MoanaClient::MoanaClientException
-    STDERR.puts ex.status_code
-    exit 1
+    handle_moana_client_exception(ex)
   end
 end
 
@@ -320,4 +320,17 @@ def moana_client(url : String)
         end
 
   MoanaClient::Client.new(url, app.user_id, app.token)
+end
+
+def handle_moana_client_exception(ex)
+  if ex.status_code == 401
+    STDERR.puts "Unauthorized. Login to Kadalu Storage by running `kadalu login <email>`"
+    exit 1
+  elsif ex.status_code == 403
+    STDERR.puts "Operation not permitted"
+    exit 1
+  else
+    STDERR.puts "Request failed with HTTP error([#{ex.status_code}] #ex.message)"
+    exit 1
+  end
 end
