@@ -40,8 +40,7 @@ struct VolfileGetCommand < Command
       File.write(@args.volfile.filename, volfile.content)
       puts "Volfile downloaded successfully. Volfile saved to #{@args.volfile.filename}"
     rescue ex : MoanaClient::MoanaClientException
-      STDERR.puts "Failed to fetch Volfile(HTTP Error: #{ex.status_code})"
-      exit 1
+      handle_moana_client_exception(ex)
     rescue ex : Exception
       STDERR.puts ex.message
       exit 1

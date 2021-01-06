@@ -12,7 +12,7 @@ struct TaskListCommand < Command
         tasks_data = cluster.tasks
       end
 
-      if tasks_data
+      if tasks_data.size > 0
         printf("%-36s  %-10s  %-20s  %-15s\n", "Task ID", "State", "Assigned To", "Type")
       end
       tasks_data.each do |task|
@@ -28,8 +28,7 @@ struct TaskListCommand < Command
                task.type)
       end
     rescue ex : MoanaClient::MoanaClientException
-      STDERR.puts ex.status_code
-      exit 1
+      handle_moana_client_exception(ex)
     end
   end
 end

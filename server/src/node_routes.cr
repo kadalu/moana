@@ -26,10 +26,6 @@ get "/api/v1/clusters/:cluster_id/nodes/:id" do |env|
 end
 
 post "/api/v1/clusters/:cluster_id/nodes" do |env|
-  if !cluster_maintainer?(env)
-    halt(env, status_code: 403, response: forbidden_response)
-  end
-
   hostname = env.params.json["hostname"].as(String)
   endpoint = env.params.json["endpoint"].as(String)
 

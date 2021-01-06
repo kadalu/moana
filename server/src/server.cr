@@ -12,6 +12,12 @@ require "./volfile_routes"
 require "./user_routes"
 require "./role_routes"
 require "./app_routes"
+require "./error_routes"
+
+# Set the content type for all APIs
+before_all do |env|
+  env.response.content_type = "application/json"
+end
 
 class AuthHeaderHandler < Kemal::Handler
   def call(env)
@@ -56,17 +62,9 @@ class AuthHandler < Kemal::Handler
     return call_next(env) if exclude_match?(env) || env.get?("auth_valid?")
 
     env.response.status_code = 401
-    {error: "Unauthorized. Invalid X-User-ID or Authorization header"}.to_json
+    env.response.content_type = "application/json"
+    env.response.print ({"error": "Unauthorized"}).to_json
   end
-end
-
-# Set the content type for all APIs
-before_all do |env|
-  env.response.content_type = "application/json"
-end
-
-error 404 do |env|
-  {"error": "Not Found"}.to_json
 end
 
 MoanaDB.init(".")

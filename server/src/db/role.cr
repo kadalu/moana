@@ -5,7 +5,7 @@ require "sqlite3"
 require "moana_types"
 
 ROLE_SELECT_QUERY = <<-SQL
-  SELECT COUNT(id)
+  SELECT COUNT(*)
   FROM roles
   WHERE user_id = ? AND
         cluster_id = ? AND

@@ -45,7 +45,7 @@ module MoanaDB
         name        VARCHAR,
         created_by  VARCHAR,
         invite_hash VARCHAR DEFAULT '-',
-        invited_at  TIMESTAMP DEFAULT datetime(),
+        invited_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         created_at  TIMESTAMP,
         updated_at  TIMESTAMP
     );"

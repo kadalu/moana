@@ -143,8 +143,10 @@ module MoanaTypes
              user_id : String,
              token : String = "",
              remote_ip : String,
-             user_agent : String,
-             created_at : Time = Time.utc
+             user_agent : String
+
+    # TODO: Fix the Time Format https://github.com/crystal-lang/crystal-sqlite3/issues/14
+    # created_at : String = ""
 
     def initialize(@id, @user_id, @token, @remote_ip, @user_agent)
     end

@@ -27,7 +27,7 @@ module MoanaClient
       url = "#{ctx.url}/api/v1/apps"
       response = MoanaClient.http_get(url, headers: MoanaClient.auth_header(ctx))
       if response.status_code == 200
-        MoanaTypes::User.from_json(response.body)
+        Array(MoanaTypes::App).from_json(response.body)
       else
         MoanaClient.error_response(response)
       end

@@ -133,7 +133,7 @@ module MoanaDB
 
   def self.list_volumes(user_id : String, cluster_id : String, conn = @@conn)
     query = "SELECT DISTINCT volume_id FROM roles WHERE cluster_id = ? AND
-             user_id = ? AND name IN [?, ?, ?]"
+             user_id = ? AND name IN (?, ?, ?)"
     params = [] of DB::Any
     params << cluster_id
     params << user_id
