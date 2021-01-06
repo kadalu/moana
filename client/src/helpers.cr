@@ -6,12 +6,21 @@ module MoanaClient
   extend self
 
   def auth_header(ctx)
-    return nil if (ctx.user_id == "" || ctx.token == "")
+    return nil if (ctx.token == "")
 
-    HTTP::Headers{
-      "X-User-ID" => ctx.user_id,
+    headers = HTTP::Headers{
       "Authorization" => "Bearer #{ctx.token}"
     }
+
+    if ctx.user_id != ""
+      headers["X-User-ID"] = ctx.user_id
+    end
+
+    if ctx.node_id != ""
+      headers["X-Node-ID"] = ctx.node_id
+    end
+
+    headers
   end
 
   class MoanaClientException < Exception

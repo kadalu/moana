@@ -25,8 +25,10 @@ struct NodeJoinCommand < Command
     cluster_id = cluster_id_from_name(@args.cluster.name)
     client = moana_client(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
+    invite = cluster.invite_node
+
     begin
-      node = cluster.join_node(@args.node.endpoint, @args.node.token)
+      node = cluster.join_node(@args.node.endpoint, invite.token)
       save_and_get_clusters_list(@gflags.kadalu_mgmt_server)
       puts "Node joined successfully."
       puts "ID: #{node.id}"
@@ -133,9 +135,6 @@ class MoanaCommands
         parser.banner = "Usage: #{COMMAND} node join ENDPOINT [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") do |name|
           @args.cluster.name = name
-        end
-        parser.on("-t TOKEN", "--token=TOKEN", "Token") do |token|
-          @args.node.token = token
         end
       end
 

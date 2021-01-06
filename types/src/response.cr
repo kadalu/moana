@@ -149,4 +149,10 @@ module MoanaTypes
     def initialize(@id, @user_id, @token, @remote_ip, @user_agent)
     end
   end
+
+  struct Token
+    include JSON::Serializable
+
+    property token = ""
+  end
 end
