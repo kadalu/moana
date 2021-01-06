@@ -115,5 +115,16 @@ module MoanaClient
         MoanaClient.error_response(response)
       end
     end
+
+    def invite_node
+      url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}/invites"
+      response = MoanaClient.http_post(url, "{}", headers: MoanaClient.auth_header(@ctx))
+
+      if response.status_code == 200
+        MoanaTypes::Token.from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
   end
 end

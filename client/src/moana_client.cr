@@ -4,15 +4,15 @@ require "./roles"
 
 module MoanaClient
   struct ClientContext
-    property url, user_id, token
+    property url, user_id, token, node_id
 
-    def initialize(@url : String, @user_id : String, @token : String)
+    def initialize(@url : String, @user_id : String, @token : String, @node_id : String)
     end
   end
 
   class Client
-    def initialize(url : String, user_id : String, token : String)
-      @ctx = ClientContext.new(url, user_id, token)
+    def initialize(url : String, user_id : String, token : String, node_id : String = "")
+      @ctx = ClientContext.new(url, user_id, token, node_id)
     end
 
     def initialize(url : String)

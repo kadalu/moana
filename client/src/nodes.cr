@@ -31,8 +31,7 @@ module MoanaClient
       begin
         response = MoanaClient.http_post(
           url,
-          {cluster_id: cluster_id, moana_url: ctx.url, token: token}.to_json,
-          headers: MoanaClient.auth_header(ctx)
+          {cluster_id: cluster_id, moana_url: ctx.url, token: token}.to_json
         )
         if response.status_code == 201
           MoanaTypes::Node.from_json(response.body)
