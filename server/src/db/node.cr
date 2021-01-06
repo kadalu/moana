@@ -15,10 +15,11 @@ SQL
 module MoanaDB
   def self.create_table_nodes(conn = @@conn)
     conn.not_nil!.exec "CREATE TABLE IF NOT EXISTS nodes (
-       id UUID PRIMARY KEY,
+       id         UUID PRIMARY KEY,
        cluster_id UUID,
-       hostname VARCHAR,
-       endpoint VARCHAR,
+       hostname   VARCHAR,
+       endpoint   VARCHAR,
+       token_hash VARCHAR,
        created_at TIMESTAMP,
        updated_at TIMESTAMP
     );"
@@ -52,9 +53,9 @@ module MoanaDB
     nodes[0]
   end
 
-  def self.create_node(cluster_id : String, hostname : String, endpoint : String, conn = @@conn)
-    query = "INSERT INTO nodes(id, cluster_id, hostname, endpoint, created_at, updated_at)
-             VALUES           (?,  ?,          ?,        ?,        datetime(), datetime());"
+  def self.create_node(cluster_id : String, hostname : String, endpoint : String, token : String, conn = @@conn)
+    query = "INSERT INTO nodes(id, cluster_id, hostname, endpoint, token_hash, created_at, updated_at)
+             VALUES           (?,  ?,          ?,        ?,        ?,          datetime(), datetime());"
 
     node_id = UUID.random.to_s
     conn.not_nil!.exec(
@@ -62,10 +63,20 @@ module MoanaDB
       node_id,
       cluster_id,
       hostname,
-      endpoint
+      endpoint,
+      hash_sha256(token)
     )
 
-    MoanaTypes::Node.new(node_id, hostname, endpoint)
+    node = MoanaTypes::Node.new(node_id, hostname, endpoint)
+    node.token = token
+
+    node
+  end
+
+  def self.valid_node_token?(id : String, token : String, conn = @@conn)
+    query = "SELECT COUNT(id) FROM nodes
+             WHERE id = ? AND token_hash = ?"
+    conn.not_nil!.scalar(query, id, hash_sha256(token)).as(Int64) > 0
   end
 
   def self.update_node(id : String, hostname : String? = nil, endpoint : String? = nil, conn = @@conn)

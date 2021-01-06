@@ -30,6 +30,14 @@ post "/api/v1/clusters" do |env|
   MoanaDB.create_cluster(env.get("user_id").as(String), name).to_json
 end
 
+post "/api/v1/clusters/:cluster_id/invites" do |env|
+  token = hash_sha256(UUID.random.to_s)
+
+  MoanaDB.update_node_invite(env.params.url["cluster_id"], token)
+
+  {token: token}.to_json
+end
+
 put "/api/v1/clusters/:cluster_id" do |env|
   if !cluster_maintainer?(env)
     halt(env, status_code: 403, response: forbidden_response)

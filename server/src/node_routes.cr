@@ -33,8 +33,12 @@ post "/api/v1/clusters/:cluster_id/nodes" do |env|
   hostname = env.params.json["hostname"].as(String)
   endpoint = env.params.json["endpoint"].as(String)
 
+  # Generate a Token to use with all future node
+  # to Server communications
+  token = hash_sha256(UUID.random.to_s)
+
   env.response.status_code = 201
-  MoanaDB.create_node(env.params.url["cluster_id"], hostname, endpoint).to_json
+  MoanaDB.create_node(env.params.url["cluster_id"], hostname, endpoint, token).to_json
 end
 
 put "/api/v1/clusters/:cluster_id/nodes/:id" do |env|

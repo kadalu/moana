@@ -6,7 +6,7 @@ module MoanaTypes
     include JSON::Serializable
     include DB::Serializable
 
-    property id = "", hostname = "", endpoint = "", cluster_id = ""
+    property id = "", hostname = "", endpoint = "", cluster_id = "", token = ""
 
     def initialize
     end

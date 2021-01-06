@@ -41,11 +41,13 @@ module MoanaDB
 
   def self.create_table_clusters(conn = @@conn)
     conn.not_nil!.exec "CREATE TABLE IF NOT EXISTS clusters (
-        id         UUID PRIMARY KEY,
-        name       VARCHAR,
-        created_by VARCHAR,
-        created_at TIMESTAMP,
-        updated_at TIMESTAMP
+        id          UUID PRIMARY KEY,
+        name        VARCHAR,
+        created_by  VARCHAR,
+        invite_hash VARCHAR DEFAULT '-',
+        invited_at  TIMESTAMP DEFAULT datetime(),
+        created_at  TIMESTAMP,
+        updated_at  TIMESTAMP
     );"
   end
 
@@ -69,6 +71,19 @@ module MoanaDB
 
       cluster
     end
+  end
+
+  def self.update_node_invite(id : String, invite : String, conn = @@conn)
+    query = "UPDATE clusters SET invite_hash = ?, invited_at = datetime() WHERE id = ?"
+    res = conn.not_nil!.exec(query, hash_sha256(invite), id)
+    res.rows_affected > 0
+  end
+
+  def self.valid_node_invite?(id : String, invite : String, conn = @@conn)
+    query = "SELECT COUNT(id) FROM clusters
+             WHERE id = ? AND invite_hash = ? AND
+             invited_at >= datetime('now', '-5 minutes')"
+    conn.not_nil!.scalar(query, id, hash_sha256(invite)).as(Int64) > 0
   end
 
   def self.list_clusters(user_id : String, conn = @@conn)
