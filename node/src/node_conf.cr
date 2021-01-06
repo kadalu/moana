@@ -85,8 +85,7 @@ class NodeConf
     @moana_url = moana_url
     @cluster_id = cluster_id
     @node_id = node.id
-    # TODO: Enable Token save once available
-    # @token = node.token
+    @token = node.token
 
     if node.hostname != "" && node.hostname != @hostname
       raise NodeConfException.new("Node agent hostname(#{@hostname}) is different than joined node(#{node.hostname})")

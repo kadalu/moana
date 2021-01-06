@@ -44,11 +44,14 @@ class Watcher
     end
   end
 
+  def moana_client
+    MoanaClient::Client.new(@node_conf.moana_url, "", @node_conf.token, @node_conf.node_id)
+  end
+
   # Update the status of Task, before and after the execution.
   # Queued -> Received -> Success|Failure
   def update_task_state(task_id, resp_status, reply)
-    client = MoanaClient::Client.new(@node_conf.moana_url)
-    task = client.cluster(@node_conf.cluster_id).task(task_id)
+    task = moana_client.cluster(@node_conf.cluster_id).task(task_id)
     begin
       task.update(resp_status, reply)
     rescue ex : MoanaClient::MoanaClientException
@@ -110,7 +113,7 @@ class Watcher
     # Initialize a Client that connects to Moana Server.
     # Moana Server URL is received from the Configuration
     # file.
-    client = MoanaClient::Client.new(@node_conf.moana_url).cluster(@node_conf.cluster_id)
+    client = moana_client.cluster(@node_conf.cluster_id)
     node_client = client.node(@node_conf.node_id)
 
     loop do
