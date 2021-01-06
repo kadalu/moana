@@ -15,7 +15,6 @@ get "/api/v1/tasks/:cluster_id/:node_id" do |env|
 end
 
 put "/api/v1/clusters/:cluster_id/tasks/:id" do |env|
-  # TODO: Handle Auth Mgmt by validating request is from a Node in Cluster
   state = env.params.json["state"]?.as(String?)
   response = env.params.json["response"]?.as(String?)
 

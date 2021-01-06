@@ -6,7 +6,6 @@ require "./default_volfiles"
 require "./helpers"
 
 get "/api/v1/clusters/:cluster_id/volfiles/:name" do |env|
-  # TODO: Validate Node Auth
   env.response.status_code = 500
   {status: "not implemented"}.to_json
 end
@@ -33,7 +32,6 @@ get "/api/v1/clusters/:cluster_id/volfiles/:name/:volume_id" do |env|
 end
 
 get "/api/v1/clusters/:cluster_id/volfiles/:name/:volume_id/:brick_id" do |env|
-  # TODO: Validate Node Auth
   volume = MoanaDB.get_volume(env.params.url["volume_id"])
   if volume.nil?
     env.response.status_code = 500

@@ -18,13 +18,29 @@ class AuthHeaderHandler < Kemal::Handler
     # Verify if X-User-ID and Authorization headers are set.
     # Else, pass it to next Handler without doing anything
     user_id = env.request.headers["X-User-ID"]?
+    node_id = env.request.headers["X-Node-ID"]?
     auth = env.request.headers["Authorization"]?
-    if !user_id.nil? && !auth.nil?
+
+    if !auth.nil?
       parts = auth.split(" ")
       if parts.size == 2 && parts[0].downcase == "bearer"
-        env.set("app_token", parts[1])
-        env.set("user_id", user_id)
-        env.set("auth_valid?", MoanaDB.valid_token?(user_id, parts[1]))
+        env.set("token", parts[1])
+
+        if !user_id.nil?
+          # End user APIs
+          env.set("user_id", user_id)
+          env.set("auth_valid?", MoanaDB.valid_token?(user_id, parts[1]))
+        elsif !node_id.nil?
+          # Node APIs
+          env.set("node_id", node_id)
+          env.set("auth_valid?", MoanaDB.valid_node_token?(node_id, parts[1]))
+        else
+          # May be invite Accept API(Node Join)
+          env.set(
+            "auth_valid?",
+            parts[1] != "-" && MoanaDB.valid_node_invite?(env.params.url["cluster_id"], parts[1])
+          )
+        end
       end
     end
 
