@@ -22,7 +22,7 @@ struct NodeJoinTask < Task
     end
 
     begin
-      client = MoanaClient::Client.new(parsed.moana_url)
+      client = MoanaClient::Client.new(parsed.moana_url, "", parsed.token)
       cluster = client.cluster(parsed.cluster_id)
 
       hostname = parsed.hostname

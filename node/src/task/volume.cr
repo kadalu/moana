@@ -49,7 +49,7 @@ struct VolumeStartTask < Task
   end
 
   def run(node_conf)
-    client = MoanaClient::Client.new(node_conf.moana_url)
+    client = MoanaClient::Client.new(node_conf.moana_url, "", node_conf.token, node_conf.node_id)
     volume_client = client.cluster(node_conf.cluster_id).volume(parsed.id)
 
     parsed.subvols.each do |subvol|
