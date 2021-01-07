@@ -39,6 +39,10 @@ module MoanaClient
       User.new(@ctx, id)
     end
 
+    def user_by_email(email : String)
+      User.new(@ctx, "", email)
+    end
+
     def add_role(user_id, cluster_id, volume_id, role)
       Role.create(@ctx, user_id, cluster_id, volume_id, role)
     end

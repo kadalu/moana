@@ -60,14 +60,14 @@ struct LoginCommand < Command
 
     client = moana_client(@gflags.kadalu_mgmt_server)
     begin
-      app = client.user(@args.user.email).create_app(@args.user.password)
+      app = client.user_by_email(@args.user.email).create_app(@args.user.password)
       puts "Successfully logged in to Kadalu Storage Server."
       puts "App ID: #{app.id}"
       filename = Path.home.join(".kadalu", "app.json")
       Dir.mkdir_p(Path[filename].parent)
       File.write(filename, app.to_json)
-      puts "Token saved to `~/.kadalu/app.json` Run `#{COMMAND} logout` "
-      puts "to logout from the Server or delete the `~/.kadalu/app.json` file."
+      puts
+      puts "Token saved to `~/.kadalu/app.json` Run `#{COMMAND} logout` to logout from the Server or delete the `~/.kadalu/app.json` file."
     rescue ex : MoanaClient::MoanaClientException
       handle_moana_client_exception(ex)
     end
