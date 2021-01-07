@@ -9,6 +9,7 @@ require "./helpers"
 USER_SELECT_QUERY = <<-SQL
   SELECT users.id AS id,
        users.name AS name,
+       users.email AS email,
        roles.cluster_id AS role_cluster_id,
        roles.user_id AS role_user_id,
        roles.volume_id AS role_volume_id,
@@ -24,6 +25,7 @@ module MoanaDB
 
     property id : String,
              name : String,
+             email : String,
              role_cluster_id : String?,
              role_user_id : String?,
              role_volume_id : String?,
@@ -34,24 +36,27 @@ module MoanaDB
     conn.not_nil!.exec "CREATE TABLE IF NOT EXISTS users (
         id            VARCHAR PRIMARY KEY,
         name          VARCHAR,
+        email         VARCHAR,
         password_hash VARCHAR,
         created_at    TIMESTAMP,
         updated_at    TIMESTAMP
     );"
+
+    conn.not_nil!.exec "CREATE INDEX IF NOT EXISTS users_email_idx ON users (email);"
   end
 
   private def self.grouped_users(data : Array(UserView))
     grouped_data = data.group_by do |rec|
       # Group by users.id, users.name, users.email
       # Row index are same as specified in the Query
-      [rec.id, rec.name]
+      [rec.id, rec.name, rec.email]
     end
 
     grouped_data.map do |key, rows|
       # Select only if node details are not nil
       rows = rows.select { |row| !row.role_name.nil? }
 
-      user = MoanaTypes::User.new(key[0], key[1])
+      user = MoanaTypes::User.new(key[0], key[1], key[2])
       user.roles = rows.map do |row|
         MoanaTypes::Role.new(
           row.role_cluster_id.not_nil!,
@@ -93,20 +98,34 @@ module MoanaDB
     users[0]
   end
 
+  def self.get_user_by_email(email : String, password : String, conn = @@conn)
+    password_hash = hash_sha256(password)
+    query = "#{USER_SELECT_QUERY} WHERE users.email = ? AND users.password_hash = ?"
+    users = grouped_users(
+      conn.not_nil!.query_all(query, email, password_hash, as: UserView)
+    )
+
+    return nil if users.size == 0
+
+    users[0]
+  end
+
   def self.create_user(name : String, email : String, password : String, conn = @@conn)
-    query = "INSERT INTO users(id, name, password_hash, created_at, updated_at)
-             VALUES           (?,  ?,    ?,             datetime(), datetime());"
+    query = "INSERT INTO users(id, name, email, password_hash, created_at, updated_at)
+             VALUES           (?,  ?,    ?,     ?,             datetime(), datetime());"
 
     password_hash = hash_sha256(password)
+    user_id = UUID.random.to_s
 
     conn.not_nil!.exec(
       query,
-      email,
+      user_id,
       name,
+      email,
       password_hash
     )
 
-    MoanaTypes::User.new(email, name)
+    MoanaTypes::User.new(user_id, name, email)
   end
 
   def self.update_user(id : String, name : String, conn = @@conn)

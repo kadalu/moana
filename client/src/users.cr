@@ -7,7 +7,7 @@ require "./apps"
 
 module MoanaClient
   class User
-    def initialize(@ctx : ClientContext, @user_id : String)
+    def initialize(@ctx : ClientContext, @user_id : String, @email : String = "")
     end
 
     def self.create(ctx : ClientContext, name : String, email : String, password : String)
@@ -46,7 +46,7 @@ module MoanaClient
     end
 
     def create_app(password)
-      App.create(@ctx, @user_id, password)
+      App.create(@ctx, @email, password)
     end
 
     def app(app_id)

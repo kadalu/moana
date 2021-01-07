@@ -330,7 +330,7 @@ def handle_moana_client_exception(ex)
     STDERR.puts "Operation not permitted"
     exit 1
   else
-    STDERR.puts "Request failed with HTTP error([#{ex.status_code}] #ex.message)"
+    STDERR.puts "Request failed with HTTP error([#{ex.status_code}] #{ex.message})"
     exit 1
   end
 end

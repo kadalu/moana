@@ -8,7 +8,7 @@ post "/api/v1/apps" do |env|
   email = env.params.json["email"].as(String)
   password = env.params.json["password"].as(String)
 
-  user = MoanaDB.get_user(email, password)
+  user = MoanaDB.get_user_by_email(email, password)
   if user
     env.response.status_code = 201
     token = hash_sha256(UUID.random.to_s)
