@@ -57,11 +57,35 @@ $ systemctl set-environment GLUSTERFSD=/usr/local/sbin/glusterfsd
 Run CLI from any node.
 
 ```
-$ export KADALU_MGMT_SERVER=http://kadalu-server-url:3000
+$ export KADALU_MGMT_SERVER=<kadalu-server-url>
 $ kadalu cluster list
 ```
 
+## Register an User
+
+```
+$ # kadalu register <name> <email>
+$ kadalu register Admin admin@example.com
+Enter password:
+User registered successfully.
+ID: efe3b67e-7444-4857-8454-1a44fde7fa43
+```
+
+Once registered, login to Kadalu Server by running,
+
+```
+$ # kadalu login <email>
+$ kadalu login admin@example.com
+Enter password:
+Successfully logged in to Kadalu Storage Server.
+App ID: 9794c22e-5003-47cd-af1d-883e4b2625ad
+
+Token saved to `~/.kadalu/app.json` Run `kadalu logout` to logout from the Server or delete the `~/.kadalu/app.json` file.
+```
+
 ## Create and view the Cluster
+
+After login to Kadalu Server, create and manage Clusters.
 
 ```
 $ kadalu cluster create mycluster
@@ -75,7 +99,11 @@ $ kadalu cluster list
 *230da85c-82fd-43a1-a517-fd6d67bce827  mycluster
 ```
 
+The user who creates the Cluster will become admin for that Cluster.
+
 ## Request a node to join the Cluster
+
+Run the below command from where the Node endpoint is reachable. It can be run from the node itself or one of the node from where the endpoint is reachable.
 
 ```
 $ # kadalu node join <endpoint>
