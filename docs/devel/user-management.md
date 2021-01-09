@@ -59,14 +59,14 @@ Possible Role names are:
 
 To see if a user is Cluster Admin:
 
-```
-cluster_admin?(user_id, cluster_id)
-    result = SELECT COUNT(*)
+```crystal
+def cluster_admin?(user_id, cluster_id)
+    result = `SELECT COUNT(*)
              FROM roles
              WHERE cluster_id = <cluster_id> AND
                    volume_id = 'all' AND
                    user_id = <user_id> AND
-                   name = 'admin'
+                   name = 'admin'`
 
     result > 0
 end
@@ -76,14 +76,14 @@ Get `cluster_id` from URL parameters and `user_id` from validated Header.
 
 To check if a user is volume viewer:
 
-```
-volume_viewer?(user_id, cluster_id, volume_id)
-    result = SELECT COUNT(*)
+```crystal
+def volume_viewer?(user_id, cluster_id, volume_id)
+    result = `SELECT COUNT(*)
              FROM roles
              WHERE cluster_id = <cluster_id> AND
                    volume_id = <volume_id> AND
                    user_id = <user_id> AND
-                   name IN ('admin', 'maintainer', 'viewer')
+                   name IN ('admin', 'maintainer', 'viewer')`
 
     result > 0 || cluster_viewer?(user_id, cluster_id)
 end
