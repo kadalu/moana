@@ -11,4 +11,6 @@
 
 ## Topics
 
+* [User, Roles and Apps](./user-management.md)
 * [Task Management](./task-management.md)
+
