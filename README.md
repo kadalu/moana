@@ -36,16 +36,17 @@ $ kadalu-server
 
 Start the node agent in all Storage nodes.
 
+NOTE: only `kadalu-node` process needs to have `sudo` access as it runs glusterfsd, and needs to create brick directories, etc.
+
 ```
 $ # Create Required directories in the node
-$ mkdir -p /var/lib/kadalu \
-    /var/run/kadalu \
+$ sudo mkdir -p /var/run/kadalu \
     /var/lib/kadalu/volfiles \
     /var/log/kadalu
 $ # Copy Systemd unit template file
-$ cp extra/kadalu-brick@.service /lib/systemd/system/
+$ sudo cp extra/kadalu-brick@.service /lib/systemd/system/
 $ # Copy glusterfsd wrapper script
-$ cp extra/kadalu-brick /usr/sbin/
+$ sudo cp extra/kadalu-brick /usr/sbin/
 $ # Start the Node agent
 $ sudo kadalu-node
 ```
