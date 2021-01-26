@@ -149,7 +149,7 @@ struct VolumeDeleteCommand < Command
 end
 
 struct VolumeSetCommand < Command
-  def pos_args
+  def pos_args(args)
     if args.size < 3
       STDERR.puts "Volume name and options are not specified"
       exit 1
@@ -159,10 +159,12 @@ struct VolumeSetCommand < Command
       exit 1
     end
 
+    puts "args #{args}"
     @args.volume.name = args[0]
+
     # Except first argument, all other arguments are Option pairs
     args[1 .. -1].each_slice(2) do |opt|
-      options[opt[0]] = opt[1]
+      @args.volume.options[opt[0]] = opt[1]
     end
 
     # Call parent pos_args to set cluster_name
@@ -170,11 +172,22 @@ struct VolumeSetCommand < Command
   end
 
   def handle
+    cluster_id = cluster_id_from_name(@args.cluster.name)
+    client = moana_client(gflags.kadalu_mgmt_server)
+
+    begin
+      volume_id = volume_id_from_name(client, cluster_id, @args.volume.name)
+      volume = client.cluster(cluster_id).volume(volume_id)
+      volume.set_options(@args.volume.options)
+      puts "Volume options set successfully."
+    rescue ex : MoanaClient::MoanaClientException
+      handle_moana_client_exception(ex)
+    end
   end
 end
 
 struct VolumeResetCommand < Command
-  def pos_args
+  def pos_args(args)
     if args.size < 2
       STDERR.puts "Volume name and option names are not specified"
       exit 1
@@ -189,6 +202,17 @@ struct VolumeResetCommand < Command
   end
 
   def handle
+    cluster_id = cluster_id_from_name(@args.cluster.name)
+    client = moana_client(gflags.kadalu_mgmt_server)
+
+    begin
+      volume_id = volume_id_from_name(client, cluster_id, @args.volume.name)
+      volume = client.cluster(cluster_id).volume(volume_id)
+      volume.reset_options(@args.volume.option_names)
+      puts "Volume options reset successfully."
+    rescue ex : MoanaClient::MoanaClientException
+      handle_moana_client_exception(ex)
+    end
   end
 end
 
@@ -268,13 +292,13 @@ class MoanaCommands
 
       parser.on("set", "Set #{PRODUCT} Volume Options") do
         @command_type = CommandType::VolumeSet
-        parser.banner = "Usage: #{COMMAND} volume set OPTNAME1 OPTVALUE1 ... [arguments]"
+        parser.banner = "Usage: #{COMMAND} volume set VOLNAME OPTNAME1 OPTVALUE1 ... [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
       end
 
       parser.on("reset", "Reset #{PRODUCT} Volume Options") do
         @command_type = CommandType::VolumeReset
-        parser.banner = "Usage: #{COMMAND} volume reset OPTNAME1 ... [arguments]"
+        parser.banner = "Usage: #{COMMAND} volume reset VOLNAME OPTNAME1 ... [arguments]"
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
       end
     end
