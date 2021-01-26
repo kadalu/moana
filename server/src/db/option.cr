@@ -23,7 +23,7 @@ module MoanaDB
        cluster_id UUID,
        volume_id  UUID,
        name       VARCHAR,
-       value      VARCHAR
+       value      VARCHAR,
        created_at TIMESTAMP,
        updated_at TIMESTAMP,
        PRIMARY KEY (volume_id, name)
@@ -75,10 +75,12 @@ module MoanaDB
   end
 
   def self.delete_option(volume_id : String, names : Array(String), conn = @@conn)
-    query = "DELETE FROM options WHERE volume_id = ? AND IN "
+    query = "DELETE FROM options WHERE volume_id = ? AND name IN "
 
-    values = [volume_id]
+    values = [] of String
     params = [] of DB::Any
+
+    params << volume_id
 
     names.each do |name|
       values << "?"

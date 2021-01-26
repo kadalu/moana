@@ -93,29 +93,29 @@ module MoanaClient
       end
     end
 
-    def set_option(req : Hash(String, String))
-      url = "#{ctx.url}/api/v1/clusters/#{req.cluster_id}/volumes/#{@id}/options/set"
+    def set_options(req : Hash(String, String))
+      url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}/volumes/#{@id}/options/set"
       response = MoanaClient.http_post(
         url,
         req.to_json,
-        headers: MoanaClient.auth_header(ctx)
+        headers: MoanaClient.auth_header(@ctx)
       )
       if response.status_code == 200
-        MoanaTypes::Task.from_json(response.body)
+        MoanaTypes::Ok.from_json(response.body)
       else
         MoanaClient.error_response(response)
       end
     end
 
-    def reset_option(req : Array(String))
-      url = "#{ctx.url}/api/v1/clusters/#{req.cluster_id}/volumes/#{@id}/options/reset"
+    def reset_options(req : Array(String))
+      url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}/volumes/#{@id}/options/reset"
       response = MoanaClient.http_post(
         url,
         req.to_json,
-        headers: MoanaClient.auth_header(ctx)
+        headers: MoanaClient.auth_header(@ctx)
       )
       if response.status_code == 200
-        MoanaTypes::Task.from_json(response.body)
+        MoanaTypes::Ok.from_json(response.body)
       else
         MoanaClient.error_response(response)
       end

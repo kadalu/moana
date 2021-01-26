@@ -158,4 +158,10 @@ module MoanaTypes
 
     property token = ""
   end
+
+  struct Ok
+    include JSON::Serializable
+
+    property ok = false
+  end
 end
