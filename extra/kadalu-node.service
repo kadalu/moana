@@ -1,0 +1,10 @@
+[Unit]
+Description=Kadalu Storage node agent
+After=network.target
+
+[Service]
+PIDFile=/var/run/kadalu/node.pid
+ExecStart=/usr/sbin/kadalu-node
+
+[Install]
+WantedBy=multi-user.target

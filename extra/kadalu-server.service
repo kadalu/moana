@@ -1,0 +1,10 @@
+[Unit]
+Description=Kadalu Storage Server
+After=network.target
+
+[Service]
+PIDFile=/var/run/kadalu/server.pid
+ExecStart=/usr/sbin/kadalu-server
+
+[Install]
+WantedBy=multi-user.target
