@@ -1,0 +1,53 @@
+FROM crystallang/crystal:0.35.1-alpine as crystal
+
+WORKDIR /app
+COPY server ./server
+COPY cli ./cli
+COPY types ./types
+COPY client ./client
+COPY volgen ./volgen
+
+RUN apk add --update --no-cache --force-overwrite sqlite-dev sqlite-static
+RUN cd server && shards install --production
+RUN cd server && VERSION=${VERSION} shards build --static --release --stats --time
+
+RUN cd cli && shards install --production
+RUN cd cli && VERSION=${VERSION} shards build --static --release --stats --time
+
+FROM ubuntu:20.04 as prod
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update -yq && \
+    apt-get install -y --no-install-recommends python3 xfsprogs init && \
+    apt-get -y clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY extra/kadalu-server.service /lib/systemd/system/
+COPY extra/entrypoint_server.sh /usr/sbin/entrypoint_server.sh
+RUN chmod +x /usr/sbin/entrypoint_server.sh
+
+COPY --from=crystal /app/server/bin/kadalu-server /usr/sbin/kadalu-server
+COPY --from=crystal /app/cli/bin/kadalu /usr/sbin/kadalu
+
+RUN systemctl enable kadalu-server
+
+ARG version="(unknown)"
+# Container build time (date -u '+%Y-%m-%dT%H:%M:%S.%NZ')
+ARG builddate="(unknown)"
+
+LABEL build-date="${builddate}"
+LABEL io.k8s.description="KaDalu Storage Server"
+LABEL name="kadalu-storage-server"
+LABEL Summary="KaDalu Storage Server"
+LABEL vcs-type="git"
+LABEL vcs-url="https://github.com/kadalu/kadalu"
+LABEL vendor="kadalu"
+LABEL version="${version}"
+
+ENTRYPOINT ["/usr/sbin/entrypoint_server.sh"]
+CMD ["/usr/sbin/init"]
+
+# Debugging, Comment the above line and
+# uncomment below line
+# ENTRYPOINT ["tail", "-f", "/dev/null"]
