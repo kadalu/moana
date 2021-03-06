@@ -1,9 +1,11 @@
 require "yaml"
 
+CONDITION_MORE_THAN_ONE_SUBVOL = "more_than_one_subvol"
+
 class Graph
   include YAML::Serializable
 
-  property name : String = "", type = "", options : Hash(String, String)? = nil
+  property name : String = "", type = "", options : Hash(String, String)? = nil, include_when : String?
 end
 
 class VolfileTmpl
@@ -105,6 +107,15 @@ class Volfile
     volgen self
   end
 
+  def self.include_when?(vol_tmpl, vars)
+    case vol_tmpl.include_when
+    when CONDITION_MORE_THAN_ONE_SUBVOL
+      vars["volume.number_of_subvols"].to_i > 1
+    else
+      true
+    end
+  end
+
   # First time append the Graph to subvols
   # after this add the Graph to last Graph's subvols
   # list. If the input graph is not sibling then replaces
@@ -151,7 +162,8 @@ class Volfile
       "volume.name" => volume.name,
       "volume.id" => volume.id,
       "volume.type" => volume.type.downcase,
-      "volume.index" => "#{vidx}"
+      "volume.index" => "#{vidx}",
+      "volume.number_of_subvols" => "#{volume.subvols.size}"
     }
   end
 
@@ -159,6 +171,7 @@ class Volfile
     vars = volume_variables volume, vidx
     vars["subvol.type"] = subvol.type.downcase
     vars["subvol.index"] = "#{sidx}"
+    vars["subvol.number_of_bricks"] = "#{subvol.bricks.size}"
 
     vars
   end
@@ -187,7 +200,9 @@ class Volfile
     graph = Volfile.new(name, volfile_tmpl.volume[0], vvars, opts)
 
     volfile_tmpl.volume[1 .. -1].each do |vol_tmpl|
-      graph.add(Volfile.new(name, vol_tmpl, vvars, opts))
+      if Volfile.include_when?(vol_tmpl, vvars)
+        graph.add(Volfile.new(name, vol_tmpl, vvars, opts))
+      end
     end
 
     volume.subvols.each_with_index do |subvol, sidx|
@@ -195,7 +210,9 @@ class Volfile
       sgraph = Volfile.new(name, volfile_tmpl.subvol[0], svars, opts)
 
       volfile_tmpl.subvol[1 .. -1].each do |subvol_tmpl|
-        sgraph.add(Volfile.new(name, subvol_tmpl, svars, opts))
+        if Volfile.include_when?(subvol_tmpl, svars)
+          sgraph.add(Volfile.new(name, subvol_tmpl, svars, opts))
+        end
       end
 
       subvol.bricks.each_with_index do |brick, bidx|
@@ -203,7 +220,9 @@ class Volfile
         bgraph = Volfile.new(name, volfile_tmpl.brick[0], bvars, opts)
 
         volfile_tmpl.brick[1 .. -1].each do |brick_tmpl|
-          bgraph.add(Volfile.new(name, brick_tmpl, bvars, opts))
+          if Volfile.include_when?(brick_tmpl, bvars)
+            bgraph.add(Volfile.new(name, brick_tmpl, bvars, opts))
+          end
         end
 
         sgraph.add(bgraph, sibling=true)
@@ -232,7 +251,9 @@ class Volfile
         graph = Volfile.new(name, volfile_tmpl.brick[0], bvars, opts)
 
         volfile_tmpl.brick[1 .. -1].each do |brick_tmpl|
-          graph.add(Volfile.new(name, brick_tmpl, bvars, opts))
+          if Volfile.include_when?(brick_tmpl, bvars)
+            graph.add(Volfile.new(name, brick_tmpl, bvars, opts))
+          end
         end
         content = graph.volgen.reverse!.join("\n")
         break

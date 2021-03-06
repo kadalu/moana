@@ -74,7 +74,10 @@ module MoanaDB
 
   private def self.subvols(entry, bricks_data)
     subvol_type = entry.type.split(" ")[-1]
-    subvol_bricks_count = entry.replica_count > 1 ? entry.replica_count : entry.disperse_count
+    subvol_bricks_count = bricks_data.size
+    if entry.replica_count > 1 || entry.disperse_count > 1
+      subvol_bricks_count = entry.replica_count > 1 ? entry.replica_count : entry.disperse_count
+    end
     number_of_subvols = bricks_data.size / subvol_bricks_count
 
     (0 .. number_of_subvols-1).map do |sidx|

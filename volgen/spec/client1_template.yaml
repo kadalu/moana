@@ -1,0 +1,23 @@
+---
+volume:
+  - name: meta-autoload
+    type: meta
+  - type: debug/io-stats
+    name: "{{ volume.name }}"
+  - type: "performance/write-behind"
+    name: "{{ volume.name }}-write-behind"
+  - type: "features/utime"
+    name: "{{ volume.name }}-utime"
+  - type: "cluster/distribute"
+    name: "{{ volume.name }}-distribute"
+    include_when: more_than_one_subvol
+subvol:
+  - type: "cluster/{{ subvol.type }}"
+    name: "{{ volume.name }}-{{ subvol.type }}-{{ subvol.index }}"
+brick:
+  - type: "protocol/client"
+    name: "{{ volume.name }}-{{ subvol.type }}-{{ subvol.index }}-client-{{ brick.index }}"
+    options:
+      remote-subvolume: "{{ brick.path }}"
+      remote-host: "{{ brick.node }}"
+      remote-port: "{{ brick.port }}"

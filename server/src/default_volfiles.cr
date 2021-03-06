@@ -1,3 +1,5 @@
+require "moana_volgen"
+
 CLIENT_VOLFILE = <<-YAML
 ---
 volume:
@@ -9,6 +11,9 @@ volume:
     name: "{{ volume.name }}-write-behind"
   - type: "features/utime"
     name: "{{ volume.name }}-utime"
+  - type: "cluster/distribute"
+    name: "{{ volume.name }}-distribute"
+    include_when: #{CONDITION_MORE_THAN_ONE_SUBVOL}
 subvol:
   - type: "cluster/{{ subvol.type }}"
     name: "{{ volume.name }}-{{ subvol.type }}-{{ subvol.index }}"
