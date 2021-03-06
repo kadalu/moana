@@ -126,7 +126,10 @@ def volume_from_request(req : MoanaTypes::VolumeCreateRequest)
   subvol_type = REPLICATE if req.replica_count > 1
   subvol_type = DISPERSE if req.disperse_count > 1
 
-  subvol_bricks_count = req.replica_count > 1 ? req.replica_count : req.disperse_count
+  subvol_bricks_count = req.bricks.size
+  if req.replica_count > 1 || req.disperse_count > 1
+    subvol_bricks_count = req.replica_count > 1 ? req.replica_count : req.disperse_count
+  end
   number_of_subvols = req.bricks.size / subvol_bricks_count
 
   volume.type = subvol_type

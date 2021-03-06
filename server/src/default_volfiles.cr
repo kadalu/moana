@@ -48,10 +48,6 @@ brick:
     name: "{{ volume.name }}-locks"
   - type: "features/access-control"
     name: "{{ volume.name }}-access-control"
-  - type: "features/bitrot-stub"
-    name: "{{ volume.name }}-bitrot-stub"
-    options:
-      export: "{{ brick.path }}"
   - type: "features/changelog"
     name: "{{ volume.name }}-changelog"
     options:

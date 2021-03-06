@@ -80,8 +80,8 @@ def start_brick_process(conf):
         [
             glusterfsd,
             "-N",
-            "-p", "/var/run/kadalu/%s.pid" % conf["name"],
-            "-S", "/var/run/kadalu/%s.socket" % conf["name"],
+            "-p", "/var/run/%s.pid" % conf["name"],
+            "-S", "/var/run/%s.socket" % conf["name"],
             "--brick-name", conf["path"],
             "-l", "/var/log/kadalu/bricks/%s.log" % conf["name"],
             "--xlator-option",
