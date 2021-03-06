@@ -29,7 +29,10 @@ module MoanaTypes
     include JSON::Serializable
     include DB::Serializable
 
-    property id : String, cluster_id : String, node_id : String, type : String, state : String, data : String, response : String, node = MoanaTypes::Node.new
+    property id : String = "", cluster_id : String = "", node_id : String = "", type : String = "", state : String = "", data : String = "", response : String = "", node = MoanaTypes::Node.new
+
+    def initialize
+    end
   end
 
   struct Brick

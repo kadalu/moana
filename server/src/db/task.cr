@@ -5,17 +5,34 @@ require "moana_types"
 require "sqlite3"
 
 TASK_SELECT_QUERY = <<-SQL
-  SELECT id,
-         cluster_id,
-         node_id,
-         type,
-         state,
-         data,
-         response
+  SELECT tasks.id,
+         tasks.cluster_id,
+         tasks.node_id,
+         nodes.hostname AS node_hostname,
+         nodes.endpoint AS node_endpoint,
+         tasks.type,
+         tasks.state,
+         tasks.data,
+         tasks.response
   FROM tasks
+  INNER JOIN nodes ON tasks.node_id = nodes.id
 SQL
 
 module MoanaDB
+  struct TaskView
+    include DB::Serializable
+
+    property id : String,
+             cluster_id : String,
+             node_id : String,
+             node_hostname : String,
+             node_endpoint : String,
+             type : String,
+             state : String,
+             data : String,
+             response : String
+  end
+
   def self.create_table_tasks(conn = @@conn)
     conn.not_nil!.exec "CREATE TABLE IF NOT EXISTS tasks (
        id         UUID PRIMARY KEY,
@@ -32,20 +49,46 @@ module MoanaDB
     conn.not_nil!.exec "CREATE INDEX IF NOT EXISTS tasks_node_id_idx ON tasks (node_id);"
   end
 
+  def self.grouped_tasks(data : Array(TaskView))
+    data.map do |row|
+      task = MoanaTypes::Task.new
+
+      task.id = row.id
+      task.node = MoanaTypes::Node.new
+      task.node.id = row.node_id
+      task.node.hostname = row.node_hostname
+      task.node.endpoint = row.node_endpoint
+      task.type = row.type
+      task.state = row.state
+      task.data = row.data
+      task.response = row.response
+
+      task
+    end
+  end
+
   def self.list_tasks(conn = @@conn)
-    conn.not_nil!.query_all(TASK_SELECT_QUERY, as: MoanaTypes::Task)
+    grouped_tasks(
+      conn.not_nil!.query_all(TASK_SELECT_QUERY, as: TaskView)
+    )
   end
 
   def self.list_tasks(cluster_id : String, conn = @@conn)
-    conn.not_nil!.query_all("#{TASK_SELECT_QUERY} WHERE cluster_id = ?", cluster_id, as: MoanaTypes::Task)
+    grouped_tasks(
+      conn.not_nil!.query_all("#{TASK_SELECT_QUERY} WHERE tasks.cluster_id = ?", cluster_id, as: TaskView)
+    )
   end
 
   def self.list_tasks(cluster_id : String, node_id : String, conn = @@conn)
-    conn.not_nil!.query_all("#{TASK_SELECT_QUERY} WHERE cluster_id = ? AND node_id = ?", cluster_id, node_id, as: MoanaTypes::Task)
+    grouped_tasks(
+      conn.not_nil!.query_all("#{TASK_SELECT_QUERY} WHERE tasks.cluster_id = ? AND tasks.node_id = ?", cluster_id, node_id, as: TaskView)
+    )
   end
 
   def self.get_task(id : String, conn = @@conn)
-    tasks = conn.not_nil!.query_all("#{TASK_SELECT_QUERY} WHERE id = ?", id, as: MoanaTypes::Task)
+    tasks = grouped_tasks(
+      conn.not_nil!.query_all("#{TASK_SELECT_QUERY} WHERE tasks.id = ?", id, as: TaskView)
+    )
 
     return nil if tasks.size == 0
     tasks[0]
