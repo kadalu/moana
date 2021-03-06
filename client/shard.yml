@@ -9,8 +9,6 @@ description: |
 
 license: Apache-2.0
 
-crystal: 0.35.1
-
 dependencies:
   moana_types:
     path: ../types
