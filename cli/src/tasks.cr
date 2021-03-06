@@ -1,31 +1,50 @@
 require "./helpers"
 
+struct TaskError
+  include JSON::Serializable
+
+  property error : String, status_code : Int32, node : MoanaTypes::Node
+end
+
 struct TaskListCommand < Command
   def handle
     cluster_id = cluster_id_from_name(@args.cluster.name)
     client = moana_client(@gflags.kadalu_mgmt_server)
     cluster = client.cluster(cluster_id)
     begin
+      # TODO: Show summary of the task from task.data
       if @args.task.id != ""
-        tasks_data = [cluster.task(@args.task.id).get]
+        task = cluster.task(@args.task.id).get
+
+        puts "Task ID: #{task.id}"
+        puts "State: #{task.state}"
+        puts "Assigned To: #{task.node.hostname}"
+        puts "Type: #{task.type}"
+
+        if task.state == "Failed"
+          puts "Failures:"
+
+          errors = Array(TaskError).from_json(task.response)
+          errors.each do |err|
+            puts "  Node: #{err.node.hostname} (ID: #{err.node.id})"
+            puts "  Status code: #{err.status_code}"
+            puts "  Error: #{err.error}"
+            puts
+          end
+        end
       else
         tasks_data = cluster.tasks
-      end
-
-      if tasks_data.size > 0
-        printf("%-36s  %-10s  %-20s  %-15s\n", "Task ID", "State", "Assigned To", "Type")
-      end
-      tasks_data.each do |task|
-        hostname = ""
-        if node = task.node
-          node_id = node.id
-          hostname = node.hostname
+        if tasks_data.size > 0
+          printf("%-36s  %-10s  %-20s  %-15s\n", "Task ID", "State", "Assigned To", "Type")
         end
-        printf("%-36s  %-10s  %-20s  %-15s\n",
-               task.id,
-               task.state,
-               hostname,
-               task.type)
+        tasks_data.each do |task|
+          printf("%-36s  %-10s  %-20s  %-15s\n",
+                 task.id,
+                 task.state,
+                 task.node.hostname,
+                 task.type
+                )
+        end
       end
     rescue ex : MoanaClient::MoanaClientException
       handle_moana_client_exception(ex)

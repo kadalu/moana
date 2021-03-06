@@ -9,6 +9,10 @@ get "/api/v1/clusters/:cluster_id/tasks" do |env|
   MoanaDB.list_tasks(env.params.url["cluster_id"]).to_json
 end
 
+get "/api/v1/clusters/:cluster_id/tasks/:id" do |env|
+  MoanaDB.get_task(env.params.url["id"]).to_json
+end
+
 get "/api/v1/tasks/:cluster_id/:node_id" do |env|
   t = MoanaDB.list_tasks(env.params.url["cluster_id"], env.params.url["node_id"]).to_json
   t
