@@ -67,7 +67,8 @@ class AuthHandler < Kemal::Handler
   end
 end
 
-MoanaDB.init(".")
+workdir = ENV.fetch("WORKDIR", "/var/lib/kadalu")
+MoanaDB.init(workdir)
 
 add_handler AuthHeaderHandler.new
 add_handler AuthHandler.new
