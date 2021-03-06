@@ -17,4 +17,4 @@ VERSION=${VERSION} time -v shards build --static --release --stats --time
 mv bin/kadalu bin/kadalu-amd64
 "
 
-docker run --rm -it -v $PWD:/workspace -w /workspace crystallang/crystal:0.35.1-alpine /bin/sh -c "$CMDS"
+docker run --rm -it -v $PWD:/workspace -w /workspace crystallang/crystal:0.36.1-alpine /bin/sh -c "$CMDS"

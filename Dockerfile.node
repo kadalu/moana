@@ -1,4 +1,4 @@
-FROM crystallang/crystal:0.35.1-alpine as crystal
+FROM crystallang/crystal:0.36.1-alpine as crystal
 
 WORKDIR /app
 COPY node ./node
