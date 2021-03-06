@@ -31,7 +31,15 @@ docker network create kadalu
 Run one instance of `kadalu-storage/server` container and spawn multiple instance of `kadalu-storage/node` containers as required.
 
 ```
-docker run -d -v /sys/fs/cgroup/:/sys/fs/cgroup:ro --cap-add SYS_ADMIN --name kadalu-control --network kadalu kadalu-storage/server
+docker run -d \
+    -v /sys/fs/cgroup/:/sys/fs/cgroup:ro \
+    --cap-add SYS_ADMIN \
+    --name kadalu-control \
+    -v /root/.kadalu/data-kadalu-control:/var/lib/kadalu \
+    -v /root/.kadalu/data-kadalu-control-config:/root/.kadalu \
+    --network kadalu \
+    --hostname kadalu-control
+    kadalu-storage/server
 ```
 
 Login and check if `kadalu-server` is running
@@ -53,8 +61,22 @@ Mar 05 08:01:45 e044bf61ea76 kadalu-server[34]: [development] Kemal is ready to 
 ```
 
 ```
-docker run -d -v /sys/fs/cgroup/:/sys/fs/cgroup:ro --cap-add SYS_ADMIN --name node1 --network kadalu --hostname node1.kadalu kadalu-storage/node
-docker run -d -v /sys/fs/cgroup/:/sys/fs/cgroup:ro --cap-add SYS_ADMIN --name node2 --network kadalu --hostname node2.kadalu kadalu-storage/node
+docker run -d \
+    -v /sys/fs/cgroup/:/sys/fs/cgroup:ro \
+    -v /Users/aravinda/kadalu-data/data-node1:/var/lib/kadalu \
+    --cap-add SYS_ADMIN \
+    --name node1 \
+    --network kadalu \
+    --hostname node1.kadalu \
+    kadalu-storage/node
+docker run -d \
+    -v /sys/fs/cgroup/:/sys/fs/cgroup:ro \
+    -v /Users/aravinda/kadalu-data/data-node2:/var/lib/kadalu \
+    --cap-add SYS_ADMIN \
+    --name node2 \
+    --network kadalu \
+    --hostname node2.kadalu \
+    kadalu-storage/node
 ```
 
 Login to check if `kadalu-node` service is running
@@ -163,8 +185,6 @@ c576818e-8c20-48c5-b92b-603a1aa37e11  gvol1           Distribute      Started
 
 ## TODO:
 
-* Add Volumes for `/var/lib/kadalu` for each Node containers
-* Add Volume for `kadalu-storage/server`(For Sqlite db and other things)
 * Set the required environment variables
 * How to communicate between containers(Self-heal daemon requires to connect to other storage nodes, kadalu-node agent needs to connect to Kadalu Server/Control plane)
 * Access brick directories inside `kadalu-storage/node` container(Dynamic access when new brick added)
