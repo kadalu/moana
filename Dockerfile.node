@@ -18,6 +18,7 @@ FROM ubuntu:20.04 as prod
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PATH="/kadalu/bin:/opt/bin:/opt/sbin:$PATH"
 COPY --from=kadalu-storage/builder:latest /opt /opt
+ENV GLUSTERFSD=/opt/sbin/glusterfsd
 
 RUN apt-get update -yq && \
     apt-get install -y --no-install-recommends python3 xfsprogs libtirpc3 init && \
