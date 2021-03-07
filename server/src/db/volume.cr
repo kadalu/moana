@@ -134,7 +134,7 @@ module MoanaDB
     end
   end
 
-  def self.list_volumes(user_id : String, cluster_id : String, conn = @@conn)
+  def self.list_volumes(user_id : String, cluster_id : String, filters = MoanaTypes::VolumeFilter.new, conn = @@conn)
     query = "SELECT DISTINCT volume_id FROM roles WHERE cluster_id = ? AND
              user_id = ? AND name IN (?, ?, ?)"
     params = [] of DB::Any
@@ -148,6 +148,19 @@ module MoanaDB
     show_all_volumes = volume_ids.includes?("all")
 
     query = "#{VOLUME_SELECT_QUERY} WHERE volumes.cluster_id = ?"
+    params = [] of DB::Any
+    params << cluster_id
+
+    if !filters.nil?
+      if filters.volume_types.size > 0
+        values = [] of String
+        filters.volume_types.each do |name|
+          values << "?"
+          params << name
+        end
+        query += " AND volumes.type IN (#{values.join(",")})"
+      end
+    end
 
     volumes = grouped_volumes(
       conn.not_nil!.query_all(query, cluster_id, as: VolumeView)

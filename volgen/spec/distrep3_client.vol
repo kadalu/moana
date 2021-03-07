@@ -1,4 +1,4 @@
-volume gvol1-replicate-1-client-2
+volume gvol1-replicate-1-client-5
     type protocol/client
     option remote-subvolume /bricks/gvol1/b6
     option remote-host node6.kadalu
@@ -6,7 +6,7 @@ volume gvol1-replicate-1-client-2
 end-volume
 
 
-volume gvol1-replicate-1-client-1
+volume gvol1-replicate-1-client-4
     type protocol/client
     option remote-subvolume /bricks/gvol1/b5
     option remote-host node5.kadalu
@@ -14,7 +14,7 @@ volume gvol1-replicate-1-client-1
 end-volume
 
 
-volume gvol1-replicate-1-client-0
+volume gvol1-replicate-1-client-3
     type protocol/client
     option remote-subvolume /bricks/gvol1/b4
     option remote-host node4.kadalu
@@ -24,7 +24,8 @@ end-volume
 
 volume gvol1-replicate-1
     type cluster/replicate
-    subvolumes gvol1-replicate-1-client-0 gvol1-replicate-1-client-1 gvol1-replicate-1-client-2
+    option afr-pending-xattr gvol1-client-3,gvol1-client-4,gvol1-client-5
+    subvolumes gvol1-replicate-1-client-3 gvol1-replicate-1-client-4 gvol1-replicate-1-client-5
 end-volume
 
 
@@ -54,6 +55,7 @@ end-volume
 
 volume gvol1-replicate-0
     type cluster/replicate
+    option afr-pending-xattr gvol1-client-0,gvol1-client-1,gvol1-client-2
     subvolumes gvol1-replicate-0-client-0 gvol1-replicate-0-client-1 gvol1-replicate-0-client-2
 end-volume
 

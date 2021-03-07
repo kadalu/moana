@@ -1,20 +1,12 @@
 ---
-volume:
-  - name: meta-autoload
-    type: meta
+cluster:
   - type: debug/io-stats
-    name: "{{ volume.name }}"
-  - type: "performance/write-behind"
-    name: "{{ volume.name }}-write-behind"
-  - type: "features/utime"
-    name: "{{ volume.name }}-utime"
-  - type: "cluster/distribute"
-    name: "{{ volume.name }}-distribute"
-    include_when: more_than_one_subvol
+    name: "glustershd"
 subvol:
   - type: "cluster/{{ subvol.type }}"
     name: "{{ volume.name }}-{{ subvol.type }}-{{ subvol.index }}"
     options:
+      iam-self-heal-daemon: "yes"
       afr-pending-xattr: "{{ subvol.afr-pending-xattr }}"
 brick:
   - type: "protocol/client"

@@ -11,7 +11,7 @@ end
 class VolfileTmpl
   include YAML::Serializable
 
-  property volume = [] of Graph, subvol = [] of Graph, brick = [] of Graph
+  property cluster = [] of Graph, volume = [] of Graph, subvol = [] of Graph, brick = [] of Graph
 end
 
 def apply_filters(vars)
@@ -82,7 +82,10 @@ class Volfile
 
     if opts = graph.options
       opts.each do |key, value|
-        out += "    option #{key} #{value}\n"
+        # Add only if option value is not empty
+        if value != ""
+          out += "    option #{key} #{value}\n"
+        end
       end
     end
 
@@ -173,6 +176,29 @@ class Volfile
     vars["subvol.index"] = "#{sidx}"
     vars["subvol.number_of_bricks"] = "#{subvol.bricks.size}"
 
+    # Afr records dirty flag details in xattr.
+    # The name of the xattr is <volume-name>-client-<index>
+    # These xattrs names are specified as afr-pending-xattr
+    # in volfile so that both Client and Self heal
+    # daemon will understand. The index starts from zero and
+    # will not reset for each sub volume. If a brick is removed,
+    # index will not change for existing bricks. When new bricks
+    # added it will get new index as len(volinfo.Bricks) + 1
+    # TODO: If a subvolume is removed then this may go wrong
+    # As a alternative, Brick ID can be used as part of xattr
+    # name <volume-name>-client-<brick-id>. But this will break
+    # the backward compatibility.
+    vars["subvol.afr-pending-xattr"] = ""
+    if subvol.type.downcase == "replicate" || subvol.type.downcase == "disperse"
+      afr_pending_xattrs = [] of String
+      subvol.bricks.each_with_index do |brick, bidx|
+        xattr_idx = sidx*subvol.bricks.size+bidx
+        afr_pending_xattrs << "#{volume.name}-client-#{xattr_idx}"
+      end
+
+      vars["subvol.afr-pending-xattr"] = afr_pending_xattrs.join(",")
+    end
+
     vars
   end
 
@@ -182,13 +208,64 @@ class Volfile
     vars["brick.node_id"] = brick.node.id
     vars["brick.type"] = brick.type.downcase
     vars["brick.path"] = brick.path
-    vars["brick.index"] = "#{bidx}"
+    vars["brick.index"] = "#{sidx*subvol.bricks.size + bidx}"
     vars["brick.port"] = "#{brick.port}"
 
     vars
   end
 
-  # TODO: Implement Cluster level volfile
+  def self.cluster_level(name, tmpl, volumes)
+    volfile_tmpl = VolfileTmpl.from_yaml(tmpl)
+
+    # Create graph instance with first template element
+    graph = Volfile.new(name, volfile_tmpl.cluster[0], Hash(String, String).new, Hash(String, String).new)
+
+    volumes.each_with_index do |volume, vidx|
+      opts = volume.options
+      vvars = Volfile.volume_variables(volume, vidx)
+
+      vgraph = graph
+      if volfile_tmpl.volume.size > 0
+        vgraph = Volfile.new(name, volfile_tmpl.volume[0], vvars, opts)
+        volfile_tmpl.volume[1 .. -1].each do |vol_tmpl|
+          if Volfile.include_when?(vol_tmpl, vvars)
+            vgraph.add(Volfile.new(name, vol_tmpl, vvars, opts))
+          end
+        end
+      end
+
+      volume.subvols.each_with_index do |subvol, sidx|
+        svars = Volfile.subvol_variables(volume, subvol, 0, sidx)
+        sgraph = Volfile.new(name, volfile_tmpl.subvol[0], svars, opts)
+
+        volfile_tmpl.subvol[1 .. -1].each do |subvol_tmpl|
+          if Volfile.include_when?(subvol_tmpl, svars)
+            sgraph.add(Volfile.new(name, subvol_tmpl, svars, opts))
+          end
+        end
+
+        subvol.bricks.each_with_index do |brick, bidx|
+          bvars = Volfile.brick_variables(volume, subvol, brick, 0, sidx, bidx)
+          bgraph = Volfile.new(name, volfile_tmpl.brick[0], bvars, opts)
+
+          volfile_tmpl.brick[1 .. -1].each do |brick_tmpl|
+            if Volfile.include_when?(brick_tmpl, bvars)
+              bgraph.add(Volfile.new(name, brick_tmpl, bvars, opts))
+            end
+          end
+
+          sgraph.add(bgraph, sibling=true)
+        end
+
+        vgraph.add(sgraph, sibling=true)
+      end
+      if volfile_tmpl.volume.size > 0
+        graph.add(vgraph, sibling=true)
+      end
+    end
+
+    graph.volgen.reverse!.join("\n")
+  end
 
   def self.volume_level(name, tmpl, volume)
     volfile_tmpl = VolfileTmpl.from_yaml(tmpl)
