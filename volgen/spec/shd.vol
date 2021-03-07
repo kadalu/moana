@@ -24,31 +24,14 @@ end-volume
 
 volume gvol1-replicate-0
     type cluster/replicate
+    option iam-self-heal-daemon yes
     option afr-pending-xattr gvol1-client-0,gvol1-client-1,gvol1-client-2
     subvolumes gvol1-replicate-0-client-0 gvol1-replicate-0-client-1 gvol1-replicate-0-client-2
 end-volume
 
 
-volume gvol1-utime
-    type features/utime
-    subvolumes gvol1-replicate-0
-end-volume
-
-
-volume gvol1-write-behind
-    type performance/write-behind
-    subvolumes gvol1-utime
-end-volume
-
-
-volume gvol1
+volume glustershd
     type debug/io-stats
-    subvolumes gvol1-write-behind
-end-volume
-
-
-volume meta-autoload
-    type meta
-    subvolumes gvol1
+    subvolumes gvol1-replicate-0
 end-volume
 

@@ -1,5 +1,25 @@
 require "moana_volgen"
 
+SHD_VOLFILE = <<-YAML
+---
+cluster:
+  - type: debug/io-stats
+    name: "glustershd"
+subvol:
+  - type: "cluster/{{ subvol.type }}"
+    name: "{{ volume.name }}-{{ subvol.type }}-{{ subvol.index }}"
+    options:
+      iam-self-heal-daemon: "yes"
+      afr-pending-xattr: "{{ subvol.afr-pending-xattr }}"
+brick:
+  - type: "protocol/client"
+    name: "{{ volume.name }}-{{ subvol.type }}-{{ subvol.index }}-client-{{ brick.index }}"
+    options:
+      remote-subvolume: "{{ brick.path }}"
+      remote-host: "{{ brick.node }}"
+      remote-port: "{{ brick.port }}"
+YAML
+
 CLIENT_VOLFILE = <<-YAML
 ---
 volume:
@@ -17,6 +37,8 @@ volume:
 subvol:
   - type: "cluster/{{ subvol.type }}"
     name: "{{ volume.name }}-{{ subvol.type }}-{{ subvol.index }}"
+    options:
+      afr-pending-xattr: "{{ subvol.afr-pending-xattr }}"
 brick:
   - type: "protocol/client"
     name: "{{ volume.name }}-{{ subvol.type }}-{{ subvol.index }}-client-{{ brick.index }}"

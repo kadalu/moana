@@ -47,4 +47,11 @@ module MoanaTypes
     def initialize
     end
   end
+
+  struct VolumeFilter
+    property volume_types = [] of String
+
+    def initialize
+    end
+  end
 end

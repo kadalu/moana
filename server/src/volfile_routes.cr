@@ -6,8 +6,25 @@ require "./default_volfiles"
 require "./helpers"
 
 get "/api/v1/clusters/:cluster_id/volfiles/:name" do |env|
-  env.response.status_code = 500
-  {status: "not implemented"}.to_json
+  filters = MoanaTypes::VolumeFilter.new
+
+  if env.params.query["volume_types"]?
+    filters.volume_types = env.params.query["volume_types"].split(",")
+  end
+
+  volumes = MoanaDB.list_volumes(env.get("user_id").as(String), env.params.url["cluster_id"], filters)
+  if volumes.size == 0
+    {"content" => ""}.to_json
+  else
+    # TODO: Get Volfile template from Db based on params["name"]
+    volfile_content = Volfile.cluster_level(env.params.url["name"], SHD_VOLFILE, volumes)
+    if volfile_content == ""
+      env.response.status_code = 500
+      {status: "failed to get volfile content"}.to_json
+    else
+      {"content" => volfile_content}.to_json
+    end
+  end
 end
 
 get "/api/v1/clusters/:cluster_id/volfiles/:name/:volume_id" do |env|
