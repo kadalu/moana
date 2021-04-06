@@ -8,6 +8,8 @@ require "./volfile"
 require "./helpers"
 require "./users"
 
+VERSION = {{ `shards version #{__DIR__}`.chomp.stringify }}
+
 class MoanaCommands
   @args = Args.new
   @pos_args = [] of String

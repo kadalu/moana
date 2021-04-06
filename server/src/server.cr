@@ -14,6 +14,8 @@ require "./role_routes"
 require "./app_routes"
 require "./error_routes"
 
+VERSION = {{ `shards version #{__DIR__}`.chomp.stringify }}
+
 # Set the content type for all APIs
 before_all do |env|
   env.response.content_type = "application/json"

@@ -4,6 +4,8 @@ require "./watcher"
 require "./routes"
 require "./node_conf"
 
+VERSION = {{ `shards version #{__DIR__}`.chomp.stringify }}
+
 # Initialize the node configuration
 node_conf = NodeConf.new
 

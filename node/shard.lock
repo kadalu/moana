@@ -2,19 +2,19 @@ version: 2.0
 shards:
   db:
     git: https://github.com/crystal-lang/crystal-db.git
-    version: 0.10.0
+    version: 0.10.1
 
   exception_page:
     git: https://github.com/crystal-loot/exception_page.git
-    version: 0.1.4
+    version: 0.1.5
 
   kemal:
     git: https://github.com/kemalcr/kemal.git
-    version: 0.27.0
+    version: 1.0.0+git.commit.6e72ebb447caa29e9868af546d1d0b2343a68553
 
   kilt:
     git: https://github.com/jeromegn/kilt.git
-    version: 0.4.0
+    version: 0.4.1
 
   moana_client:
     path: ../client
@@ -26,7 +26,7 @@ shards:
 
   radix:
     git: https://github.com/luislavena/radix.git
-    version: 0.3.9
+    version: 0.4.1
 
   xattr:
     git: https://github.com/ettomatic/xattr.git

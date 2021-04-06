@@ -19,6 +19,7 @@ dependencies:
 
   kemal:
     github: kemalcr/kemal
+    commit: 6e72ebb447caa29e9868af546d1d0b2343a68553
 
   moana_types:
     path: ../types
