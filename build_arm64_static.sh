@@ -16,17 +16,17 @@ apk add --update --no-cache --force-overwrite \
     yaml-static \
     sqlite-dev sqlite-static
 cd server
-shards install --production
+shards install --ignore-crystal-version --production
 VERSION=${VERSION} time -v shards build --static --release --stats --time
 chown 1000:1000 -R bin
 mv bin/kadalu-server bin/kadalu-server-arm64
 cd ../node
-shards install --production
+shards install --ignore-crystal-version --production
 VERSION=${VERSION} time -v shards build --static --release --stats --time
 chown 1000:1000 -R bin
 mv bin/kadalu-node bin/kadalu-node-arm64
 cd ../cli
-shards install --production
+shards install --ignore-crystal-version --production
 VERSION=${VERSION} time -v shards build --static --release --stats --time
 chown 1000:1000 -R bin
 mv bin/kadalu bin/kadalu-arm64

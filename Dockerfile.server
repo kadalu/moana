@@ -1,4 +1,4 @@
-FROM crystallang/crystal:0.36.1-alpine as crystal
+FROM crystallang/crystal:1.0.0-alpine as crystal
 
 WORKDIR /app
 COPY server ./server
@@ -9,10 +9,10 @@ COPY volgen ./volgen
 
 RUN apk add --update --no-cache --force-overwrite sqlite-dev sqlite-static
 RUN cd server && shards install --production
-RUN cd server && VERSION=${VERSION} shards build --static --release --stats --time
+RUN cd server && shards build --static --release --stats --time
 
 RUN cd cli && shards install --production
-RUN cd cli && VERSION=${VERSION} shards build --static --release --stats --time
+RUN cd cli && shards build --static --release --stats --time
 
 FROM ubuntu:20.04 as prod
 
