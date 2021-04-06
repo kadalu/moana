@@ -22,4 +22,8 @@ end
 # node and then broadcast to all Participating nodes within the
 # Cluster and updates the response back to Moana Server.
 Kemal.config.port = node_conf.port
+
+# Application name
+Kemal.config.app_name = "kadalu-node"
+
 Kemal.run
