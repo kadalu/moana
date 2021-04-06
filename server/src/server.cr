@@ -75,6 +75,9 @@ MoanaDB.init(workdir)
 add_handler AuthHeaderHandler.new
 add_handler AuthHandler.new
 
+# Application name
+Kemal.config.app_name = "kadalu-server"
+
 # All the routes are set by respective controllers,
 # Start the server.
 Kemal.run
