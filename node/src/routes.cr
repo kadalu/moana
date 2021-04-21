@@ -26,7 +26,7 @@ post "/api/v1/join" do |env|
   task = Task.from_json(
     {
       type: "node_join",
-      data: req.to_json
+      data: req.to_json,
     }.to_json
   )
 

@@ -15,7 +15,7 @@ module MoanaDB
     include DB::Serializable
 
     property name = "",
-             value = ""
+      value = ""
   end
 
   def self.create_table_options(conn = @@conn)

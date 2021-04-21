@@ -25,7 +25,7 @@ struct VolumeCreateTask < Task
         next if node_conf.node_id != brick.node.id
         begin
           create_brick(parsed, brick)
-        rescue ex: CreateBrickException
+        rescue ex : CreateBrickException
           raise TaskException.new("#{ex}", 500)
         end
       end
@@ -132,7 +132,7 @@ struct VolumeExpandTask < Task
 
         begin
           create_brick(parsed, brick)
-        rescue ex: CreateBrickException
+        rescue ex : CreateBrickException
           raise TaskException.new("#{ex}", 500)
         end
       end

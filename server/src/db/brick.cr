@@ -18,11 +18,11 @@ module MoanaDB
     include DB::Serializable
 
     property id = "",
-             path = "",
-             port : Int32 = 0,
-             device = "",
-             state = "",
-             type = ""
+      path = "",
+      port : Int32 = 0,
+      device = "",
+      state = "",
+      type = ""
   end
 
   def self.create_table_bricks(conn = @@conn)

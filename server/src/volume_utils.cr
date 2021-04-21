@@ -2,11 +2,11 @@ require "uuid"
 
 require "moana_types"
 
-DISTRIBUTE = "Distribute"
-REPLICATE = "Replicate"
-DISPERSE = "Disperse"
+DISTRIBUTE            = "Distribute"
+REPLICATE             = "Replicate"
+DISPERSE              = "Disperse"
 DISTRIBUTED_REPLICATE = "Distribute Replicate"
-DISTRIBUTED_DISPERSE = "Distribute Disperse"
+DISTRIBUTED_DISPERSE  = "Distribute Disperse"
 
 def update_node_details(volume, nodes)
   data = Hash(String, MoanaTypes::Node).new
@@ -187,13 +187,13 @@ def volume_from_request(req : MoanaTypes::VolumeCreateRequest)
   volume.type = subvol_type
   volume.type = "#{DISTRIBUTE} #{subvol_type}" if number_of_subvols > 1
 
-  volume.subvols = (0 .. number_of_subvols-1).map do |sidx|
+  volume.subvols = (0..number_of_subvols - 1).map do |sidx|
     subvol = MoanaTypes::Subvol.new
 
     subvol.replica_count = req.replica_count
     subvol.disperse_count = req.disperse_count
     subvol.type = subvol_type
-    subvol.bricks = (0 .. subvol_bricks_count-1).map do |bidx|
+    subvol.bricks = (0..subvol_bricks_count - 1).map do |bidx|
       brickreq = req.bricks[sidx * subvol_bricks_count + bidx]
       brick = MoanaTypes::Brick.new
       brick.id = UUID.random.to_s
@@ -220,13 +220,13 @@ def volume_from_request(volume : MoanaTypes::Volume, req : MoanaTypes::VolumeExp
   # Change Volume type if number of existing subvols was 1
   volume.type = "#{DISTRIBUTE} #{subvol_type}" if volume.subvols.size == 1
 
-  (0 .. number_of_new_subvols - 1).each do |sidx|
+  (0..number_of_new_subvols - 1).each do |sidx|
     subvol = MoanaTypes::Subvol.new
 
     subvol.replica_count = volume.replica_count
     subvol.disperse_count = volume.disperse_count
     subvol.type = subvol_type
-    subvol.bricks = (0 .. subvol_bricks_count-1).map do |bidx|
+    subvol.bricks = (0..subvol_bricks_count - 1).map do |bidx|
       brickreq = req.bricks[sidx * subvol_bricks_count + bidx]
       brick = MoanaTypes::Brick.new
       brick.id = UUID.random.to_s

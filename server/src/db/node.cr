@@ -30,7 +30,7 @@ module MoanaDB
     parts = [] of String
     params = [] of DB::Any
     node_ids.each do |node_id|
-      parts <<  "?"
+      parts << "?"
       params << node_id
     end
     query = "#{NODE_SELECT_QUERY} WHERE id IN (#{parts.join(",")})"

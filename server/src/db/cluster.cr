@@ -33,10 +33,10 @@ module MoanaDB
     include DB::Serializable
 
     property id : String,
-             name : String,
-             node_id : String?,
-             node_hostname : String?,
-             node_endpoint : String?
+      name : String,
+      node_id : String?,
+      node_hostname : String?,
+      node_endpoint : String?
   end
 
   def self.create_table_clusters(conn = @@conn)

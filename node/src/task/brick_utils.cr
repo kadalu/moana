@@ -33,8 +33,8 @@ end
 class BrickXattrException < CreateBrickException
 end
 
-MOUNT_CMD = "mount"
-UMOUNT_CMD = "umount"
+MOUNT_CMD            = "mount"
+UMOUNT_CMD           = "umount"
 VOLUME_ID_XATTR_NAME = "trusted.glusterfs.volume-id"
 
 def execute(cmd, args)
@@ -54,15 +54,14 @@ abstract struct Brick
   @mount_path = ""
 
   property volume : MoanaTypes::Volume,
-           brick : MoanaTypes::Brick,
-           brick_fs = ""
-
+    brick : MoanaTypes::Brick,
+    brick_fs = ""
 
   use_json_discriminator "brick_fs", {
-    xfs: XfsBrick,
-    zfs: ZfsBrick,
+    xfs:  XfsBrick,
+    zfs:  ZfsBrick,
     ext4: Ext4Brick,
-    dir: DirBrick
+    dir:  DirBrick,
   }
 
   def mkfs
@@ -97,7 +96,7 @@ abstract struct Brick
     end
   end
 
-  def wipe()
+  def wipe
     pass
   end
 
@@ -112,7 +111,7 @@ abstract struct Brick
       if val != test_xattr_value
         raise XattrSupportException.new("Xattr value mismatch. actual=#{val} expected=#{test_xattr_value}")
       end
-    rescue ex: IO::Error
+    rescue ex : IO::Error
       raise XattrSupportException.new("Extended attributes are not supported(Error: #{ex.os_error})")
     end
   end
@@ -125,7 +124,7 @@ abstract struct Brick
       #   raise BrickXattrException.new("Brick is already used with another Volume")
       # end
       xattr[VOLUME_ID_XATTR_NAME] = volume_id.bytes.to_slice
-    rescue ex: IO::Error
+    rescue ex : IO::Error
       raise BrickXattrException.new("Failed to set Volume ID Xattr(Error: #{ex.os_error})")
     end
   end
@@ -199,9 +198,9 @@ def create_brick(volume, brickdata)
   # respective instance(XfsBrick, ZfsBrick, Ext4Brick and DirBrick)
   brick = Brick.from_json(
     {
-      volume: volume,
-      brick: brickdata,
-      brick_fs: volume.brick_fs
+      volume:   volume,
+      brick:    brickdata,
+      brick_fs: volume.brick_fs,
     }.to_json
   )
 
@@ -239,10 +238,10 @@ end
 def systemctl_service(name, action)
   # Enable the Service
   ret, resp = execute(
-         "systemctl", [
-           action,
-           name
-         ])
+    "systemctl", [
+    action,
+    name,
+  ])
   if ret != 0
     raise SystemctlException.new("Failed to #{action} service: #{resp}")
   end
@@ -252,13 +251,13 @@ def start_brick(workdir, volume, brick)
   # Create the config file
   filename = "#{workdir}/#{brick.node.hostname}:#{brick.path.gsub("/", "-")}.json"
   File.write(filename, {
-               "path" => brick.path,
-               "node.id" => brick.node.id,
-               "node.hostname" => brick.node.hostname,
-               "volume.name" => volume.name,
-               "port" => brick.port,
-               "device" => brick.device
-             }.to_json)
+    "path"          => brick.path,
+    "node.id"       => brick.node.id,
+    "node.hostname" => brick.node.hostname,
+    "volume.name"   => volume.name,
+    "port"          => brick.port,
+    "device"        => brick.device,
+  }.to_json)
 
   service_name = "kadalu-brick@#{brick.node.hostname}:#{brick.path.gsub("/", "-")}.service"
   systemctl_service(service_name, "enable")

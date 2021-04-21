@@ -39,15 +39,15 @@ class NodeConf
   include JSON::Serializable
 
   property hostname = "",
-           endpoint_https = "no",
-           port : Int32 = DEFAULT_PORT,
-           endpoint = "",
-           workdir = "",
-           config_file = "",
-           cluster_id = "",
-           node_id = "",
-           moana_url = "",
-           token = ""
+    endpoint_https = "no",
+    port : Int32 = DEFAULT_PORT,
+    endpoint = "",
+    workdir = "",
+    config_file = "",
+    cluster_id = "",
+    node_id = "",
+    moana_url = "",
+    token = ""
 
   def initialize
     # Get hostname from env variable, if not

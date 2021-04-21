@@ -38,21 +38,21 @@ module MoanaDB
     include DB::Serializable
 
     property id : String,
-             name : String,
-             state : String,
-             type : String,
-             replica_count : Int32,
-             disperse_count : Int32,
-             brick_fs : String,
-             fs_opts : String,
-             brick_id : String,
-             brick_path : String,
-             brick_device : String,
-             brick_port : Int32,
-             brick_state : String,
-             node_id : String,
-             node_hostname : String,
-             node_endpoint : String
+      name : String,
+      state : String,
+      type : String,
+      replica_count : Int32,
+      disperse_count : Int32,
+      brick_fs : String,
+      fs_opts : String,
+      brick_id : String,
+      brick_path : String,
+      brick_device : String,
+      brick_port : Int32,
+      brick_state : String,
+      node_id : String,
+      node_hostname : String,
+      node_endpoint : String
   end
 
   def self.create_table_volumes(conn = @@conn)
@@ -81,13 +81,13 @@ module MoanaDB
       number_of_subvols = bricks_data.size / subvol_bricks_count
     end
 
-    (0 .. number_of_subvols-1).map do |sidx|
+    (0..number_of_subvols - 1).map do |sidx|
       subvol = MoanaTypes::Subvol.new
 
       subvol.replica_count = entry.replica_count
       subvol.disperse_count = entry.disperse_count
       subvol.type = subvol_type
-      subvol.bricks = (0 .. subvol_bricks_count-1).map do |bidx|
+      subvol.bricks = (0..subvol_bricks_count - 1).map do |bidx|
         bricks_data[sidx * subvol_bricks_count + bidx]
       end
 
@@ -222,7 +222,7 @@ module MoanaDB
             brick.id,
             cluster_id,
             volume.id,
-            idx+1,
+            idx + 1,
             brick.node.id,
             brick.path == "" ? "-" : brick.path,
             brick.device == "" ? "-" : brick.device,
@@ -253,7 +253,7 @@ module MoanaDB
             brick.id,
             cluster_id,
             volume.id,
-            idx+1,
+            idx + 1,
             brick.node.id,
             brick.path == "" ? "-" : brick.path,
             brick.device == "" ? "-" : brick.device,

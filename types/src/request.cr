@@ -9,10 +9,10 @@ module MoanaTypes
     include JSON::Serializable
 
     property moana_url = "",
-             cluster_id = "",
-             hostname = "",
-             endpoint = "",
-             token = ""
+      cluster_id = "",
+      hostname = "",
+      endpoint = "",
+      token = ""
 
     def initialize
     end
@@ -22,11 +22,11 @@ module MoanaTypes
     include JSON::Serializable
 
     property node_id = "",
-             path = "",
-             device = "",
-             port : Int32 = 0,
-             node_hostname = "",
-             node_endpoint = ""
+      path = "",
+      device = "",
+      port : Int32 = 0,
+      node_hostname = "",
+      node_endpoint = ""
 
     def initialize
     end
@@ -36,13 +36,13 @@ module MoanaTypes
     include JSON::Serializable
 
     property name = "",
-             replica_count : Int32 = 1,
-             disperse_count : Int32 = 1,
-             bricks = [] of MoanaTypes::BrickRequest,
-             brick_fs = "",
-             fs_opts = "",
-             start = true,
-             cluster_id = ""
+      replica_count : Int32 = 1,
+      disperse_count : Int32 = 1,
+      bricks = [] of MoanaTypes::BrickRequest,
+      brick_fs = "",
+      fs_opts = "",
+      start = true,
+      cluster_id = ""
 
     def initialize
     end
@@ -52,8 +52,8 @@ module MoanaTypes
     include JSON::Serializable
 
     property replica_count : Int32 = 1,
-             disperse_count : Int32 = 1,
-             bricks = [] of MoanaTypes::BrickRequest
+      disperse_count : Int32 = 1,
+      bricks = [] of MoanaTypes::BrickRequest
 
     def initialize
     end

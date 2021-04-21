@@ -39,11 +39,11 @@ struct TaskListCommand < Command
         end
         tasks_data.each do |task|
           printf("%-36s  %-10s  %-20s  %-15s\n",
-                 task.id,
-                 task.state,
-                 task.node.hostname,
-                 task.type
-                )
+            task.id,
+            task.state,
+            task.node.hostname,
+            task.type
+          )
         end
       end
     rescue ex : MoanaClient::MoanaClientException
@@ -65,4 +65,3 @@ class MoanaCommands
     end
   end
 end
-
