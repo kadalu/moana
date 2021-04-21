@@ -48,6 +48,17 @@ module MoanaTypes
     end
   end
 
+  struct VolumeExpandRequest
+    include JSON::Serializable
+
+    property replica_count : Int32 = 1,
+             disperse_count : Int32 = 1,
+             bricks = [] of MoanaTypes::BrickRequest
+
+    def initialize
+    end
+  end
+
   struct VolumeFilter
     property volume_types = [] of String
 

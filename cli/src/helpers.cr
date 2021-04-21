@@ -32,6 +32,7 @@ enum CommandType
   NodeList
 
   VolumeCreate
+  VolumeExpand
   VolumeStart
   VolumeStop
   VolumeSet

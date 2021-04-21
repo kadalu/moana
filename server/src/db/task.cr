@@ -54,6 +54,7 @@ module MoanaDB
       task = MoanaTypes::Task.new
 
       task.id = row.id
+      task.cluster_id = row.cluster_id
       task.node = MoanaTypes::Node.new
       task.node.id = row.node_id
       task.node.hostname = row.node_hostname

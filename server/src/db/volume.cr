@@ -74,11 +74,12 @@ module MoanaDB
 
   private def self.subvols(entry, bricks_data)
     subvol_type = entry.type.split(" ")[-1]
-    subvol_bricks_count = bricks_data.size
+    subvol_bricks_count = 1
+    number_of_subvols = bricks_data.size
     if entry.replica_count > 1 || entry.disperse_count > 1
       subvol_bricks_count = entry.replica_count > 1 ? entry.replica_count : entry.disperse_count
+      number_of_subvols = bricks_data.size / subvol_bricks_count
     end
-    number_of_subvols = bricks_data.size / subvol_bricks_count
 
     (0 .. number_of_subvols-1).map do |sidx|
       subvol = MoanaTypes::Subvol.new
@@ -227,7 +228,38 @@ module MoanaDB
             brick.device == "" ? "-" : brick.device,
             brick.port,
             brick.type == "" ? "-" : brick.type,
-            brick.state == "" ? "-" : brick.state,
+            brick.state == "" ? "Created" : brick.state,
+          )
+        end
+      end
+    end
+
+    volume
+  end
+
+  def self.expand_volume(cluster_id : String, volume : MoanaTypes::Volume, conn = @@conn)
+    b_query = "INSERT INTO bricks(id, cluster_id, volume_id, idx, node_id, path, device, port, type, state, created_at, updated_at)
+               VALUES            (?,  ?,          ?,         ?,   ?,       ?,    ?,      ?,    ?,    ?,     datetime(), datetime());"
+
+    conn.not_nil!.transaction do |tx|
+      cnn = tx.connection
+
+      volume.subvols.each do |subvol|
+        subvol.bricks.each_with_index do |brick, idx|
+          next if brick.state != "" && brick.state != "-"
+
+          cnn.exec(
+            b_query,
+            brick.id,
+            cluster_id,
+            volume.id,
+            idx+1,
+            brick.node.id,
+            brick.path == "" ? "-" : brick.path,
+            brick.device == "" ? "-" : brick.device,
+            brick.port,
+            brick.type == "" ? "-" : brick.type,
+            brick.state == "" ? "Created" : brick.state,
           )
         end
       end

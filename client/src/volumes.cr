@@ -120,5 +120,19 @@ module MoanaClient
         MoanaClient.error_response(response)
       end
     end
+
+    def expand(req : MoanaTypes::VolumeExpandRequest)
+      url = "#{@ctx.url}/api/v1/clusters/#{@cluster_id}/volumes/#{@id}/expand"
+      response = MoanaClient.http_post(
+        url,
+        req.to_json,
+        headers: MoanaClient.auth_header(@ctx)
+      )
+      if response.status_code == 200
+        MoanaTypes::Task.from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
   end
 end

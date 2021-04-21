@@ -119,15 +119,15 @@ struct VolumeInfoCommand < Command
         puts "Status                  : #{vol.state}"
         puts "Number of Storage units : #{vol.subvols.size * vol.subvols[0].bricks.size}"
         vol.subvols.each_with_index do |subvol, sidx|
+          printf("Distribute Group %-2s     :\n", sidx+1)
           subvol.bricks.each_with_index do |brick, idx|
             printf(
-              "Storage Unit %-3s        : %s:%s (Port: %s)\n",
+              "    Storage Unit %-3s    : %s:%s (Port: %s)\n",
               idx+1,
               brick.node.hostname,
               brick.path,
               brick.port
             )
-            puts
             puts
           end
         end
@@ -216,6 +216,39 @@ struct VolumeResetCommand < Command
   end
 end
 
+struct VolumeExpandCommand < Command
+  def pos_args(args : Array(String))
+    if args.size < 2
+      STDERR.puts "Volume name or bricks are not specified"
+      exit 1
+    end
+    @args.volume.name = args[0]
+    # Except first argument, all other arguments are Bricks
+    @args.volume.bricks = args[1 .. -1]
+
+    # Call parent pos_args to set cluster_name
+    super
+  end
+
+  def handle
+    cluster_id = cluster_id_from_name(@args.cluster.name)
+    req = MoanaTypes::VolumeExpandRequest.new
+    req.bricks = prepare_bricks_list(cluster_id, @args.volume.bricks, @args.volume.brick_fs)
+
+    client = moana_client(@gflags.kadalu_mgmt_server)
+    cluster = client.cluster(cluster_id)
+    begin
+      volume_id = volume_id_from_name(client, cluster_id, @args.volume.name)
+      task = cluster.volume(volume_id).expand(req)
+      puts "Volume expand request sent successfully."
+      puts "Task ID: #{task.id}"
+    rescue ex : MoanaClient::MoanaClientException
+      handle_moana_client_exception(ex)
+    end
+  end
+
+end
+
 class MoanaCommands
   def volume_commands(parser)
     parser.on("volume", "Manage #{PRODUCT} Volumes") do
@@ -282,6 +315,13 @@ class MoanaCommands
         end
 
         parser.on("--start", "Start Volume after Create") { @args.volume.start = true }
+      end
+
+      parser.on("expand", "Expand #{PRODUCT} Volume") do
+        @command_type = CommandType::VolumeExpand
+
+        parser.banner = "Usage: #{COMMAND} volume expand NAME BRICKS [arguments]"
+        parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
       end
 
       parser.on("delete", "Delete #{PRODUCT} Volume") do
