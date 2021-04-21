@@ -105,3 +105,37 @@ struct VolumeStopTask < Task
     end
   end
 end
+
+struct VolumeExpandTask < Task
+  property type = "volume_expand"
+  @parsed : MoanaTypes::Volume | Nil = nil
+
+  def parsed
+    if @parsed.nil?
+      @parsed = MoanaTypes::Volume.from_json(@data)
+    end
+
+    @parsed.not_nil!
+  end
+
+  def initialize
+  end
+
+  def run(node_conf)
+    parsed.subvols.each do |subvol|
+      subvol.bricks.each do |brick|
+        # Task execute only for Local Bricks
+        next if node_conf.node_id != brick.node.id
+
+        # Skip if the Brick is already created
+        next if (brick.state != "" && brick.state != "-")
+
+        begin
+          create_brick(parsed, brick)
+        rescue ex: CreateBrickException
+          raise TaskException.new("#{ex}", 500)
+        end
+      end
+    end
+  end
+end

@@ -12,6 +12,7 @@ TASK_VOLUME_CREATE_START = "volume_create_start"
 TASK_VOLUME_START = "volume_start"
 TASK_VOLUME_STOP = "volume_stop"
 TASK_VOLUME_DELETE = "volume_delete"
+TASK_VOLUME_EXPAND = "volume_expand"
 
 
 get "/api/v1/clusters/:cluster_id/volumes" do |env|
@@ -93,6 +94,43 @@ post "/api/v1/clusters/:cluster_id/volumes/:volume_id/stop" do |env|
   end
 
   volume_action(env, env.params.url["cluster_id"], env.params.url["volume_id"], "stop")
+end
+
+post "/api/v1/clusters/:cluster_id/volumes/:volume_id/expand" do |env|
+  if !volume_maintainer?(env)
+    halt(env, status_code: 403, response: forbidden_response)
+  end
+
+  req = MoanaTypes::VolumeExpandRequest.from_json(env.request.body.not_nil!)
+
+  begin
+    volume = MoanaDB.get_volume(env.params.url["volume_id"])
+    if volume.nil?
+      env.response.status_code = 400
+      {"error": "Invalid Volume ID"}.to_json
+    else
+      req.validate!(volume, env.params.url["cluster_id"])
+
+      volume = volume_from_request(volume, req)
+      # First participating node to assign task
+      node_id = volume.first_node_id
+
+      # node hostname and endpoint may not be available
+      # Query from Db and update the Volume struct
+      nodes = MoanaDB.list_nodes(volume.participating_nodes)
+      volume = update_node_details(volume, nodes)
+
+      task = MoanaDB.create_task(env.params.url["cluster_id"],
+                                 node_id,
+                                 TASK_VOLUME_EXPAND,
+                                 volume.to_json)
+      env.response.status_code = 200
+      task.to_json
+    end
+  rescue ex: MoanaTypes::VolumeException
+      env.response.status_code = 400
+      {"error": ex.message}.to_json
+  end
 end
 
 delete "/api/v1/clusters/:cluster_id/volumes/:volume_id" do |env|

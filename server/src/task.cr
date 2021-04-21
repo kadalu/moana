@@ -18,6 +18,15 @@ struct VolumeCreateTask < ServerTask
   end
 end
 
+struct VolumeExpandTask < ServerTask
+  property type = "volume_expand"
+
+  def on_complete
+    volume = MoanaTypes::Volume.from_json(@data)
+    MoanaDB.expand_volume(@cluster_id, volume)
+  end
+end
+
 struct VolumeStartTask < ServerTask
   property type = "volume_start"
 

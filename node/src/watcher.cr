@@ -7,6 +7,7 @@ TASK_STATE_RECEIVED = "Received"
 TASK_VOLUME_CREATE = "volume_create"
 TASK_VOLUME_START = "volume_start"
 TASK_VOLUME_STOP = "volume_stop"
+TASK_VOLUME_EXPAND = "volume_expand"
 
 struct TaskError
   include JSON::Serializable
@@ -27,13 +28,13 @@ class Watcher
 
   def participating_nodes(task)
     case task.type
-    when TASK_VOLUME_CREATE, TASK_VOLUME_START, TASK_VOLUME_STOP
+    when TASK_VOLUME_CREATE, TASK_VOLUME_START, TASK_VOLUME_STOP, TASK_VOLUME_EXPAND
       vol = MoanaTypes::Volume.from_json(task.data)
 
       nodes = [] of MoanaTypes::Node
       vol.subvols.each do |subvol|
         subvol.bricks.each do |brick|
-          nodes << brick.node
+          nodes << brick.node if !nodes.includes?(brick.node)
         end
       end
 
