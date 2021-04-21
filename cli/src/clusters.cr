@@ -6,7 +6,6 @@ require "./helpers"
 require "moana_client"
 require "moana_types"
 
-
 struct ClusterCreateCommand < Command
   def pos_args(args : Array(String))
     @args.cluster.name = cluster_name_from_pos_args(args)
@@ -78,7 +77,6 @@ struct ClusterDeleteCommand < Command
     @args.cluster.name = cluster_name_from_pos_args(args)
   end
 
-  
   def handle
     cluster_id = cluster_id_from_name(@args.cluster.name)
     client = moana_client(@gflags.kadalu_mgmt_server)
@@ -101,7 +99,6 @@ struct ClusterDeleteCommand < Command
       end
 
       handle_moana_client_exception(ex)
-
     end
   end
 end
@@ -117,7 +114,6 @@ struct ClusterSetDefaultCommand < Command
     puts "Default cluster set successfully.\n"
     puts "Note: The default cluster details is stored locally in this node"
   end
-
 end
 
 class MoanaCommands

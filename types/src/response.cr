@@ -39,12 +39,12 @@ module MoanaTypes
     include JSON::Serializable
 
     property id = "",
-             path = "",
-             device = "",
-             node = MoanaTypes::Node.new,
-             port : Int32 = 0,
-             state = "",
-             type = ""
+      path = "",
+      device = "",
+      node = MoanaTypes::Node.new,
+      port : Int32 = 0,
+      state = "",
+      type = ""
 
     def initialize
     end
@@ -54,9 +54,9 @@ module MoanaTypes
     include JSON::Serializable
 
     property replica_count : Int32 = 1,
-             disperse_count : Int32 = 1,
-             type = "",
-             bricks = [] of MoanaTypes::Brick
+      disperse_count : Int32 = 1,
+      type = "",
+      bricks = [] of MoanaTypes::Brick
 
     def initialize
     end
@@ -66,15 +66,15 @@ module MoanaTypes
     include JSON::Serializable
 
     property id = "",
-             name = "",
-             replica_count : Int32 = 1,
-             disperse_count : Int32 = 1,
-             state = "",
-             type = "",
-             brick_fs = "",
-             fs_opts = "",
-             options = {} of String => String,
-             subvols = [] of MoanaTypes::Subvol
+      name = "",
+      replica_count : Int32 = 1,
+      disperse_count : Int32 = 1,
+      state = "",
+      type = "",
+      brick_fs = "",
+      fs_opts = "",
+      options = {} of String => String,
+      subvols = [] of MoanaTypes::Subvol
 
     def initialize
     end
@@ -119,9 +119,9 @@ module MoanaTypes
     include JSON::Serializable
 
     property user_id = "",
-             cluster_id = "",
-             volume_id = "",
-             name = ""
+      cluster_id = "",
+      volume_id = "",
+      name = ""
 
     def initialize(@user_id, @cluster_id, @volume_id, @name)
     end
@@ -131,9 +131,9 @@ module MoanaTypes
     include JSON::Serializable
 
     property id : String,
-             name : String,
-             email : String,
-             roles = [] of MoanaTypes::Role
+      name : String,
+      email : String,
+      roles = [] of MoanaTypes::Role
 
     def initialize(@id, @name, @email)
     end
@@ -144,10 +144,10 @@ module MoanaTypes
     include DB::Serializable
 
     property id : String,
-             user_id : String,
-             token : String = "",
-             remote_ip : String,
-             user_agent : String
+      user_id : String,
+      token : String = "",
+      remote_ip : String,
+      user_agent : String
 
     # TODO: Fix the Time Format https://github.com/crystal-lang/crystal-sqlite3/issues/14
     # created_at : String = ""

@@ -7,8 +7,8 @@ require "./helpers"
 
 struct NodeJoinCommand < Command
   property hostname = "",
-           endpoint = "",
-           token = "ABCD"  # TODO: Replace this
+    endpoint = "",
+    token = "ABCD" # TODO: Replace this
 
   def pos_args(args : Array(String))
     if args.size != 1
@@ -40,8 +40,8 @@ end
 
 struct NodeUpdateCommand < Command
   property hostname = "",
-           new_hostname = "",
-           endpoint = ""
+    new_hostname = "",
+    endpoint = ""
 
   def handle
     cluster_id, node_id = cluster_and_node_id_from_name(@args.cluster.name, @args.node.hostname)
@@ -55,7 +55,6 @@ struct NodeUpdateCommand < Command
       handle_moana_client_exception(ex)
     end
   end
-
 end
 
 struct NodeListCommand < Command

@@ -1,12 +1,12 @@
 require "./node_conf"
 
 TASK_STATE_COMPLETED = "Completed"
-TASK_STATE_FAILED = "Failed"
-TASK_STATE_RECEIVED = "Received"
+TASK_STATE_FAILED    = "Failed"
+TASK_STATE_RECEIVED  = "Received"
 
 TASK_VOLUME_CREATE = "volume_create"
-TASK_VOLUME_START = "volume_start"
-TASK_VOLUME_STOP = "volume_stop"
+TASK_VOLUME_START  = "volume_start"
+TASK_VOLUME_STOP   = "volume_stop"
 TASK_VOLUME_EXPAND = "volume_expand"
 
 struct TaskError
@@ -39,7 +39,6 @@ class Watcher
       end
 
       nodes
-
     else
       [] of MoanaTypes::Node
     end
@@ -109,7 +108,7 @@ class Watcher
     # generated and saved in a specific directory.
     # If Config file not exists, then that means Moana
     # node agent is started but no Join request is received.
-    @node_conf.wait()
+    @node_conf.wait
 
     # Initialize a Client that connects to Moana Server.
     # Moana Server URL is received from the Configuration
@@ -124,7 +123,7 @@ class Watcher
       # errors to get the list of tasks then wait for some time.
       begin
         # TODO: Remember last task time
-        node_client.tasks().each do |task|
+        node_client.tasks.each do |task|
           handle_task(client, task)
         end
       rescue Socket::ConnectError

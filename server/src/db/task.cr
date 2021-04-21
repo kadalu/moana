@@ -23,14 +23,14 @@ module MoanaDB
     include DB::Serializable
 
     property id : String,
-             cluster_id : String,
-             node_id : String,
-             node_hostname : String,
-             node_endpoint : String,
-             type : String,
-             state : String,
-             data : String,
-             response : String
+      cluster_id : String,
+      node_id : String,
+      node_hostname : String,
+      node_endpoint : String,
+      type : String,
+      state : String,
+      data : String,
+      response : String
   end
 
   def self.create_table_tasks(conn = @@conn)

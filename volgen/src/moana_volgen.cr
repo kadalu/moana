@@ -15,7 +15,6 @@ class VolfileTmpl
 end
 
 def apply_filters(vars)
-
 end
 
 class Volfile
@@ -162,11 +161,11 @@ class Volfile
 
   def self.volume_variables(volume, vidx)
     {
-      "volume.name" => volume.name,
-      "volume.id" => volume.id,
-      "volume.type" => volume.type.downcase,
-      "volume.index" => "#{vidx}",
-      "volume.number_of_subvols" => "#{volume.subvols.size}"
+      "volume.name"              => volume.name,
+      "volume.id"                => volume.id,
+      "volume.type"              => volume.type.downcase,
+      "volume.index"             => "#{vidx}",
+      "volume.number_of_subvols" => "#{volume.subvols.size}",
     }
   end
 
@@ -192,7 +191,7 @@ class Volfile
     if subvol.type.downcase == "replicate" || subvol.type.downcase == "disperse"
       afr_pending_xattrs = [] of String
       subvol.bricks.each_with_index do |brick, bidx|
-        xattr_idx = sidx*subvol.bricks.size+bidx
+        xattr_idx = sidx*subvol.bricks.size + bidx
         afr_pending_xattrs << "#{volume.name}-client-#{xattr_idx}"
       end
 
@@ -227,7 +226,7 @@ class Volfile
       vgraph = graph
       if volfile_tmpl.volume.size > 0
         vgraph = Volfile.new(name, volfile_tmpl.volume[0], vvars, opts)
-        volfile_tmpl.volume[1 .. -1].each do |vol_tmpl|
+        volfile_tmpl.volume[1..-1].each do |vol_tmpl|
           if Volfile.include_when?(vol_tmpl, vvars)
             vgraph.add(Volfile.new(name, vol_tmpl, vvars, opts))
           end
@@ -238,7 +237,7 @@ class Volfile
         svars = Volfile.subvol_variables(volume, subvol, 0, sidx)
         sgraph = Volfile.new(name, volfile_tmpl.subvol[0], svars, opts)
 
-        volfile_tmpl.subvol[1 .. -1].each do |subvol_tmpl|
+        volfile_tmpl.subvol[1..-1].each do |subvol_tmpl|
           if Volfile.include_when?(subvol_tmpl, svars)
             sgraph.add(Volfile.new(name, subvol_tmpl, svars, opts))
           end
@@ -248,19 +247,19 @@ class Volfile
           bvars = Volfile.brick_variables(volume, subvol, brick, 0, sidx, bidx)
           bgraph = Volfile.new(name, volfile_tmpl.brick[0], bvars, opts)
 
-          volfile_tmpl.brick[1 .. -1].each do |brick_tmpl|
+          volfile_tmpl.brick[1..-1].each do |brick_tmpl|
             if Volfile.include_when?(brick_tmpl, bvars)
               bgraph.add(Volfile.new(name, brick_tmpl, bvars, opts))
             end
           end
 
-          sgraph.add(bgraph, sibling=true)
+          sgraph.add(bgraph, sibling = true)
         end
 
-        vgraph.add(sgraph, sibling=true)
+        vgraph.add(sgraph, sibling = true)
       end
       if volfile_tmpl.volume.size > 0
-        graph.add(vgraph, sibling=true)
+        graph.add(vgraph, sibling = true)
       end
     end
 
@@ -276,7 +275,7 @@ class Volfile
     # Create graph instance with first template element
     graph = Volfile.new(name, volfile_tmpl.volume[0], vvars, opts)
 
-    volfile_tmpl.volume[1 .. -1].each do |vol_tmpl|
+    volfile_tmpl.volume[1..-1].each do |vol_tmpl|
       if Volfile.include_when?(vol_tmpl, vvars)
         graph.add(Volfile.new(name, vol_tmpl, vvars, opts))
       end
@@ -286,7 +285,7 @@ class Volfile
       svars = Volfile.subvol_variables(volume, subvol, 0, sidx)
       sgraph = Volfile.new(name, volfile_tmpl.subvol[0], svars, opts)
 
-      volfile_tmpl.subvol[1 .. -1].each do |subvol_tmpl|
+      volfile_tmpl.subvol[1..-1].each do |subvol_tmpl|
         if Volfile.include_when?(subvol_tmpl, svars)
           sgraph.add(Volfile.new(name, subvol_tmpl, svars, opts))
         end
@@ -296,16 +295,16 @@ class Volfile
         bvars = Volfile.brick_variables(volume, subvol, brick, 0, sidx, bidx)
         bgraph = Volfile.new(name, volfile_tmpl.brick[0], bvars, opts)
 
-        volfile_tmpl.brick[1 .. -1].each do |brick_tmpl|
+        volfile_tmpl.brick[1..-1].each do |brick_tmpl|
           if Volfile.include_when?(brick_tmpl, bvars)
             bgraph.add(Volfile.new(name, brick_tmpl, bvars, opts))
           end
         end
 
-        sgraph.add(bgraph, sibling=true)
+        sgraph.add(bgraph, sibling = true)
       end
 
-      graph.add(sgraph, sibling=true)
+      graph.add(sgraph, sibling = true)
     end
 
     graph.volgen.reverse!.join("\n")
@@ -327,7 +326,7 @@ class Volfile
         bvars = Volfile.brick_variables(volume, subvol, brick, 0, sidx, bidx)
         graph = Volfile.new(name, volfile_tmpl.brick[0], bvars, opts)
 
-        volfile_tmpl.brick[1 .. -1].each do |brick_tmpl|
+        volfile_tmpl.brick[1..-1].each do |brick_tmpl|
           if Volfile.include_when?(brick_tmpl, bvars)
             graph.add(Volfile.new(name, brick_tmpl, bvars, opts))
           end

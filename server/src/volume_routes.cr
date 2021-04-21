@@ -7,13 +7,12 @@ require "./db/*"
 require "./volume_utils"
 require "./helpers"
 
-TASK_VOLUME_CREATE = "volume_create"
+TASK_VOLUME_CREATE       = "volume_create"
 TASK_VOLUME_CREATE_START = "volume_create_start"
-TASK_VOLUME_START = "volume_start"
-TASK_VOLUME_STOP = "volume_stop"
-TASK_VOLUME_DELETE = "volume_delete"
-TASK_VOLUME_EXPAND = "volume_expand"
-
+TASK_VOLUME_START        = "volume_start"
+TASK_VOLUME_STOP         = "volume_stop"
+TASK_VOLUME_DELETE       = "volume_delete"
+TASK_VOLUME_EXPAND       = "volume_expand"
 
 get "/api/v1/clusters/:cluster_id/volumes" do |env|
   MoanaDB.list_volumes(env.get("user_id").as(String), env.params.url["cluster_id"]).to_json
@@ -57,7 +56,7 @@ post "/api/v1/clusters/:cluster_id/volumes" do |env|
     task = MoanaDB.create_task(env.params.url["cluster_id"], node_id, task_type, volume.to_json)
     env.response.status_code = 201
     task.to_json
-  rescue ex: MoanaTypes::VolumeException
+  rescue ex : MoanaTypes::VolumeException
     env.response.status_code = 400
     {"error": ex.message}.to_json
   end
@@ -121,15 +120,15 @@ post "/api/v1/clusters/:cluster_id/volumes/:volume_id/expand" do |env|
       volume = update_node_details(volume, nodes)
 
       task = MoanaDB.create_task(env.params.url["cluster_id"],
-                                 node_id,
-                                 TASK_VOLUME_EXPAND,
-                                 volume.to_json)
+        node_id,
+        TASK_VOLUME_EXPAND,
+        volume.to_json)
       env.response.status_code = 200
       task.to_json
     end
-  rescue ex: MoanaTypes::VolumeException
-      env.response.status_code = 400
-      {"error": ex.message}.to_json
+  rescue ex : MoanaTypes::VolumeException
+    env.response.status_code = 400
+    {"error": ex.message}.to_json
   end
 end
 

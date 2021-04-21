@@ -18,7 +18,7 @@ module MoanaClient
     def initialize(url : String)
       @ctx = ClientContext.new(url, "", "")
     end
-    
+
     def create_cluster(name)
       Cluster.create(@ctx, name)
     end
@@ -27,7 +27,7 @@ module MoanaClient
       Cluster.new(@ctx, id)
     end
 
-    def clusters()
+    def clusters
       Cluster.all(@ctx)
     end
 

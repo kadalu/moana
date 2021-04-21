@@ -10,7 +10,7 @@ struct VolumeCreateCommand < Command
     end
     @args.volume.name = args[0]
     # Except first argument, all other arguments are Bricks
-    @args.volume.bricks = args[1 .. -1]
+    @args.volume.bricks = args[1..-1]
 
     # Call parent pos_args to set cluster_name
     super
@@ -38,7 +38,6 @@ struct VolumeCreateCommand < Command
       handle_moana_client_exception(ex)
     end
   end
-
 end
 
 struct VolumeStartCommand < Command
@@ -93,7 +92,7 @@ struct VolumeListCommand < Command
       end
       volume_data.each do |volume|
         if @args.volume.name == "" || volume.id == @args.volume.name || volume.name == @args.volume.name
-          printf("%-36s  %-15s %-15s %-s\n",volume.id, volume.name, volume.type, volume.state)
+          printf("%-36s  %-15s %-15s %-s\n", volume.id, volume.name, volume.type, volume.state)
         end
       end
     rescue ex : MoanaClient::MoanaClientException
@@ -105,7 +104,6 @@ end
 struct VolumeInfoCommand < Command
   property name = ""
 
-  
   def handle
     cluster_id = cluster_id_from_name(@args.cluster.name)
     client = moana_client(@gflags.kadalu_mgmt_server)
@@ -119,11 +117,11 @@ struct VolumeInfoCommand < Command
         puts "Status                  : #{vol.state}"
         puts "Number of Storage units : #{vol.subvols.size * vol.subvols[0].bricks.size}"
         vol.subvols.each_with_index do |subvol, sidx|
-          printf("Distribute Group %-2s     :\n", sidx+1)
+          printf("Distribute Group %-2s     :\n", sidx + 1)
           subvol.bricks.each_with_index do |brick, idx|
             printf(
               "    Storage Unit %-3s    : %s:%s (Port: %s)\n",
-              idx+1,
+              idx + 1,
               brick.node.hostname,
               brick.path,
               brick.port
@@ -163,7 +161,7 @@ struct VolumeSetCommand < Command
     @args.volume.name = args[0]
 
     # Except first argument, all other arguments are Option pairs
-    args[1 .. -1].each_slice(2) do |opt|
+    args[1..-1].each_slice(2) do |opt|
       @args.volume.options[opt[0]] = opt[1]
     end
 
@@ -195,7 +193,7 @@ struct VolumeResetCommand < Command
 
     @args.volume.name = args[0]
     # Except first argument, all other arguments are Option names
-    @args.volume.option_names = args[1 .. -1]
+    @args.volume.option_names = args[1..-1]
 
     # Call parent pos_args to set cluster_name
     super
@@ -224,7 +222,7 @@ struct VolumeExpandCommand < Command
     end
     @args.volume.name = args[0]
     # Except first argument, all other arguments are Bricks
-    @args.volume.bricks = args[1 .. -1]
+    @args.volume.bricks = args[1..-1]
 
     # Call parent pos_args to set cluster_name
     super
@@ -246,7 +244,6 @@ struct VolumeExpandCommand < Command
       handle_moana_client_exception(ex)
     end
   end
-
 end
 
 class MoanaCommands

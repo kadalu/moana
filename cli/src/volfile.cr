@@ -63,4 +63,3 @@ class MoanaCommands
     end
   end
 end
-

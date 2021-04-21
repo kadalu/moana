@@ -4,7 +4,6 @@ require "moana_types"
 
 require "./helpers"
 
-
 module MoanaClient
   class App
     def initialize(@ctx : ClientContext, @user_id : String, @app_id : String)
@@ -41,6 +40,5 @@ module MoanaClient
         MoanaClient.error_response(response)
       end
     end
-
   end
 end

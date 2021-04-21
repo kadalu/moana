@@ -58,28 +58,28 @@ end
 
 struct ClusterArgs
   property name = "",
-           newname = ""
+    newname = ""
 end
 
 struct NodeArgs
   property hostname = "",
-           new_hostname = "",
-           endpoint = "",
-           token = ""
+    new_hostname = "",
+    endpoint = "",
+    token = ""
 end
 
 struct VolumeArgs
   property name : String = "",
-           replica_count : Int32 = 1,
-           disperse_count : Int32 = 1,
-           brick_fs : String = "dir",
-           fs_opts : String = "",
-           use_lvm = false,
-           size : UInt64 = 0,
-           start = false,
-           options = {} of String => String,
-           option_names = [] of String,
-           bricks = [] of String
+    replica_count : Int32 = 1,
+    disperse_count : Int32 = 1,
+    brick_fs : String = "dir",
+    fs_opts : String = "",
+    use_lvm = false,
+    size : UInt64 = 0,
+    start = false,
+    options = {} of String => String,
+    option_names = [] of String,
+    bricks = [] of String
 end
 
 struct BrickArgs
@@ -88,7 +88,7 @@ end
 
 struct VolfileArgs
   property name : String = "",
-           filename : String = ""
+    filename : String = ""
 end
 
 struct TaskArgs
@@ -97,9 +97,9 @@ end
 
 struct UserArgs
   property name = "",
-           email = "",
-           password = "",
-           role = ""
+    email = "",
+    password = "",
+    role = ""
 end
 
 struct AppArgs
@@ -108,23 +108,23 @@ end
 
 struct Args
   property cluster = ClusterArgs.new,
-           node = NodeArgs.new,
-           volume = VolumeArgs.new,
-           task = TaskArgs.new,
-           brick = BrickArgs.new,
-           volfile = VolfileArgs.new,
-           user = UserArgs.new,
-           app = AppArgs.new
+    node = NodeArgs.new,
+    volume = VolumeArgs.new,
+    task = TaskArgs.new,
+    brick = BrickArgs.new,
+    volfile = VolfileArgs.new,
+    user = UserArgs.new,
+    app = AppArgs.new
 end
 
 abstract struct Command
   property args = Args.new,
-           gflags = Gflags.new
+    gflags = Gflags.new
 
   abstract def handle
 
   def set_args(@gflags : Gflags, @args : Args, pargs : Array(String))
-      pos_args(pargs)
+    pos_args(pargs)
   end
 
   def cluster_name_from_pos_args(args)
@@ -259,7 +259,6 @@ def prepare_bricks_list(cluster_id, data, brick_fs)
     STDERR.puts "Invalid Cluster ID or name"
     exit 1
   end
-
 end
 
 def volume_id_from_name(client, cluster_id, name)
@@ -315,9 +314,9 @@ end
 def moana_client(url : String)
   filename = Path.home.join(".kadalu", "app.json")
   app = if File.exists?(filename)
-           App.from_json(File.read(filename))
-         else
-           App.new
+          App.from_json(File.read(filename))
+        else
+          App.new
         end
 
   MoanaClient::Client.new(url, app.user_id, app.token)

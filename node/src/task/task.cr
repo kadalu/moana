@@ -14,11 +14,11 @@ abstract struct Task
   property data = ""
 
   use_json_discriminator "type", {
-    node_join: NodeJoinTask,
+    node_join:     NodeJoinTask,
     volume_create: VolumeCreateTask,
-    volume_start: VolumeStartTask,
-    volume_stop: VolumeStopTask,
-    volume_expand: VolumeExpandTask
+    volume_start:  VolumeStartTask,
+    volume_stop:   VolumeStopTask,
+    volume_expand: VolumeExpandTask,
   }
 
   abstract def run(node_conf : NodeConfig)

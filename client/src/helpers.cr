@@ -9,7 +9,7 @@ module MoanaClient
     return nil if (ctx.token == "")
 
     headers = HTTP::Headers{
-      "Authorization" => "Bearer #{ctx.token}"
+      "Authorization" => "Bearer #{ctx.token}",
     }
 
     if ctx.user_id != ""

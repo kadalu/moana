@@ -24,12 +24,12 @@ module MoanaDB
     include DB::Serializable
 
     property id : String,
-             name : String,
-             email : String,
-             role_cluster_id : String?,
-             role_user_id : String?,
-             role_volume_id : String?,
-             role_name : String?
+      name : String,
+      email : String,
+      role_cluster_id : String?,
+      role_user_id : String?,
+      role_volume_id : String?,
+      role_name : String?
   end
 
   def self.create_table_users(conn = @@conn)
