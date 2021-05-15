@@ -1,6 +1,7 @@
 require "json"
 
 require "kemal"
+require "connection_manager"
 
 require "./db/db"
 require "./cluster_routes"
@@ -13,6 +14,7 @@ require "./user_routes"
 require "./role_routes"
 require "./app_routes"
 require "./error_routes"
+require "./task_manager"
 
 VERSION = {{ `shards version #{__DIR__}`.chomp.stringify }}
 
@@ -59,6 +61,7 @@ end
 
 class AuthHandler < Kemal::Handler
   exclude ["/api/v1/users", "/api/v1/apps"], "POST"
+  exclude ["/ws/:cluster_id"], "GET"
 
   def call(env)
     return call_next(env) if exclude_match?(env) || env.get?("auth_valid?")
@@ -71,6 +74,39 @@ end
 
 workdir = ENV.fetch("WORKDIR", "/var/lib/kadalu")
 MoanaDB.init(workdir)
+
+connections = ConnectionManager::Manager.new
+TaskManager.new(connections)
+
+ws "/ws/:cluster_id" do |socket, env|
+  # TODO: Verify Headers
+  # env.request.headers["CLUSTER_ID"] and env.request.headers["Authorization"]
+  # Use env.request.headers["NODE_ID"] as node identifier
+  cluster_id = env.ws_route_lookup.params["cluster_id"]
+
+  if !env.request.headers["X-Node-ID"]?
+    # No Node-ID is set, may be a Client. Generate an ID for
+    # each Client connection
+    node_id = UUID.random.to_s
+  else
+    node_id = env.request.headers["X-Node-ID"]
+  end
+
+  connections.add_connection(cluster_id, node_id, socket)
+
+  socket.on_message do |message|
+    connections.add_task_response(
+      cluster_id,
+      ConnectionManager::Task.from_json(message),
+      node_id
+    )
+  end
+
+  # Handle disconnection and clean sockets
+  socket.on_close do |_|
+    connections.close_connection(cluster_id, node_id)
+  end
+end
 
 add_handler AuthHeaderHandler.new
 add_handler AuthHandler.new

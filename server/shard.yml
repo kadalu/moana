@@ -26,3 +26,6 @@ dependencies:
 
   moana_volgen:
     path: ../volgen
+
+  connection_manager:
+    path: ../connection_manager

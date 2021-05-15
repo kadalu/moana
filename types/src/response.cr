@@ -2,6 +2,9 @@ require "json"
 require "db"
 
 module MoanaTypes
+  TASK_STATE_COMPLETED = "Completed"
+  TASK_STATE_FAILED    = "Failed"
+
   struct Node
     include JSON::Serializable
     include DB::Serializable
@@ -25,6 +28,11 @@ module MoanaTypes
     end
   end
 
+  TASK_VOLUME_CREATE = "volume_create"
+  TASK_VOLUME_START  = "volume_start"
+  TASK_VOLUME_STOP   = "volume_stop"
+  TASK_VOLUME_EXPAND = "volume_expand"
+
   struct Task
     include JSON::Serializable
     include DB::Serializable
@@ -32,6 +40,24 @@ module MoanaTypes
     property id : String = "", cluster_id : String = "", node_id : String = "", type : String = "", state : String = "", data : String = "", response : String = "", node = MoanaTypes::Node.new
 
     def initialize
+    end
+
+    def participating_nodes
+      case @type
+      when TASK_VOLUME_CREATE, TASK_VOLUME_START, TASK_VOLUME_STOP, TASK_VOLUME_EXPAND
+        vol = Volume.from_json(@data)
+
+        nodes = [] of Node
+        vol.subvols.each do |subvol|
+          subvol.bricks.each do |brick|
+            nodes << brick.node if !nodes.includes?(brick.node)
+          end
+        end
+
+        nodes
+      else
+        [] of Node
+      end
     end
   end
 

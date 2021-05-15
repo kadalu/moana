@@ -86,6 +86,16 @@ module MoanaDB
     )
   end
 
+  def self.list_open_tasks(cluster_id : String, conn = @@conn)
+    grouped_tasks(
+      conn.not_nil!.query_all("#{TASK_SELECT_QUERY} WHERE tasks.cluster_id = ? AND tasks.state not in (?, ?)",
+        cluster_id,
+        MoanaTypes::TASK_STATE_COMPLETED,
+        MoanaTypes::TASK_STATE_FAILED,
+        as: TaskView)
+    )
+  end
+
   def self.get_task(id : String, conn = @@conn)
     tasks = grouped_tasks(
       conn.not_nil!.query_all("#{TASK_SELECT_QUERY} WHERE tasks.id = ?", id, as: TaskView)
