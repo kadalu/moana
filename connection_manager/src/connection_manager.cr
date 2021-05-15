@@ -5,7 +5,7 @@ module ConnectionManager
   class TimeoutException < Exception
     property responses
 
-    def initialize(@message : String, @responses : Hash(String, Task))
+    def initialize(@message : String, @responses : Hash(String, Message))
       super(@message)
     end
   end
@@ -13,23 +13,23 @@ module ConnectionManager
   class NotOnlineException < Exception
     property responses, ids
 
-    def initialize(@message : String, @ids : Array(String), @responses : Hash(String, Task))
+    def initialize(@message : String, @ids : Array(String), @responses : Hash(String, Message))
       super(@message)
     end
   end
 
-  class Task
+  class Message
     include JSON::Serializable
 
-    property id = "", task = "", response = ""
+    property id = "", message = "", response = "", type = "task", task_done = true
 
-    def initialize(@id, @task)
+    def initialize(@id, @message)
     end
   end
 
   class Namespace
     property connections = Hash(String, HTTP::WebSocket).new,
-      tasks = Hash(String, Hash(String, Task)).new
+      tasks = Hash(String, Hash(String, Message)).new
   end
 
   class Manager
@@ -38,9 +38,9 @@ module ConnectionManager
     private record ListNamespaces, return_channel : Channel(Array(String))
     private record ListConnections, namespace : String, ids : Array(String), return_channel : Channel(Hash(String, HTTP::WebSocket))
 
-    private record AddTaskResponse, namespace : String, task : Task, id : String
+    private record AddTaskResponse, namespace : String, task : Message, id : String
     private record AddTask, namespace : String, task_id : String
-    private record GetTaskResponses, namespace : String, task_id : String, return_channel : Channel(Hash(String, Task))
+    private record GetTaskResponses, namespace : String, task_id : String, return_channel : Channel(Hash(String, Message))
     private record TaskDone, namespace : String, task_id : String
     private record SendMessage, namespace : String, id : String, message : String
 
@@ -81,7 +81,7 @@ module ConnectionManager
             command.return_channel.send connections
           when AddTask
             if @namespaces[command.namespace]?
-              @namespaces[command.namespace].tasks[command.task_id] = Hash(String, Task).new
+              @namespaces[command.namespace].tasks[command.task_id] = Hash(String, Message).new
             end
           when AddTaskResponse
             if @namespaces[command.namespace].tasks[command.task.id]?
@@ -90,7 +90,7 @@ module ConnectionManager
           when GetTaskResponses
             command.return_channel.send(
               if !@namespaces[command.namespace]? || !@namespaces[command.namespace].tasks[command.task_id]?
-                Hash(String, Task).new
+                Hash(String, Message).new
               else
                 @namespaces[command.namespace].tasks[command.task_id]
               end
@@ -113,7 +113,7 @@ module ConnectionManager
     end
 
     def task_responses(namespace, task_id)
-      Channel(Hash(String, Task)).new.tap { |return_channel|
+      Channel(Hash(String, Message)).new.tap { |return_channel|
         @requests.send GetTaskResponses.new(namespace, task_id, return_channel)
       }.receive
     end

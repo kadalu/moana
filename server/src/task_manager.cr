@@ -33,11 +33,28 @@ module TaskManager
             begin
               responses = connection_manager.task(
                 @id,
-                ConnectionManager::Task.new(task.id, task.to_json),
+                ConnectionManager::Message.new(task.id, task.to_json),
                 task.participating_nodes.map { |node| node.id },
                 timeout: 120
               )
-              # TODO: Handle responses and update Task table
+              failed_responses = responses.select { |task_id, resp| !resp.task_done }
+              state = MoanaTypes::TASK_STATE_FAILED
+
+              if failed_responses.size == 0
+                # Convert to JSON and then Convert back to different Type
+                # to make automatic handling possible with JSON discrimination.
+                # And also this will validate the task Type. If a Task type
+                # is not implemented or not handled then below line will
+                # raise error.
+                server_task = ServerTask.from_json(task.to_json)
+                server_task.on_complete
+                state = MoanaTypes::TASK_STATE_COMPLETED
+              end
+              MoanaDB.update_task(
+                task.id,
+                state,
+                responses.to_json
+              )
             rescue ex : ConnectionManager::NotOnlineException
               MoanaDB.update_task(
                 task.id,

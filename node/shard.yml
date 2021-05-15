@@ -26,3 +26,6 @@ dependencies:
 
   xattr:
     github: ettomatic/xattr
+
+  connection_manager:
+    path: ../connection_manager

@@ -97,7 +97,7 @@ ws "/ws/:cluster_id" do |socket, env|
   socket.on_message do |message|
     connections.add_task_response(
       cluster_id,
-      ConnectionManager::Task.from_json(message),
+      ConnectionManager::Message.from_json(message),
       node_id
     )
   end
