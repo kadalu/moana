@@ -86,6 +86,10 @@ module MoanaDB
     conn.not_nil!.scalar(query, id, hash_sha256(invite)).as(Int64) > 0
   end
 
+  def self.list_cluster_ids(conn = @@conn)
+    conn.not_nil!.query_all("SELECT id FROM clusters", as: String)
+  end
+
   def self.list_clusters(user_id : String, conn = @@conn)
     query = "#{CLUSTER_LIST_QUERY} WHERE roles.name IN (?, ?, ?) AND user_id = ? AND volume_id = ?"
     params = [] of DB::Any

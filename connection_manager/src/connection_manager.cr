@@ -35,6 +35,7 @@ module ConnectionManager
   class Manager
     private record AddConnection, namespace : String, id : String, socket : HTTP::WebSocket
     private record CloseConnection, namespace : String, id : String
+    private record ListNamespaces, return_channel : Channel(Array(String))
     private record ListConnections, namespace : String, ids : Array(String), return_channel : Channel(Hash(String, HTTP::WebSocket))
 
     private record AddTaskResponse, namespace : String, task : Task, id : String
@@ -44,7 +45,7 @@ module ConnectionManager
     private record SendMessage, namespace : String, id : String, message : String
 
     @requests = Channel(AddConnection | CloseConnection | ListConnections |
-                        AddTaskResponse | AddTask |
+                        AddTaskResponse | AddTask | ListNamespaces |
                         GetTaskResponses | TaskDone | SendMessage).new
 
     def initialize
@@ -65,6 +66,8 @@ module ConnectionManager
             if @namespaces[command.namespace].connections.size == 0
               @namespaces.delete(command.namespace)
             end
+          when ListNamespaces
+            command.return_channel.send @namespaces.keys
           when ListConnections
             connections = Hash(String, HTTP::WebSocket).new
 
@@ -93,7 +96,9 @@ module ConnectionManager
               end
             )
           when TaskDone
-            @namespaces[command.namespace].tasks.delete(command.task_id)
+            if @namespaces[command.namespace]?
+              @namespaces[command.namespace].tasks.delete(command.task_id)
+            end
           when SendMessage
             if @namespaces[command.namespace]? && @namespaces[command.namespace].connections[command.id]?
               @namespaces[command.namespace].connections[command.id].send command.message
@@ -121,6 +126,12 @@ module ConnectionManager
       @requests.send CloseConnection.new(namespace, id)
     end
 
+    def list_namespaces
+      Channel(Array(String)).new.tap { |return_channel|
+        @requests.send ListNamespaces.new(return_channel)
+      }.receive
+    end
+
     def list_connections(namespace, ids)
       Channel(Hash(String, HTTP::WebSocket)).new.tap { |return_channel|
         @requests.send ListConnections.new(namespace, ids, return_channel)
@@ -138,7 +149,6 @@ module ConnectionManager
       conns = list_connections(namespace, participants)
       connected_ids = conns.keys
       disconnected_ids = participants.select { |id| !conns[id]? }
-
       if !partial && disconnected_ids.size > 0
         raise NotOnlineException.new(
           "Not all required participants are connected.",
