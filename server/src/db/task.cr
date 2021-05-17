@@ -115,7 +115,7 @@ module MoanaDB
       cluster_id,
       node_id,
       task_type,
-      MoanaTypes::QUEUED,
+      MoanaTypes::TASK_STATE_QUEUED,
       data,
       "{}"
     )

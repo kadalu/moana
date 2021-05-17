@@ -67,11 +67,11 @@ struct NodeListCommand < Command
     begin
       nodes_data = cluster.nodes
       if nodes_data.size > 0
-        printf("%-36s  %-25s  %-s\n", "ID", "Name", "Endpoint")
+        printf("%-36s  %-25s  %-12s  %-s\n", "ID", "Name", "State", "Endpoint")
       end
       nodes_data.each do |node|
         if @args.node.hostname == "" || node.id == @args.node.hostname || node.hostname == @args.node.hostname
-          printf("%-36s  %-25s  %-s\n", node.id, node.hostname, node.endpoint)
+          printf("%-36s  %-25s  %-12s  %-s\n", node.id, node.hostname, (node.connected ? "Connected" : "Disconnected"), node.endpoint)
         end
       end
     rescue ex : MoanaClient::MoanaClientException

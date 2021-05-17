@@ -1,10 +1,12 @@
+require "connection_manager"
+
 module TaskManager
   class ClusterStatusTasks
     getter id
 
     @terminated = false
 
-    def initialize(@id : String, connection_manager : ConnectionManager::Manager)
+    def initialize(@id : String)
       spawn do
         loop do
           break if @terminated
@@ -32,7 +34,7 @@ module TaskManager
       end
     end
 
-    def initialize(@id : String, connection_manager : ConnectionManager::Manager)
+    def initialize(@id : String)
       spawn do
         loop do
           break if @terminated
@@ -42,7 +44,7 @@ module TaskManager
             responses = Hash(String, ConnectionManager::Message).new
 
             begin
-              responses = connection_manager.task(
+              responses = ConnectionManager.manager.task(
                 @id,
                 ConnectionManager::Message.new(task.id, task.to_json),
                 participating_nodes.map { |node| node.id },
@@ -95,7 +97,7 @@ module TaskManager
     end
   end
 
-  def self.new(connections : ConnectionManager::Manager)
+  def self.new
     cluster_tasks = Hash(String, ClusterTasks).new
     cluster_status_tasks = Hash(String, ClusterStatusTasks).new
     spawn do
@@ -114,8 +116,8 @@ module TaskManager
         # Start Task manager of new Clusters if not already started
         new_clusters.each do |cluster_id|
           if !cluster_tasks[cluster_id]?
-            cluster_tasks[cluster_id] = ClusterTasks.new(cluster_id, connections)
-            cluster_status_tasks[cluster_id] = ClusterStatusTasks.new(cluster_id, connections)
+            cluster_tasks[cluster_id] = ClusterTasks.new(cluster_id)
+            cluster_status_tasks[cluster_id] = ClusterStatusTasks.new(cluster_id)
           end
         end
 

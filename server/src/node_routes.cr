@@ -1,4 +1,5 @@
 require "kemal"
+require "connection_manager"
 
 require "./db/*"
 require "./helpers"
@@ -8,7 +9,14 @@ get "/api/v1/clusters/:cluster_id/nodes" do |env|
     halt(env, status_code: 403, response: forbidden_response)
   end
 
-  MoanaDB.list_nodes(env.params.url["cluster_id"]).to_json
+  nodes = MoanaDB.list_nodes(env.params.url["cluster_id"])
+  (nodes.map do |node|
+    if ConnectionManager.manager.connected?(env.params.url["cluster_id"], node.id)
+      node.connected = true
+    end
+
+    node
+  end).to_json
 end
 
 get "/api/v1/clusters/:cluster_id/nodes/:id" do |env|
@@ -21,6 +29,10 @@ get "/api/v1/clusters/:cluster_id/nodes/:id" do |env|
     env.response.status_code = 400
     {"error": "Invalid Node ID"}.to_json
   else
+    if ConnectionManager.manager.connected?(env.params.url["cluster_id"], node.id)
+      node.connected = true
+    end
+
     node.to_json
   end
 end
