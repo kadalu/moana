@@ -8,10 +8,10 @@ class TaskException < Exception
   end
 end
 
-abstract struct Task
+abstract struct NodeTask
   include JSON::Serializable
 
-  property data = ""
+  property data = "", id = ""
 
   use_json_discriminator "type", {
     node_join:     NodeJoinTask,

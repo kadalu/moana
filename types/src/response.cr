@@ -2,8 +2,11 @@ require "json"
 require "db"
 
 module MoanaTypes
-  TASK_STATE_COMPLETED = "Completed"
-  TASK_STATE_FAILED    = "Failed"
+  TASK_STATE_QUEUED     = "Queued"
+  TASK_STATE_COMPLETED  = "Completed"
+  TASK_STATE_FAILED     = "Failed"
+  TASK_STATE_TIMEOUT    = "Timeout"
+  TASK_STATE_NOT_ONLINE = "NotOnline"
 
   struct Node
     include JSON::Serializable

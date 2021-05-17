@@ -3,7 +3,7 @@ require "moana_client"
 
 require "./task"
 
-struct NodeJoinTask < Task
+struct NodeJoinTask < NodeTask
   property type = "node_join"
   @parsed : MoanaTypes::NodeJoinRequest | Nil = nil
 

@@ -3,7 +3,7 @@ require "moana_types"
 require "./brick_utils"
 require "./task"
 
-struct VolumeCreateTask < Task
+struct VolumeCreateTask < NodeTask
   property type = "volume_create"
   @parsed : MoanaTypes::Volume | Nil = nil
 
@@ -33,7 +33,7 @@ struct VolumeCreateTask < Task
   end
 end
 
-struct VolumeStartTask < Task
+struct VolumeStartTask < NodeTask
   property type = "volume_start"
   @parsed : MoanaTypes::Volume | Nil = nil
 
@@ -75,7 +75,7 @@ struct VolumeStartTask < Task
   end
 end
 
-struct VolumeStopTask < Task
+struct VolumeStopTask < NodeTask
   property type = "volume_stop"
   @parsed : MoanaTypes::Volume | Nil = nil
 
@@ -106,7 +106,7 @@ struct VolumeStopTask < Task
   end
 end
 
-struct VolumeExpandTask < Task
+struct VolumeExpandTask < NodeTask
   property type = "volume_expand"
   @parsed : MoanaTypes::Volume | Nil = nil
 
