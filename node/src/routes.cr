@@ -8,7 +8,7 @@ post "/api/v1/join" do |env|
   req = MoanaTypes::NodeJoinRequest.from_json(env.request.body.not_nil!)
 
   # Node Join request as a Task
-  task = Task.from_json(
+  task = NodeTask.from_json(
     {
       type: "node_join",
       data: req.to_json,

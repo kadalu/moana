@@ -24,21 +24,31 @@ module TaskManager
 
     @terminated = false
 
+    def formatted_responses(nodes, responses)
+      nodes.map do |node|
+        return {node: node, response: ""} if !responses[node.id]?
+
+        {node: node, response: responses[node.id].response}
+      end
+    end
+
     def initialize(@id : String, connection_manager : ConnectionManager::Manager)
       spawn do
         loop do
           break if @terminated
 
           MoanaDB.list_open_tasks(@id).each do |task|
+            participating_nodes = task.participating_nodes
+            responses = Hash(String, ConnectionManager::Message).new
+
             begin
               responses = connection_manager.task(
                 @id,
                 ConnectionManager::Message.new(task.id, task.to_json),
-                task.participating_nodes.map { |node| node.id },
+                participating_nodes.map { |node| node.id },
                 timeout: 120
               )
               failed_responses = responses.select { |task_id, resp| !resp.task_done }
-              state = MoanaTypes::TASK_STATE_FAILED
 
               if failed_responses.size == 0
                 # Convert to JSON and then Convert back to different Type
@@ -48,31 +58,29 @@ module TaskManager
                 # raise error.
                 server_task = ServerTask.from_json(task.to_json)
                 server_task.on_complete
-                state = MoanaTypes::TASK_STATE_COMPLETED
+                MoanaDB.update_task(
+                  task.id,
+                  MoanaTypes::TASK_STATE_COMPLETED,
+                  "[]"
+                )
+              else
+                MoanaDB.update_task(
+                  task.id,
+                  MoanaTypes::TASK_STATE_FAILED,
+                  formatted_responses(participating_nodes, responses).to_json
+                )
               end
-              MoanaDB.update_task(
-                task.id,
-                state,
-                responses.to_json
-              )
             rescue ex : ConnectionManager::NotOnlineException
               MoanaDB.update_task(
                 task.id,
-                MoanaTypes::TASK_STATE_FAILED,
-                {
-                  "error"             => ex.message,
-                  "offline_nodes"     => ex.ids,
-                  "partial_responses" => ex.responses,
-                }.to_json
+                MoanaTypes::TASK_STATE_NOT_ONLINE,
+                formatted_responses(participating_nodes, responses).to_json
               )
             rescue ex : ConnectionManager::TimeoutException
               MoanaDB.update_task(
                 task.id,
-                MoanaTypes::TASK_STATE_FAILED,
-                {
-                  "error"             => ex.message,
-                  "partial_responses" => ex.responses,
-                }.to_json
+                MoanaTypes::TASK_STATE_TIMEOUT,
+                formatted_responses(participating_nodes, responses).to_json
               )
             end
           end

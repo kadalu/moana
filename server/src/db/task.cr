@@ -88,10 +88,9 @@ module MoanaDB
 
   def self.list_open_tasks(cluster_id : String, conn = @@conn)
     grouped_tasks(
-      conn.not_nil!.query_all("#{TASK_SELECT_QUERY} WHERE tasks.cluster_id = ? AND tasks.state not in (?, ?)",
+      conn.not_nil!.query_all("#{TASK_SELECT_QUERY} WHERE tasks.cluster_id = ? AND tasks.state = ?",
         cluster_id,
-        MoanaTypes::TASK_STATE_COMPLETED,
-        MoanaTypes::TASK_STATE_FAILED,
+        MoanaTypes::TASK_STATE_QUEUED,
         as: TaskView)
     )
   end
@@ -116,7 +115,7 @@ module MoanaDB
       cluster_id,
       node_id,
       task_type,
-      "Queued",
+      MoanaTypes::QUEUED,
       data,
       "{}"
     )

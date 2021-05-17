@@ -47,7 +47,8 @@ class NodeConf
     cluster_id = "",
     node_id = "",
     moana_url = "",
-    token = ""
+    token = "",
+    connection_retry_interval = 5
 
   def initialize
     # Get hostname from env variable, if not
