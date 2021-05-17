@@ -2,6 +2,12 @@ require "http/web_socket"
 require "json"
 
 module ConnectionManager
+  @@manager = Manager.new
+
+  def self.manager
+    @@manager
+  end
+
   class TimeoutException < Exception
     property responses
 
@@ -37,6 +43,7 @@ module ConnectionManager
     private record CloseConnection, namespace : String, id : String
     private record ListNamespaces, return_channel : Channel(Array(String))
     private record ListConnections, namespace : String, ids : Array(String), return_channel : Channel(Hash(String, HTTP::WebSocket))
+    private record GetConnectionState, namespace : String, id : String, return_channel : Channel(Bool)
 
     private record AddTaskResponse, namespace : String, task : Message, id : String
     private record AddTask, namespace : String, task_id : String
@@ -45,7 +52,7 @@ module ConnectionManager
     private record SendMessage, namespace : String, id : String, message : String
 
     @requests = Channel(AddConnection | CloseConnection | ListConnections |
-                        AddTaskResponse | AddTask | ListNamespaces |
+                        AddTaskResponse | AddTask | ListNamespaces | GetConnectionState |
                         GetTaskResponses | TaskDone | SendMessage).new
 
     def initialize
@@ -79,6 +86,12 @@ module ConnectionManager
               end
             end
             command.return_channel.send connections
+          when GetConnectionState
+            connected = false
+            if @namespaces[command.namespace]? && @namespaces[command.namespace].connections[command.id]?
+              connected = true
+            end
+            command.return_channel.send connected
           when AddTask
             if @namespaces[command.namespace]?
               @namespaces[command.namespace].tasks[command.task_id] = Hash(String, Message).new
@@ -140,6 +153,12 @@ module ConnectionManager
 
     def list_connections(namespace)
       list_connections(namespace, [] of String)
+    end
+
+    def connected?(namespace, id)
+      Channel(Bool).new.tap { |return_channel|
+        @requests.send GetConnectionState.new(namespace, id, return_channel)
+      }.receive
     end
 
     def task(namespace, task, participants, partial = false, timeout = 0)
