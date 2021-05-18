@@ -55,68 +55,94 @@ module ConnectionManager
                         AddTaskResponse | AddTask | ListNamespaces | GetConnectionState |
                         GetTaskResponses | TaskDone | SendMessage).new
 
+    def handle_add_connection(command)
+      if !@namespaces[command.namespace]?
+        @namespaces[command.namespace] = Namespace.new
+      end
+
+      @namespaces[command.namespace].connections[command.id] = command.socket
+    end
+
+    def handle_close_connection(command)
+      @namespaces[command.namespace].connections.delete(command.id)
+
+      if @namespaces[command.namespace].connections.size == 0
+        @namespaces.delete(command.namespace)
+      end
+    end
+
+    def handle_list_namespaces(command)
+      command.return_channel.send @namespaces.keys
+    end
+
+    def handle_list_connections(command)
+      connections = Hash(String, HTTP::WebSocket).new
+
+      if @namespaces[command.namespace]?
+        if command.ids.size == 0
+          connections = @namespaces[command.namespace].connections
+        else
+          connections = @namespaces[command.namespace].connections.select(command.ids)
+        end
+      end
+      command.return_channel.send connections
+    end
+
+    def handle_add_task_response(command)
+      if @namespaces[command.namespace].tasks[command.task.id]?
+        @namespaces[command.namespace].tasks[command.task.id][command.id] = command.task
+      end
+    end
+
+    def handle_add_task(command)
+      if @namespaces[command.namespace]?
+        @namespaces[command.namespace].tasks[command.task_id] = Hash(String, Message).new
+      end
+    end
+
+    def handle_get_connection_state(command)
+      connected = false
+      if @namespaces[command.namespace]? && @namespaces[command.namespace].connections[command.id]?
+        connected = true
+      end
+      command.return_channel.send connected
+    end
+
+    def handle_get_task_responses(command)
+      command.return_channel.send(
+        if !@namespaces[command.namespace]? || !@namespaces[command.namespace].tasks[command.task_id]?
+          Hash(String, Message).new
+        else
+          @namespaces[command.namespace].tasks[command.task_id]
+        end
+      )
+    end
+
+    def handle_task_done(command)
+      if @namespaces[command.namespace]?
+        @namespaces[command.namespace].tasks.delete(command.task_id)
+      end
+    end
+
+    def handle_send_message(command)
+      if @namespaces[command.namespace]? && @namespaces[command.namespace].connections[command.id]?
+        @namespaces[command.namespace].connections[command.id].send command.message
+      end
+    end
+
     def initialize
       @namespaces = Hash(String, Namespace).new
 
       spawn(name: "task_manager") do
         loop do
-          case command = @requests.receive
-          when AddConnection
-            if !@namespaces[command.namespace]?
-              @namespaces[command.namespace] = Namespace.new
+          {% begin %}
+            case command = @requests.receive
+                {% for value in Manager.constants %}
+                when {{ value }}
+                  handle_{{ value.underscore }}(command)
+                {% end %}
             end
-
-            @namespaces[command.namespace].connections[command.id] = command.socket
-          when CloseConnection
-            @namespaces[command.namespace].connections.delete(command.id)
-
-            if @namespaces[command.namespace].connections.size == 0
-              @namespaces.delete(command.namespace)
-            end
-          when ListNamespaces
-            command.return_channel.send @namespaces.keys
-          when ListConnections
-            connections = Hash(String, HTTP::WebSocket).new
-
-            if @namespaces[command.namespace]?
-              if command.ids.size == 0
-                connections = @namespaces[command.namespace].connections
-              else
-                connections = @namespaces[command.namespace].connections.select(command.ids)
-              end
-            end
-            command.return_channel.send connections
-          when GetConnectionState
-            connected = false
-            if @namespaces[command.namespace]? && @namespaces[command.namespace].connections[command.id]?
-              connected = true
-            end
-            command.return_channel.send connected
-          when AddTask
-            if @namespaces[command.namespace]?
-              @namespaces[command.namespace].tasks[command.task_id] = Hash(String, Message).new
-            end
-          when AddTaskResponse
-            if @namespaces[command.namespace].tasks[command.task.id]?
-              @namespaces[command.namespace].tasks[command.task.id][command.id] = command.task
-            end
-          when GetTaskResponses
-            command.return_channel.send(
-              if !@namespaces[command.namespace]? || !@namespaces[command.namespace].tasks[command.task_id]?
-                Hash(String, Message).new
-              else
-                @namespaces[command.namespace].tasks[command.task_id]
-              end
-            )
-          when TaskDone
-            if @namespaces[command.namespace]?
-              @namespaces[command.namespace].tasks.delete(command.task_id)
-            end
-          when SendMessage
-            if @namespaces[command.namespace]? && @namespaces[command.namespace].connections[command.id]?
-              @namespaces[command.namespace].connections[command.id].send command.message
-            end
-          end
+          {% end %}
         end
       end
     end
@@ -197,7 +223,7 @@ module ConnectionManager
         if !partial && disconnected_ids.size > 0
           raise NotOnlineException.new(
             "A few or all participants disconnected after the task is assigned.",
-            ids = disconnected_ids,
+            disconnected_ids,
             task_responses(namespace, task.id)
           )
         end

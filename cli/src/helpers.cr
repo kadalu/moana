@@ -202,7 +202,7 @@ def nodes_by_cluster_id(cluster_id)
     end
   end
 
-  return nil
+  nil
 end
 
 def save_and_get_clusters_list(base_url)
@@ -263,22 +263,20 @@ def prepare_bricks_list(cluster_id, data, brick_fs)
 end
 
 def volume_id_from_name(client, cluster_id, name)
-  begin
-    # TODO: Optimize this by calling search API
-    # Now this is getting all volumes and searching
-    volumes = client.cluster(cluster_id).volumes
-    volumes.each do |volume|
-      if volume.name == name || volume.id == name
-        return volume.id
-      end
+  # TODO: Optimize this by calling search API
+  # Now this is getting all volumes and searching
+  volumes = client.cluster(cluster_id).volumes
+  volumes.each do |volume|
+    if volume.name == name || volume.id == name
+      return volume.id
     end
-
-    STDERR.puts "Invalid Volume name"
-    exit 1
-  rescue ex : MoanaClient::MoanaClientException
-    STDERR.puts "Failed to get Volume ID from the name(HTTP Error: #{ex.status_code})"
-    exit 1
   end
+
+  STDERR.puts "Invalid Volume name"
+  exit 1
+rescue ex : MoanaClient::MoanaClientException
+  STDERR.puts "Failed to get Volume ID from the name(HTTP Error: #{ex.status_code})"
+  exit 1
 end
 
 def start_stop_volume(gflags, args, action)

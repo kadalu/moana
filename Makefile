@@ -26,3 +26,12 @@ build-arm64:
 
 build-amd64:
 	time ./build_amd64_static.sh
+
+lint:
+	cd server && shards build --ignore-crystal-version && ./bin/ameba
+	cd cli && shards build --ignore-crystal-version && ./bin/ameba
+	cd client && shards build --ignore-crystal-version && ./bin/ameba
+	cd connection_manager && shards build --ignore-crystal-version && ./bin/ameba
+	cd node && shards build --ignore-crystal-version && ./bin/ameba
+	cd types && shards build --ignore-crystal-version && ./bin/ameba
+	cd volgen && shards build --ignore-crystal-version && ./bin/ameba

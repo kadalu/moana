@@ -100,7 +100,7 @@ module MoanaDB
       [rec.id, rec.name, rec.state, rec.type, rec.replica_count.to_s, rec.disperse_count.to_s, rec.brick_fs, rec.fs_opts]
     end
 
-    grouped_data.map do |key, rows|
+    grouped_data.map do |_, rows|
       rows = rows.select { |brick| !brick.brick_id.nil? }
       bricks_data = rows.map do |brick|
         brk = MoanaTypes::Brick.new

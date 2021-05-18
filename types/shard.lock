@@ -8,11 +8,3 @@ shards:
     git: https://github.com/crystal-lang/crystal-db.git
     version: 0.10.1
 
-  moana_client:
-    path: ../client
-    version: 0.1.0
-
-  moana_types:
-    path: ../types
-    version: 0.1.0
-

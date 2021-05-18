@@ -50,7 +50,7 @@ class Watcher
       begin
         client = HTTP::WebSocket.new(
           URI.parse("#{ws_url}/ws/#{@node_conf.cluster_id}"),
-          headers = HTTP::Headers{
+          headers: HTTP::Headers{
             "X-Node-ID"     => @node_conf.node_id,
             "Authorization" => "Bearer #{@node_conf.token}",
           }

@@ -8,3 +8,8 @@ description: |
   Moana Websocket based Task manager
 
 license: Apache-2.0
+
+development_dependencies:
+  ameba:
+    github: crystal-ameba/ameba
+    version: ~> 0.13.0
