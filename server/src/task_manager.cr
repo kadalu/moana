@@ -28,9 +28,11 @@ module TaskManager
 
     def formatted_responses(nodes, responses)
       nodes.map do |node|
-        return {node: node, response: ""} if !responses[node.id]?
-
-        {node: node, response: responses[node.id].response}
+        if !responses[node.id]?
+          {node: node, response: "{}"}
+        else
+          {node: node, response: responses[node.id].response}
+        end
       end
     end
 
