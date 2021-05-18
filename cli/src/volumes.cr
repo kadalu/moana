@@ -33,7 +33,7 @@ struct VolumeCreateCommand < Command
     begin
       task = cluster.create_volume(req)
       puts "Volume creation request sent successfully."
-      puts "Task ID: #{task.id}"
+      show_task_detail(cluster, task.id, watch: @args.watch, show_help: true)
     rescue ex : MoanaClient::MoanaClientException
       handle_moana_client_exception(ex)
     end
@@ -55,7 +55,7 @@ struct VolumeStartCommand < Command
   end
 
   def handle
-    start_stop_volume(@gflags, @args.cluster.name, @args.volume.name, "start")
+    start_stop_volume(@gflags, @args, "start")
   end
 end
 
@@ -74,7 +74,7 @@ struct VolumeStopCommand < Command
   end
 
   def handle
-    start_stop_volume(@gflags, @args.cluster.name, @args.volume.name, "stop")
+    start_stop_volume(@gflags, @args, "stop")
   end
 end
 
@@ -239,7 +239,7 @@ struct VolumeExpandCommand < Command
       volume_id = volume_id_from_name(client, cluster_id, @args.volume.name)
       task = cluster.volume(volume_id).expand(req)
       puts "Volume expand request sent successfully."
-      puts "Task ID: #{task.id}"
+      show_task_detail(cluster, task.id, watch: @args.watch, show_help: true)
     rescue ex : MoanaClient::MoanaClientException
       handle_moana_client_exception(ex)
     end
@@ -267,12 +267,14 @@ class MoanaCommands
       parser.on("start", "#{PRODUCT} Volumes Start") do
         @command_type = CommandType::VolumeStart
         parser.banner = "Usage: #{COMMAND} volume start NAME [arguments]"
+        parser.on("-w", "--watch", "Watch for the Task") { @args.watch = true }
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
       end
 
       parser.on("stop", "#{PRODUCT} Volumes Stop") do
         @command_type = CommandType::VolumeStop
         parser.banner = "Usage: #{COMMAND} volume stop NAME [arguments]"
+        parser.on("-w", "--watch", "Watch for the Task") { @args.watch = true }
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
       end
 
@@ -280,6 +282,7 @@ class MoanaCommands
         @command_type = CommandType::VolumeCreate
 
         parser.banner = "Usage: #{COMMAND} volume create NAME BRICKS [arguments]"
+        parser.on("-w", "--watch", "Watch for the Task") { @args.watch = true }
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
         parser.on("--replica-count=COUNT", "Replica Count") { |cnt| @args.volume.replica_count = cnt.to_i }
         parser.on("--disperse-count=COUNT", "Disperse Count") { |cnt| @args.volume.disperse_count = cnt.to_i }
@@ -324,18 +327,21 @@ class MoanaCommands
       parser.on("delete", "Delete #{PRODUCT} Volume") do
         @command_type = CommandType::VolumeDelete
         parser.banner = "Usage: #{COMMAND} volume delete NAME [arguments]"
+        parser.on("-w", "--watch", "Watch for the Task") { @args.watch = true }
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
       end
 
       parser.on("set", "Set #{PRODUCT} Volume Options") do
         @command_type = CommandType::VolumeSet
         parser.banner = "Usage: #{COMMAND} volume set VOLNAME OPTNAME1 OPTVALUE1 ... [arguments]"
+        parser.on("-w", "--watch", "Watch for the Task") { @args.watch = true }
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
       end
 
       parser.on("reset", "Reset #{PRODUCT} Volume Options") do
         @command_type = CommandType::VolumeReset
         parser.banner = "Usage: #{COMMAND} volume reset VOLNAME OPTNAME1 ... [arguments]"
+        parser.on("-w", "--watch", "Watch for the Task") { @args.watch = true }
         parser.on("-c NAME", "--cluster=NAME", "Cluster name") { |name| @args.cluster.name = name }
       end
     end

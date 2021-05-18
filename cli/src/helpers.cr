@@ -114,7 +114,8 @@ struct Args
     brick = BrickArgs.new,
     volfile = VolfileArgs.new,
     user = UserArgs.new,
-    app = AppArgs.new
+    app = AppArgs.new,
+    watch = false
 end
 
 abstract struct Command
@@ -280,12 +281,12 @@ def volume_id_from_name(client, cluster_id, name)
   end
 end
 
-def start_stop_volume(gflags, cluster_name, name, action)
-  cluster_id = cluster_id_from_name(cluster_name)
+def start_stop_volume(gflags, args, action)
+  cluster_id = cluster_id_from_name(args.cluster.name)
   client = moana_client(gflags.kadalu_mgmt_server)
 
   begin
-    volume_id = volume_id_from_name(client, cluster_id, name)
+    volume_id = volume_id_from_name(client, cluster_id, args.volume.name)
     volume = client.cluster(cluster_id).volume(volume_id)
     task = if action == "start"
              volume.start
@@ -293,7 +294,7 @@ def start_stop_volume(gflags, cluster_name, name, action)
              volume.stop
            end
     puts "Volume #{action} request sent successfully."
-    puts "Task ID: #{task.id}"
+    show_task_detail(client.cluster(cluster_id), task.id, watch: args.watch, show_help: true)
   rescue ex : MoanaClient::MoanaClientException
     handle_moana_client_exception(ex)
   end
@@ -332,5 +333,53 @@ def handle_moana_client_exception(ex)
   else
     STDERR.puts "Request failed with HTTP error([#{ex.status_code}] #{ex.message})"
     exit 1
+  end
+end
+
+struct TaskResponse
+  include JSON::Serializable
+
+  property node : MoanaTypes::Node, response : String
+end
+
+struct TaskError
+  include JSON::Serializable
+
+  property error : String = "-"
+end
+
+def show_task_detail(cluster, task_id, watch = false, show_help = false)
+  loop do
+    task = cluster.task(task_id).get
+    if watch && task.state == "Queued"
+      sleep 2.seconds
+      next
+    end
+
+    puts "Task ID: #{task.id}"
+    puts "State: #{task.state}"
+    puts "Type: #{task.type}"
+
+    if task.state == "Failed" || task.state == "Timeout" || task.state == "NotOnline"
+      responses = Array(TaskResponse).new
+      responses = Array(TaskResponse).from_json(task.response) if task.response != ""
+
+      if responses.size > 0
+        puts "Failures:"
+        responses.each do |resp|
+          err_msg = TaskError.from_json(resp.response)
+          puts "  Node: #{resp.node.hostname} (ID: #{resp.node.id})"
+          puts "  Error: #{err_msg.error}"
+          puts
+        end
+      end
+    end
+
+    break
+  end
+
+  if show_help
+    puts
+    puts "Check the status of this task by running `kadalu task list -t #{task_id}`"
   end
 end
