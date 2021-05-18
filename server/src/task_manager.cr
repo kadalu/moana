@@ -52,7 +52,7 @@ module TaskManager
                 participating_nodes.map { |node| node.id },
                 timeout: 120
               )
-              failed_responses = responses.select { |task_id, resp| !resp.task_done }
+              failed_responses = responses.select { |_, resp| !resp.task_done }
 
               if failed_responses.size == 0
                 # Convert to JSON and then Convert back to different Type

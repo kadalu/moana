@@ -190,7 +190,7 @@ class Volfile
     vars["subvol.afr-pending-xattr"] = ""
     if subvol.type.downcase == "replicate" || subvol.type.downcase == "disperse"
       afr_pending_xattrs = [] of String
-      subvol.bricks.each_with_index do |brick, bidx|
+      subvol.bricks.each_with_index do |_, bidx|
         xattr_idx = sidx*subvol.bricks.size + bidx
         afr_pending_xattrs << "#{volume.name}-client-#{xattr_idx}"
       end
@@ -253,13 +253,13 @@ class Volfile
             end
           end
 
-          sgraph.add(bgraph, sibling = true)
+          sgraph.add(bgraph, sibling: true)
         end
 
-        vgraph.add(sgraph, sibling = true)
+        vgraph.add(sgraph, sibling: true)
       end
       if volfile_tmpl.volume.size > 0
-        graph.add(vgraph, sibling = true)
+        graph.add(vgraph, sibling: true)
       end
     end
 
@@ -301,10 +301,10 @@ class Volfile
           end
         end
 
-        sgraph.add(bgraph, sibling = true)
+        sgraph.add(bgraph, sibling: true)
       end
 
-      graph.add(sgraph, sibling = true)
+      graph.add(sgraph, sibling: true)
     end
 
     graph.volgen.reverse!.join("\n")
@@ -315,10 +315,10 @@ class Volfile
     volfile_tmpl = VolfileTmpl.from_yaml(tmpl)
     opts = volume.options
 
-    vvars = Volfile.volume_variables(volume, 0)
+    # vvars = Volfile.volume_variables(volume, 0)
 
     volume.subvols.each_with_index do |subvol, sidx|
-      svars = Volfile.subvol_variables(volume, subvol, 0, sidx)
+      # svars = Volfile.subvol_variables(volume, subvol, 0, sidx)
 
       subvol.bricks.each_with_index do |brick, bidx|
         next if brick.id != brick_id

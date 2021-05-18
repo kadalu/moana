@@ -29,3 +29,8 @@ dependencies:
 
   connection_manager:
     path: ../connection_manager
+
+development_dependencies:
+  ameba:
+    github: crystal-ameba/ameba
+    version: ~> 0.13.0

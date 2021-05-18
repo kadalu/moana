@@ -18,7 +18,7 @@ class MoanaCommands
   @command : Command = UnknownCommand.new
 
   def parse
-    parser = OptionParser.new do |parser|
+    OptionParser.new do |parser|
       parser.banner = "Usage: #{COMMAND} <subcommand> [arguments]"
 
       cluster_commands parser

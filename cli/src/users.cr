@@ -127,7 +127,7 @@ struct RoleAddCommand < Command
     cluster_id = cluster_id_from_name(@args.cluster.name)
     client = moana_client(@gflags.kadalu_mgmt_server)
     begin
-      role = client.add_role(@args.user.name, cluster_id, @args.volume.name, @args.user.role)
+      client.add_role(@args.user.name, cluster_id, @args.volume.name, @args.user.role)
       puts "Successfully set Role"
     rescue ex : MoanaClient::MoanaClientException
       handle_moana_client_exception(ex)
@@ -152,7 +152,7 @@ struct RoleDeleteCommand < Command
     cluster_id = cluster_id_from_name(@args.cluster.name)
     client = moana_client(@gflags.kadalu_mgmt_server)
     begin
-      role = client.role(@args.user.email, cluster_id, @args.volume.name, @args.user.role).delete
+      client.role(@args.user.email, cluster_id, @args.volume.name, @args.user.role).delete
       puts "Successfully deleted the Role"
     rescue ex : MoanaClient::MoanaClientException
       handle_moana_client_exception(ex)
