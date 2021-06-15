@@ -107,7 +107,7 @@ module TaskManager
         new_clusters = MoanaDB.list_cluster_ids
 
         # Remove task managers of Deleted Clusters
-        deleted_clusters = cluster_tasks.select { |cluster_id, _| new_clusters.includes?(cluster_id) }
+        deleted_clusters = cluster_tasks.select { |cluster_id, _| !new_clusters.includes?(cluster_id) }
         deleted_clusters.each do |cluster_id, _|
           cluster_tasks[cluster_id].stop
           cluster_status_tasks[cluster_id].stop
@@ -117,7 +117,7 @@ module TaskManager
 
         # Start Task manager of new Clusters if not already started
         new_clusters.each do |cluster_id|
-          if !cluster_tasks[cluster_id]?
+          if cluster_tasks[cluster_id]?.nil?
             cluster_tasks[cluster_id] = ClusterTasks.new(cluster_id)
             cluster_status_tasks[cluster_id] = ClusterStatusTasks.new(cluster_id)
           end
