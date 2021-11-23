@@ -17,6 +17,12 @@ dependencies:
   kemal:
     github: kemalcr/kemal
 
+  moana_types:
+    path: ../types
+
+  moana_client:
+    path: ../client
+
 development_dependencies:
   ameba:
     github: crystal-ameba/ameba

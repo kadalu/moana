@@ -5,6 +5,7 @@ require "uuid"
 require "kemal"
 
 require "./conf"
+require "./datastore/*"
 require "./plugins/*"
 require "./services/*"
 
@@ -72,6 +73,9 @@ module StorageMgr
         sleep 5.seconds
       end
     end
+
+    # Set the Datastore root directory
+    Datastore.rootdir = "#{GlobalConfig.workdir}/meta"
 
     # TODO: Enable access logging if configured
     Kemal.config.logging = false

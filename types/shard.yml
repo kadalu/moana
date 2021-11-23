@@ -1,19 +1,15 @@
-name: moana_volgen
+name: moana_types
 version: 0.1.0
 
 authors:
   - Kadalu.io <engineering@kadalu.io>
 
 description: |
-  Moana Volfiles generation
+  Kadalu Gluster Manager Types
 
 license: GPLv3
-
-dependencies:
-  moana_types:
-    path: ../types
 
 development_dependencies:
   ameba:
     github: crystal-ameba/ameba
-    version: ~> 0.13.0
+    version: ~> 0.14.3

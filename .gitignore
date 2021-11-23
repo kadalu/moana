@@ -4,3 +4,4 @@ bin
 *.db-shm
 *.db-wal
 *.dwarf
+tmp
