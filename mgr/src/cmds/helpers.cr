@@ -1,5 +1,7 @@
 require "option_parser"
 
+require "moana_client"
+
 class Args
   property cmd = "", pos_args = [] of String, url = "", cluster_name = ""
 end
@@ -56,4 +58,18 @@ end
 
 def handler(name, &block : Args -> Nil)
   Commands.add_handler(name, &block)
+end
+
+def api_call(args, message, &block : MoanaClient::Client -> Nil)
+  begin
+    client = MoanaClient::Client.new(args.url)
+    block.call(client)
+  rescue ex : MoanaClient::ClientException
+    STDERR.puts message
+    STDERR.puts "[HTTP Error: #{ex.status_code}] #{ex.message}"
+    exit 1
+  rescue ex : Socket::ConnectError
+    STDERR.puts message
+    STDERR.puts ex.message
+  end
 end
