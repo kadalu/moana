@@ -1,6 +1,6 @@
 require "./helpers"
 
-command "cluster.create", "Create the Kadalu Storage Cluster" do |parser, args|
+command "cluster.create", "Create the Kadalu Storage Cluster" do |parser, _|
   parser.banner = "Usage: kadalu cluster create NAME [arguments]"
 end
 

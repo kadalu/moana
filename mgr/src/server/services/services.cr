@@ -36,12 +36,10 @@ abstract class Service
   end
 
   def running?
-    begin
-      pid = File.read(pid_file).strip.to_i
-      Process.exists?(pid)
-    rescue File::NotFoundError
-      false
-    end
+    pid = File.read(pid_file).strip.to_i
+    Process.exists?(pid)
+  rescue File::NotFoundError
+    false
   end
 
   def start
