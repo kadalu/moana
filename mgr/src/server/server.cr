@@ -21,8 +21,8 @@ abstract class Service
 end
 
 module StorageMgr
-  def self.nodeid_file
-    "#{GlobalConfig.workdir}/nodeid"
+  def self.info_file
+    "#{GlobalConfig.workdir}/info"
   end
 
   def self.hostname_file
@@ -47,11 +47,13 @@ module StorageMgr
     end
 
     # Generate a node ID if not exists
-    if File.exists?(nodeid_file)
-      GlobalConfig.local_nodeid = File.read(nodeid_file).strip
+    if File.exists?(info_file)
+      GlobalConfig.local_node = LocalNodeData.from_json(File.read(info_file).strip)
     else
-      GlobalConfig.local_nodeid = UUID.random.to_s
-      File.write(nodeid_file, GlobalConfig.local_nodeid)
+      data = LocalNodeData.new
+      data.id = UUID.random.to_s
+      GlobalConfig.local_node = data
+      File.write(info_file, data.to_json)
     end
 
     if File.exists?(hostname_file)

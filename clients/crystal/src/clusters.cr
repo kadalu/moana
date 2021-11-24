@@ -1,3 +1,5 @@
+require "./nodes"
+
 module MoanaClient
   class Cluster
     def initialize(@client : Client, @name : String)
@@ -17,10 +19,12 @@ module MoanaClient
       if response.status_code == 201
         MoanaTypes::Cluster.from_json(response.body)
       else
-        puts response.body
-        puts response.status_code
         MoanaClient.error_response(response)
       end
+    end
+
+    def join_node(name : String, endpoint : String)
+      Node.join(@client, @name, name, endpoint)
     end
   end
 end

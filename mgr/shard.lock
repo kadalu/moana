@@ -17,7 +17,7 @@ shards:
     version: 0.6.1
 
   moana_client:
-    path: ../client
+    path: ../clients/crystal
     version: 0.1.0
 
   moana_types:
