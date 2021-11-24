@@ -34,9 +34,14 @@ module StorageMgr
     GlobalConfig.logdir = args.mgr_args.logdir
     GlobalConfig.agent = args.mgr_args.agent
 
+    # Create workdir if not exists
+    Dir.mkdir_p("#{GlobalConfig.workdir}")
+
     if GlobalConfig.logdir == ""
       Log.setup(:info)
     else
+      # Create logdir if not exists
+      Dir.mkdir_p("#{GlobalConfig.logdir}")
       logfile = Path[GlobalConfig.logdir].join("mgr.log")
       Log.setup(:info, Log::IOBackend.new(File.new(logfile, "a+")))
     end

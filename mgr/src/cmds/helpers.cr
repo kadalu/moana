@@ -71,5 +71,6 @@ def api_call(args, message, &block : MoanaClient::Client -> Nil)
   rescue ex : Socket::ConnectError
     STDERR.puts message
     STDERR.puts ex.message
+    exit 1
   end
 end
