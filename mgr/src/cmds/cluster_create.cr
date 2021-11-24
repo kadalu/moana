@@ -13,7 +13,7 @@ handler "cluster.create" do |args|
   name = args.pos_args[0]
   api_call(args, "Failed to create the Cluster") do |client|
     cluster = client.create_cluster(name)
-    puts "Clustere #{name} created successfully"
+    puts "Cluster #{name} created successfully"
     puts "ID: #{cluster.id}"
   end
 end

@@ -35,7 +35,7 @@ module Action
     @@actions[name].call(data)
   end
 
-  def self.dispatch(name, nodes, data)
+  def self.dispatch(name : String, cluster_name : String, nodes : Array(MoanaTypes::Node), data : String)
     # TODO Set token
     headers = HTTP::Headers.new
     headers["Content-Type"] = "application/json"
@@ -43,16 +43,17 @@ module Action
     # TODO: Send requests concurrently and handle
     # the response
     nodes.each do |node|
-      # TODO: http/https and Port is hard coded
-      url = "http://#{node}:3000/_apis/v1/#{name}"
-      node_resp = HTTP::Client.post(url, body: data, headers: headers)
-      puts node_resp.body
+      url = "#{node.endpoint}/_apis/v1/#{name}"
+      node_resp = HTTP::Client.post(url, body: {"data": data}.to_json, headers: headers)
       resp.set_node_response(
-        node,
+        node.name,
         NodeResponse.from_json(node_resp.body)
       )
     end
 
     resp
+  end
+
+  def self.dispatch(name : String, cluster_name : String, endpoint : String, data : String)
   end
 end

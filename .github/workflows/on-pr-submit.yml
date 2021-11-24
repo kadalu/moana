@@ -21,7 +21,7 @@ jobs:
         run: |
           curl -fsSL https://crystal-lang.org/install.sh | sudo bash
       - name: Format Check
-        run: make fmt
+        run: make fmt-check
       - name: Lint
         run: make lint
       - name: Install Binnacle

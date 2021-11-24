@@ -1,4 +1,4 @@
-from kadalu.cluster import Cluster
+from kadalu.clusters import Cluster
 
 
 class StorageManager:
@@ -35,3 +35,22 @@ class StorageManager:
         ----
         """
         return Cluster.create(self, name)
+
+    def cluster(self, name):
+        """
+        == Cluster instance
+
+        Cluster instance
+
+        Example:
+
+        [source,python]
+        ----
+        from kadalu import StorageManager
+
+        sm = StorageManager("http://localhost:3000")
+
+        sm.cluster("mycluster")
+        ----
+        """
+        return Cluster(self, name)
