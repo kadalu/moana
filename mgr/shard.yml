@@ -21,4 +21,4 @@ dependencies:
     path: ../types
 
   moana_client:
-    path: ../client
+    path: ../clients/crystal
