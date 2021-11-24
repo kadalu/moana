@@ -12,8 +12,3 @@ license: GPLv3
 dependencies:
   moana_types:
     path: ../types
-
-development_dependencies:
-  ameba:
-    github: crystal-ameba/ameba
-    version: ~> 0.13.0

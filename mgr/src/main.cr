@@ -9,38 +9,38 @@ module CLI
     parsed = Args.new
     parsed.url = ENV.fetch("KADALU_URL", "http://localhost:3000")
 
-    parser = OptionParser.new do |parser|
-      parser.banner = "Usage: kadalu [subcommand] [arguments]"
-      parser.on("-h", "--help", "Show this help") do
-        puts parser
+    parser = OptionParser.new do |parser_1|
+      parser_1.banner = "Usage: kadalu [subcommand] [arguments]"
+      parser_1.on("-h", "--help", "Show this help") do
+        puts parser_1
         exit
       end
 
-      parser.on("--version", "Show Version information") do
+      parser_1.on("--version", "Show Version information") do
         puts "kadalu #{VERSION}"
         exit
       end
 
-      parser.on("version", "Show Version information") do
+      parser_1.on("version", "Show Version information") do
         puts "kadalu #{VERSION}"
         exit
       end
 
       Commands.commands.each do |name, cmd|
-        parser.on(name, cmd.help) do
+        parser_1.on(name, cmd.help) do
           subcmds = Commands.sub_commands(name)
           if subcmds
             subcmds.each do |s_name, s_cmd|
-              parser.on(s_name, s_cmd.help) do
+              parser_1.on(s_name, s_cmd.help) do
                 parsed.cmd = "#{name}.#{s_name}"
                 s_proc = s_cmd.proc
-                s_proc.call(parser, parsed) if s_proc
+                s_proc.call(parser_1, parsed) if s_proc
               end
             end
           else
             parsed.cmd = name
             proc = cmd.proc
-            proc.call(parser, parsed) if proc
+            proc.call(parser_1, parsed) if proc
           end
         end
       end
