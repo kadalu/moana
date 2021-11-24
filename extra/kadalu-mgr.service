@@ -1,0 +1,10 @@
+[Unit]
+Description=Kadalu Storage Manager
+After=network.target
+
+[Service]
+PIDFile=/var/run/kadalu/kadalu-mgr.pid
+ExecStart=/usr/sbin/kadalu mgr --workdir=/var/lib/kadalu --logdir=/var/log/kadalu
+
+[Install]
+WantedBy=multi-user.target

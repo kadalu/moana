@@ -12,8 +12,8 @@ on:
 
 jobs:
   # TODO: Add unit test as well here
-  fmt_and_lint:
-    name: Code Format and Lint
+  tests:
+    name: Kadalu Storage Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -24,3 +24,18 @@ jobs:
         run: make fmt
       - name: Lint
         run: make lint
+      - name: Install Binnacle
+        run: |
+          curl -L https://github.com/kadalu/binnacle/releases/latest/download/binnacle -o binnacle
+          chmod +x ./binnacle
+          sudo mv ./binnacle /usr/local/bin/binnacle
+          binnacle --version
+      - name: Build Storage node container
+        run: |
+          cd tests && ./build-container.sh
+      - name: Setup Test environment
+        run: binnacle -v tests/setup.t
+      - name: Build and Install Storage manager to nodes/containers
+        run: binnacle -v tests/install.t
+      - name: Run all Tests
+        run: binnacle -v tests/all
