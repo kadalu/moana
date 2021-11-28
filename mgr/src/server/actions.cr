@@ -44,16 +44,20 @@ module Action
     # the response
     nodes.each do |node|
       url = "#{node.endpoint}/_apis/v1/#{name}"
-      node_resp = HTTP::Client.post(url, body: {"data": data}.to_json, headers: headers)
-      resp.set_node_response(
-        node.name,
-        NodeResponse.from_json(node_resp.body)
-      )
+      begin
+        node_resp = HTTP::Client.post(url, body: {"data": data}.to_json, headers: headers)
+        resp.set_node_response(
+          node.name,
+          NodeResponse.from_json(node_resp.body)
+        )
+      rescue Socket::ConnectError
+        resp.set_node_response(
+          node.name,
+          NodeResponse.new(false, {"error": "Node is not reachable"}.to_json)
+        )
+      end
     end
 
     resp
-  end
-
-  def self.dispatch(name : String, cluster_name : String, endpoint : String, data : String)
   end
 end
