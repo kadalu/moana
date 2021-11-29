@@ -25,3 +25,7 @@ nodes.each do |node|
   USE_NODE node
   puts TEST "cat /var/lib/kadalu/info"
 end
+
+USE_NODE nodes[0]
+puts TEST "kadalu node list -c mycluster"
+puts TEST "kadalu node list -c mycluster --status"

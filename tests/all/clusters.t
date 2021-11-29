@@ -17,4 +17,5 @@ nodes[1 .. -1].each do |node|
   TEST "systemctl start kadalu-agent"
 end
 
-
+USE_NODE nodes[0]
+puts TEST "kadalu cluster list"
