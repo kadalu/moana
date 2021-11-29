@@ -1,0 +1,18 @@
+= Install
+
+Download and install Kadalu Storage Manager,
+
+[source,console]
+----
+$ curl -L https://github.com/kadalu/moana/releases/latest/download/kadalu-`uname -m | sed 's|aarch64|arm64|' | sed 's|x86_64|amd64|'` -o kadalu
+$ sudo install ./kadalu /usr/sbin/kadalu
+$ kadalu --version # kadalu version
+----
+
+Download the systemd service files and install
+
+----
+$ curl -L https://github.com/kadalu/moana/releases/latest/download/kadalu-mgr.service -o kadalu-mgr.service
+$ curl -L https://github.com/kadalu/moana/releases/latest/download/kadalu-agent.service -o kadalu-agent.service
+$ sudo cp kadalu-mgr.service kadalu-agent.service /lib/systemd/system/
+----

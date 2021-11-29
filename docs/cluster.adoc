@@ -17,18 +17,36 @@ Cluster created successfully.
 ID: 4e67989e-0c24-44ac-b0a7-81aa5cb4ec6b
 ----
 
-The cluster data and the configurations stored in `/var/lib/kadalu`. Since the storage manager is running in single node, high availability is not available for the Cluster data. It is possible to provide high availability by using `kadalu-lite` Volume or backing up the Cluster data in regular interval. Refer "High availability" chapter for more details.
-
-Storage manager can support multiple Clusters. Use `set-default` to avoid typing Cluster name or ID with every command.
+Run `cluster list` command to see the list of Clusters.
 
 [source,console]
 ----
-[root@server1 ~]# kadalu cluster set-default mycluster
+[root@server1 ~]# kadalu cluster list
+                                                ID  Name
+4e67989e-0c24-44ac-b0a7-81aa5cb4ec6b  mycluster
 ----
 
-`set-default` is available only as a local option. On that node it remembers the default cluster.
+The cluster data and the configurations stored in `/var/lib/kadalu`. Since the storage manager is running in single node, high availability is not available by default. Use `kadalu-lite` Volume for high availability or backup the Cluster data in regular interval. Refer "High availability" chapter for more details.
 
-Before inviting new nodes to the Cluster, start the `kadalu-agent` service.
+Manager node is not part of any Cluster by default since Kadalu Storage manager supports multiple Clusters. Optionally invite the Storage manager node to join the Cluster similar to inviting other Storage nodes.
+
+[source,console]
+----
+[root@server1 ~]# kadalu node join mycluster/server1.example.com
+Node server1.example.com joined to mycluster successfully
+ID: 3befd57b-1d31-4664-94e9-f87bf7ce90f9
+----
+
+Default node endpoint is `http://<nodename>:3000`. If it is different then provide the endpoint using `--endpoint=ENDPOINT` option.
+
+[source,console]
+----
+[root@server1 ~]# kadalu node join mycluster/server1.example.com --endpoint=http://server1.example.com:3001
+Node server1.example.com joined to mycluster successfully
+ID: 3befd57b-1d31-4664-94e9-f87bf7ce90f9
+----
+
+Before inviting other nodes to join the Cluster, start the `kadalu-agent` service.
 
 [source,console]
 ----
@@ -36,19 +54,29 @@ Before inviting new nodes to the Cluster, start the `kadalu-agent` service.
 [root@server2 ~]# systemctl start kadalu-agent
 ----
 
-Invite new nodes to be part of the Cluster. Once it becomes the part of the Cluster, it listens to the requests from Storage manager.
-
 [source,console]
 ----
-[root@server1 ~]# kadalu node join -c mycluster server2.example.com
+[root@server1 ~]# kadalu node join mycluster/server2.example.com
+Node server2.example.com joined to mycluster successfully
+ID: 34aabcae-1052-4a78-91a5-d71c89458e8d
 ----
-
-- `server1.example.com` should be reachable from the node where the join command is run.
-- Storage manager node should be reachable from the `server1.example.com` to push the metrics.
 
 Run `node list` to view the list of the nodes and the status.
 
 [source,console]
 ----
-[root@server1 ~]# kadalu node list
+[root@server1 ~]# kadalu node list mycluster
+                                                ID                 Name  Endpoint
+322b9883-9d00-4b30-b084-953306f0d431  server1.example.com  http://server1.example.com:3000
+34aabcae-1052-4a78-91a5-d71c89458e8d  server2.example.com  http://server2.example.com:3000
+----
+
+To include the Status information,
+
+[source,console]
+----
+[root@server1 ~]# kadalu node list mycluster --status
+                                                ID   State                    Name  Endpoint
+322b9883-9d00-4b30-b084-953306f0d431      Up     server1.example.com  http://server1.example.com:3000
+34aabcae-1052-4a78-91a5-d71c89458e8d      Up     server2.example.com  http://server2.example.com:3000
 ----

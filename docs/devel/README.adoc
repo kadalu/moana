@@ -1,0 +1,19 @@
+= Developer Documentation
+
+== Welcome :-)
+
+Please refer to link:../../CONTRIBUTING.md[Contributing Guidelines] before getting into development of the project.
+
+== Code Organization
+
+* `$SRC/mgr/src/server` - Server and Agent implementation
+* `$SRC/mgr/src/cmds` - All CLI subcommands(`mgr`, `volume`, `cluster`...) using the `clients/crystal` package.
+* `$SRC/clients/crystal` - Crystal language bindings for Kadalu Storage APIs
+* `$SRC/clients/python` - Python language bindings for Kadalu Storage APIs
+* `$SRC/types` - Common Type definitions that will be used by Server, Client and CLI.
+* `$SRC/volgen` - Volfile generation library. Server will use this library to generate required Volfiles(Client, Storage Unit, Heal daemon, etc) using the YAML Templates.
+
+== Topics
+
+* link:./testing.adoc[Testing]
+* link:./container-based-dev-setup-single-node.adoc[Container based Development Environment Setup]
