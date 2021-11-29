@@ -10,10 +10,9 @@ ACTION_VALIDATE_VOLUME_CREATE = "validate_volume_create"
 ACTION_VOLUME_CREATE          = "volume_create"
 ACTION_VOLUME_CREATE_STOPPED  = "volume_create_stopped"
 
-node_action ACTION_VALIDATE_VOLUME_CREATE do |_|
-  # req = MoanaTypes::Volume.from_json(data)
-  # TODO: Validate all required things(xattr support,rootdir etc)
-  NodeResponse.new(true, "")
+node_action ACTION_VALIDATE_VOLUME_CREATE do |data|
+  req = MoanaTypes::Volume.from_json(data)
+  validate_volume_create(req)
 end
 
 alias VolumeRequestToNode = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, Array(MoanaTypes::Volfile)), MoanaTypes::Volume)
@@ -37,6 +36,8 @@ post "/api/v1/clusters/:cluster_name/volumes" do |env|
   unless volume.nil?
     halt(env, status_code: 400, response: ({"error": "Volume already exists"}.to_json))
   end
+
+  # TODO: Validate the request, dist count, storage_units count etc
 
   # Validate if the nodes are part of the Cluster
   node_names(req).each do |node|
