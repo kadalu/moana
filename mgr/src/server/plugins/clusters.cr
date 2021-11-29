@@ -12,3 +12,7 @@ post "/api/v1/clusters" do |env|
   cluster = Datastore.create_cluster(name)
   cluster.to_json
 end
+
+get "/api/v1/clusters" do
+  Datastore.list_clusters.to_json
+end
