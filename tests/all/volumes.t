@@ -17,7 +17,7 @@ end
 
 nodes.each do |node|
   USE_NODE nodes[0]
-  TEST "kadalu node join #{node} http://#{node}:3000 -c mycluster"
+  TEST "kadalu node join mycluster/#{node}"
   puts TEST "cat /var/lib/kadalu/meta/clusters/mycluster/nodes/server1/info"
 
   USE_NODE node
