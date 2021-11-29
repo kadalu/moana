@@ -40,6 +40,39 @@ def participating_nodes(cluster_name, req)
   end
 end
 
+TEST_XATTR_NAME  = "user.testattr"
+TEST_XATTR_VALUE = "testvalue"
+
+def validate_volume_create(req)
+  # TODO: Validate Rootdir
+  req.distribute_groups.each do |dist_grp|
+    dist_grp.storage_units.each do |storage_unit|
+      next unless storage_unit.node_name == GlobalConfig.local_node.name
+
+      unless File.exists?(Path[storage_unit.path].parent)
+        return NodeResponse.new(false, {"error": "Storage unit parent directory(#{Path[storage_unit.path].parent}) not exists"}.to_json)
+      end
+
+      begin
+        Dir.mkdir storage_unit.path
+      rescue ex : Exception
+        return NodeResponse.new(false, {"error": "Failed to create Storage unit path #{storage_unit.path} (Error: #{ex})"}.to_json)
+      end
+
+      begin
+        xattr = XAttr.new(storage_unit.path)
+        xattr[TEST_XATTR_NAME] = TEST_XATTR_VALUE
+      rescue ex : IO::Error
+        return NodeResponse.new(false, {"error": "Extended attributes are not supported for #{storage_unit.path} (Error: #{ex})"}.to_json)
+      ensure
+        FileUtils.rmdir storage_unit.path
+      end
+    end
+  end
+
+  NodeResponse.new(true, "")
+end
+
 def handle_volume_create(data, stopped = false)
   services, volfiles, req = VolumeRequestToNode.from_json(data)
 
@@ -49,17 +82,6 @@ def handle_volume_create(data, stopped = false)
 
       # Create the Storage Unit
       Dir.mkdir storage_unit.path
-
-      test_xattr_name = "user.testattr"
-      test_xattr_value = "testvalue"
-
-      begin
-        xattr = XAttr.new(storage_unit.path)
-        xattr[test_xattr_name] = test_xattr_value
-      rescue ex : IO::Error
-        FileUtils.rmdir storage_unit.path
-        return NodeResponse.new(false, {"error": "Extended attributes are not supported for #{storage_unit.node_name}:#{storage_unit.path} (Error: #{ex})"}.to_json)
-      end
 
       # Set volume-id xattr, ignore if same Volume ID exists
       volume_id = UUID.new(req.id)
