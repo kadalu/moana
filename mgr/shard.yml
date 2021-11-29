@@ -22,3 +22,10 @@ dependencies:
 
   moana_client:
     path: ../clients/crystal
+
+  moana_volgen:
+    path: ../volgen
+
+  xattr:
+    github: ettomatic/xattr
+    branch: master

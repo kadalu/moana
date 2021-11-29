@@ -1,6 +1,6 @@
 require "yaml"
 
-CONDITION_MORE_THAN_ONE_SUBVOL = "more_than_one_subvol"
+CONDITION_MORE_THAN_ONE_DISTRIBUTE_GROUP = "more_than_one_distribute_group"
 
 class Graph
   include YAML::Serializable
@@ -11,7 +11,7 @@ end
 class VolfileTmpl
   include YAML::Serializable
 
-  property cluster = [] of Graph, volume = [] of Graph, subvol = [] of Graph, brick = [] of Graph
+  property cluster = [] of Graph, volume = [] of Graph, distribute_group = [] of Graph, storage_unit = [] of Graph
 end
 
 def apply_filters(vars)
@@ -111,8 +111,8 @@ class Volfile
 
   def self.include_when?(vol_tmpl, vars)
     case vol_tmpl.include_when
-    when CONDITION_MORE_THAN_ONE_SUBVOL
-      vars["volume.number_of_subvols"].to_i > 1
+    when CONDITION_MORE_THAN_ONE_DISTRIBUTE_GROUP
+      vars["volume.number_of_distribute_groups"].to_i > 1
     else
       true
     end
@@ -161,54 +161,54 @@ class Volfile
 
   def self.volume_variables(volume, vidx)
     {
-      "volume.name"              => volume.name,
-      "volume.id"                => volume.id,
-      "volume.type"              => volume.type.downcase,
-      "volume.index"             => "#{vidx}",
-      "volume.number_of_subvols" => "#{volume.subvols.size}",
+      "volume.name"             => volume.name,
+      "volume.id"               => volume.id,
+      "volume.type"             => volume.type.downcase.sub("mirror", "replicate"),
+      "volume.index"            => "#{vidx}",
+      "volume.distribute_count" => "#{volume.distribute_groups.size}",
     }
   end
 
-  def self.subvol_variables(volume, subvol, vidx, sidx)
+  def self.distribute_group_variables(volume, dist_grp, vidx, grp_idx)
     vars = volume_variables volume, vidx
-    vars["subvol.type"] = subvol.type.downcase
-    vars["subvol.index"] = "#{sidx}"
-    vars["subvol.number_of_bricks"] = "#{subvol.bricks.size}"
+    vars["distribute_group.type"] = dist_grp.type.downcase.sub("mirror", "replicate")
+    vars["distribute_group.index"] = "#{grp_idx}"
+    vars["distribute_group.storage_unit_count"] = "#{dist_grp.storage_units.size}"
 
     # Afr records dirty flag details in xattr.
     # The name of the xattr is <volume-name>-client-<index>
     # These xattrs names are specified as afr-pending-xattr
     # in volfile so that both Client and Self heal
     # daemon will understand. The index starts from zero and
-    # will not reset for each sub volume. If a brick is removed,
-    # index will not change for existing bricks. When new bricks
-    # added it will get new index as len(volinfo.Bricks) + 1
+    # will not reset for each sub volume. If a Storage unit is removed,
+    # index will not change for existing storage units. When new storage units
+    # added it will get new index as len(volinfo.storage_units) + 1
     # TODO: If a subvolume is removed then this may go wrong
-    # As a alternative, Brick ID can be used as part of xattr
-    # name <volume-name>-client-<brick-id>. But this will break
+    # As a alternative, Storage Unit ID can be used as part of xattr
+    # name <volume-name>-client-<storage-unit-id>. But this will break
     # the backward compatibility.
-    vars["subvol.afr-pending-xattr"] = ""
-    if subvol.type.downcase == "replicate" || subvol.type.downcase == "disperse"
+    vars["distribute_group.afr-pending-xattr"] = ""
+    if dist_grp.type.downcase == "replicate" || dist_grp.type.downcase == "disperse"
       afr_pending_xattrs = [] of String
-      subvol.bricks.each_with_index do |_, bidx|
-        xattr_idx = sidx*subvol.bricks.size + bidx
+      dist_grp.storage_units.each_with_index do |_, unit_idx|
+        xattr_idx = grp_idx*dist_grp.storage_units.size + unit_idx
         afr_pending_xattrs << "#{volume.name}-client-#{xattr_idx}"
       end
 
-      vars["subvol.afr-pending-xattr"] = afr_pending_xattrs.join(",")
+      vars["distribute_group.afr-pending-xattr"] = afr_pending_xattrs.join(",")
     end
 
     vars
   end
 
-  def self.brick_variables(volume, subvol, brick, vidx, sidx, bidx)
-    vars = subvol_variables volume, subvol, vidx, sidx
-    vars["brick.node"] = brick.node.hostname
-    vars["brick.node_id"] = brick.node.id
-    vars["brick.type"] = brick.type.downcase
-    vars["brick.path"] = brick.path
-    vars["brick.index"] = "#{sidx*subvol.bricks.size + bidx}"
-    vars["brick.port"] = "#{brick.port}"
+  def self.storage_unit_variables(volume, dist_grp, storage_unit, vidx, grp_idx, unit_idx)
+    vars = distribute_group_variables volume, dist_grp, vidx, grp_idx
+    vars["storage_unit.node"] = storage_unit.node_name
+    vars["storage_unit.node_id"] = storage_unit.node.id
+    vars["storage_unit.type"] = storage_unit.type.downcase
+    vars["storage_unit.path"] = storage_unit.path
+    vars["storage_unit.index"] = "#{grp_idx*dist_grp.storage_units.size + unit_idx}"
+    vars["storage_unit.port"] = "#{storage_unit.port}"
 
     vars
   end
@@ -233,23 +233,23 @@ class Volfile
         end
       end
 
-      volume.subvols.each_with_index do |subvol, sidx|
-        svars = Volfile.subvol_variables(volume, subvol, 0, sidx)
-        sgraph = Volfile.new(name, volfile_tmpl.subvol[0], svars, opts)
+      volume.distribute_groups.each_with_index do |dist_grp, grp_idx|
+        grp_vars = Volfile.distribute_group_variables(volume, dist_grp, 0, grp_idx)
+        sgraph = Volfile.new(name, volfile_tmpl.distribute_group[0], grp_vars, opts)
 
-        volfile_tmpl.subvol[1..-1].each do |subvol_tmpl|
-          if Volfile.include_when?(subvol_tmpl, svars)
-            sgraph.add(Volfile.new(name, subvol_tmpl, svars, opts))
+        volfile_tmpl.distribute_group[1..-1].each do |dist_grp_tmpl|
+          if Volfile.include_when?(dist_grp_tmpl, grp_vars)
+            sgraph.add(Volfile.new(name, dist_grp_tmpl, grp_vars, opts))
           end
         end
 
-        subvol.bricks.each_with_index do |brick, bidx|
-          bvars = Volfile.brick_variables(volume, subvol, brick, 0, sidx, bidx)
-          bgraph = Volfile.new(name, volfile_tmpl.brick[0], bvars, opts)
+        dist_grp.storage_units.each_with_index do |storage_unit, unit_idx|
+          unit_vars = Volfile.storage_unit_variables(volume, dist_grp, storage_unit, 0, grp_idx, unit_idx)
+          bgraph = Volfile.new(name, volfile_tmpl.storage_unit[0], unit_vars, opts)
 
-          volfile_tmpl.brick[1..-1].each do |brick_tmpl|
-            if Volfile.include_when?(brick_tmpl, bvars)
-              bgraph.add(Volfile.new(name, brick_tmpl, bvars, opts))
+          volfile_tmpl.storage_unit[1..-1].each do |storage_unit_tmpl|
+            if Volfile.include_when?(storage_unit_tmpl, unit_vars)
+              bgraph.add(Volfile.new(name, storage_unit_tmpl, unit_vars, opts))
             end
           end
 
@@ -281,23 +281,23 @@ class Volfile
       end
     end
 
-    volume.subvols.each_with_index do |subvol, sidx|
-      svars = Volfile.subvol_variables(volume, subvol, 0, sidx)
-      sgraph = Volfile.new(name, volfile_tmpl.subvol[0], svars, opts)
+    volume.distribute_groups.each_with_index do |dist_grp, grp_idx|
+      grp_vars = Volfile.distribute_group_variables(volume, dist_grp, 0, grp_idx)
+      sgraph = Volfile.new(name, volfile_tmpl.distribute_group[0], grp_vars, opts)
 
-      volfile_tmpl.subvol[1..-1].each do |subvol_tmpl|
-        if Volfile.include_when?(subvol_tmpl, svars)
-          sgraph.add(Volfile.new(name, subvol_tmpl, svars, opts))
+      volfile_tmpl.distribute_group[1..-1].each do |dist_grp_tmpl|
+        if Volfile.include_when?(dist_grp_tmpl, grp_vars)
+          sgraph.add(Volfile.new(name, dist_grp_tmpl, grp_vars, opts))
         end
       end
 
-      subvol.bricks.each_with_index do |brick, bidx|
-        bvars = Volfile.brick_variables(volume, subvol, brick, 0, sidx, bidx)
-        bgraph = Volfile.new(name, volfile_tmpl.brick[0], bvars, opts)
+      dist_grp.storage_units.each_with_index do |storage_unit, unit_idx|
+        unit_vars = Volfile.storage_unit_variables(volume, dist_grp, storage_unit, 0, grp_idx, unit_idx)
+        bgraph = Volfile.new(name, volfile_tmpl.storage_unit[0], unit_vars, opts)
 
-        volfile_tmpl.brick[1..-1].each do |brick_tmpl|
-          if Volfile.include_when?(brick_tmpl, bvars)
-            bgraph.add(Volfile.new(name, brick_tmpl, bvars, opts))
+        volfile_tmpl.storage_unit[1..-1].each do |storage_unit_tmpl|
+          if Volfile.include_when?(storage_unit_tmpl, unit_vars)
+            bgraph.add(Volfile.new(name, storage_unit_tmpl, unit_vars, opts))
           end
         end
 
@@ -310,25 +310,25 @@ class Volfile
     graph.volgen.reverse!.join("\n")
   end
 
-  def self.brick_level(name, tmpl, volume, brick_id)
+  def self.storage_unit_level(name, tmpl, volume, storage_unit_id)
     content = ""
     volfile_tmpl = VolfileTmpl.from_yaml(tmpl)
     opts = volume.options
 
     # vvars = Volfile.volume_variables(volume, 0)
 
-    volume.subvols.each_with_index do |subvol, sidx|
-      # svars = Volfile.subvol_variables(volume, subvol, 0, sidx)
+    volume.distribute_groups.each_with_index do |dist_grp, grp_idx|
+      # grp_vars = Volfile.subvol_variables(volume, dist_grp, 0, grp_idx)
 
-      subvol.bricks.each_with_index do |brick, bidx|
-        next if brick.id != brick_id
+      dist_grp.storage_units.each_with_index do |storage_unit, unit_idx|
+        next if storage_unit.id != storage_unit_id
 
-        bvars = Volfile.brick_variables(volume, subvol, brick, 0, sidx, bidx)
-        graph = Volfile.new(name, volfile_tmpl.brick[0], bvars, opts)
+        unit_vars = Volfile.storage_unit_variables(volume, dist_grp, storage_unit, 0, grp_idx, unit_idx)
+        graph = Volfile.new(name, volfile_tmpl.storage_unit[0], unit_vars, opts)
 
-        volfile_tmpl.brick[1..-1].each do |brick_tmpl|
-          if Volfile.include_when?(brick_tmpl, bvars)
-            graph.add(Volfile.new(name, brick_tmpl, bvars, opts))
+        volfile_tmpl.storage_unit[1..-1].each do |storage_unit_tmpl|
+          if Volfile.include_when?(storage_unit_tmpl, unit_vars)
+            graph.add(Volfile.new(name, storage_unit_tmpl, unit_vars, opts))
           end
         end
         content = graph.volgen.reverse!.join("\n")

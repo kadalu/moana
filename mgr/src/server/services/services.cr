@@ -1,5 +1,7 @@
 require "json"
 
+require "moana_types"
+
 module JSON::Serializable
   macro auto_json_discriminator(key)
     {% if @type.subclasses.size > 0 %}
@@ -26,6 +28,17 @@ abstract class Service
   abstract def args : Array(String)
   abstract def pid_file : String
   abstract def id : String
+
+  def unit
+    service_unit = MoanaTypes::ServiceUnit.new
+    service_unit.name = @name
+    service_unit.id = @id
+    service_unit.path = @path
+    service_unit.pid_file = @pid_file
+    service_unit.args = @args
+
+    service_unit
+  end
 
   def pid
     if @proc.nil?

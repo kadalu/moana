@@ -8,12 +8,12 @@
   "brick_fs":"dir",
   "fs_opts":"",
   "options":{},
-  "subvols":[
+  "distribute_groups":[
     {
-      "replica_count":1,
+      "replica_count":0,
       "disperse_count":1,
       "type":"Distribute",
-      "bricks":[
+      "storage_units":[
         {
           "port":49254,
           "id":"34260614-5b5a-4c5f-9cbd-a5c84cc4ebed",

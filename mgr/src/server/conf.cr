@@ -13,7 +13,7 @@ end
 struct LocalNodeData
   include JSON::Serializable
 
-  property cluster_name = "", id = "", token_hash = "", mgr_url = ""
+  property cluster_name = "", id = "", name = "", token_hash = "", mgr_url = ""
 
   def initialize
   end

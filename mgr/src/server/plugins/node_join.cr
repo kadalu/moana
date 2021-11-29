@@ -25,6 +25,7 @@ node_action ACTION_NODE_INVITE_ACCEPT do |data|
   node.name = req.name
 
   local_node_data.cluster_name = req.cluster_name
+  local_node_data.name = req.name
   local_node_data.token_hash = hash_sha256(node.token)
   # TODO: Add Storage Manager URL
 

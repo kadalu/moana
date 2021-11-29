@@ -19,10 +19,18 @@ module Datastore
   end
 
   def self.get_nodes(cluster_name, node_names)
+    nodes = [] of MoanaTypes::Node
     node_names.map do |node_name|
-      # TODO: How to handle if node info not exists
-      get_node(cluster_name, node_name).not_nil!
+      node = get_node(cluster_name, node_name)
+      nodes << node if node
     end
+
+    nodes
+  end
+
+  def self.node_exists?(cluster_name, node_name)
+    node_file_path = node_file(cluster_name, node_name)
+    File.exists?(node_file_path)
   end
 
   def self.get_node(cluster_name, node_name)

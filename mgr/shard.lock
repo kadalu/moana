@@ -24,7 +24,15 @@ shards:
     path: ../types
     version: 0.1.0
 
+  moana_volgen:
+    path: ../volgen
+    version: 0.1.0
+
   radix:
     git: https://github.com/luislavena/radix.git
     version: 0.4.1
+
+  xattr:
+    git: https://github.com/ettomatic/xattr.git
+    version: 0.7.0+git.commit.4acdcb3be0c6f1f7ed620587fbb62e852ed38c60
 

@@ -1,4 +1,5 @@
 require "./nodes"
+require "./volumes"
 
 module MoanaClient
   class Cluster
@@ -25,6 +26,14 @@ module MoanaClient
 
     def join_node(name : String, endpoint : String)
       Node.join(@client, @name, name, endpoint)
+    end
+
+    def create_volume(req : MoanaTypes::Volume)
+      Volume.create(@client, @name, req)
+    end
+
+    def create_volume(name : String, dist_grps : Array(MoanaTypes::VolumeDistributeGroup), no_start = false)
+      Volume.create(@client, @name, name, dist_grps, no_start)
     end
   end
 end
