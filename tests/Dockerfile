@@ -8,7 +8,7 @@ RUN apt-get update -yq &&                                                 \
     sudo curl wget git build-essential automake autoconf automake libtool \
     flex bison libssl-dev pkg-config uuid-dev acl-dev zlib1g-dev          \
     libxml2-dev libxml2-utils liburcu-dev xfsprogs gdb attr               \
-    libgoogle-perftools-dev zfsutils-linux
+    libgoogle-perftools-dev zfsutils-linux screen
 
 RUN echo "root:kadalu" | chpasswd
 
@@ -21,6 +21,8 @@ RUN sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/' /etc/ssh/sshd_config \
     -e "s#obtain_device_list_from_udev = 1#obtain_device_list_from_udev = 0#" \
     /etc/lvm/lvm.conf &&                                                      \
   systemctl mask getty.target
+
+RUN curl -fsSL https://crystal-lang.org/install.sh | sudo bash
 
 RUN git clone https://github.com/kadalu/glusterfs && \
     cd glusterfs && \
