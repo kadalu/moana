@@ -20,10 +20,6 @@ post "/_apis/v1/:action" do |env|
   resp.to_json
 end
 
-before_all do |env|
-  env.response.content_type = "application/json"
-end
-
 def node_action(name, &block : String -> NodeResponse)
   Action.add(name, &block)
 end
