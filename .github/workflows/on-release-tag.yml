@@ -1,0 +1,69 @@
+name: "On Release"
+
+on:
+  push:
+    # Publish `1.2.3` tags as releases.
+    tags:
+      - "*"
+
+  # Allow to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  release_amd64:
+    runs-on: ubuntu-latest
+    container:
+      image: crystallang/crystal:latest-alpine
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build the kadalu binary
+        run: |
+            cd mgr && shards build --production --release --static --no-debug --stats --time
+      - name: Rename the binary
+        run: |
+          mv mgr/bin/kadalu mgr/bin/kadalu-amd64
+      - name: Upload kadalu-amd64 to the release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: mgr/bin/kadalu-amd64
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
+  release_arm64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Pull images
+        run: |
+          docker pull multiarch/qemu-user-static
+      - name: Install QEMU
+        run: |
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      - name: Build
+        working-directory: .
+        run: |
+          docker run -i -v `pwd`:/workspace -w /workspace --rm multiarch/alpine:aarch64-latest-stable /bin/sh -c "echo '@edge http://dl-cdn.alpinelinux.org/alpine/edge/community' >>/etc/apk/repositories; apk add --update --no-cache --force-overwrite crystal@edge gc-dev gcc gmp-dev libatomic_ops libevent-static musl-dev pcre-dev libxml2-dev openssl-dev openssl-libs-static tzdata yaml-dev zlib-static make git llvm10-dev llvm10-static g++ shards@edge yaml-static; cd mgr && shards build --production --release --static --no-debug --stats --time"
+      - name: Rename
+        run: |
+          sudo mv mgr/bin/kadalu mgr/bin/kadalu-arm64
+      - name: Upload kadalu-arm64 to the release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: mgr/bin/kadalu-arm64
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
+
+  upload_service_files:
+    steps:
+      - name: Upload kadalu-mgr.service and kadalu-agent.service to the release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: extra/*.service
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
