@@ -28,6 +28,10 @@ def dispatch_action(name, cluster_name, nodes, data)
   Action.dispatch(name, cluster_name, nodes, data)
 end
 
+def dispatch_action(name, cluster_name, nodes)
+  Action.dispatch(name, cluster_name, nodes, "")
+end
+
 def metrics_collector(name : String, &block : MgrTypes::Cluster -> Nil)
   MetricsCollector.add(name, &block)
 end

@@ -31,10 +31,10 @@ module MoanaTypes
     end
   end
 
-  struct Node
+  class Node
     include JSON::Serializable
 
-    property id = "", name = "", endpoint = "", addresses = [] of String, token = ""
+    property id = "", name = "", state = "", endpoint = "", addresses = [] of String, token = ""
 
     def initialize
     end
