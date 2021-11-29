@@ -116,9 +116,21 @@ module MoanaTypes
     end
   end
 
+  struct NodeError
+    include JSON::Serializable
+
+    property status_code = 200, error : String, node_name : String
+
+    def initialize(@node_name, @status_code, @error)
+    end
+  end
+
   struct Error
     include JSON::Serializable
 
-    property error : String, status_code : Int32 = 0
+    property error : String, node_errors = [] of NodeError
+
+    def initialize(@error)
+    end
   end
 end
