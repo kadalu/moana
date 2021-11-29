@@ -22,6 +22,29 @@ abstract class Service
 end
 
 module StorageMgr
+  class StorageManagerAPILogHandler < Kemal::BaseLogHandler
+    def initialize
+    end
+
+    def call(context : HTTP::Server::Context)
+      elapsed_time = Time.measure { call_next(context) }
+      elapsed_text = elapsed_text(elapsed_time)
+      Log.info &.emit("#{context.request.method} #{context.request.resource}", status_code: "#{context.response.status_code}", duration: "#{elapsed_text}")
+      context
+    end
+
+    def write(message : String)
+      Log.info { message.strip }
+    end
+
+    private def elapsed_text(elapsed)
+      millis = elapsed.total_milliseconds
+      return "#{millis.round(2)}ms" if millis >= 1
+
+      "#{(millis * 1000).round(2)}µs"
+    end
+  end
+
   def self.info_file
     "#{GlobalConfig.workdir}/info"
   end
@@ -87,6 +110,7 @@ module StorageMgr
 
     # TODO: Enable/Disable access logging if configured
     # Kemal.config.logging = false
+    Kemal.config.logger = StorageManagerAPILogHandler.new
 
     Log.info &.emit("Starting the Storage manager ReST API server", port: "#{Kemal.config.port}")
     # Start the API server
