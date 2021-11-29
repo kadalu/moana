@@ -8,6 +8,7 @@ require "./conf"
 require "./datastore/*"
 require "./plugins/*"
 require "./services/*"
+require "./routes"
 
 # Once all the Service definitions are added
 # to services directory then below code block adds
