@@ -1,0 +1,63 @@
+= Kadalu Storage - Quick Start
+
+== Install
+
+Download and install Kadalu Storage Manager,
+
+[source,console]
+----
+$ curl -L https://github.com/kadalu/moana/releases/latest/download/kadalu-`uname -m | sed 's|aarch64|arm64|' | sed 's|x86_64|amd64|'` -o kadalu
+$ sudo install ./kadalu /usr/sbin/kadalu
+$ kadalu --version # kadalu version
+----
+
+Download the systemd service files and install
+
+[source,console]
+----
+$ curl -L https://github.com/kadalu/moana/releases/latest/download/kadalu-mgr.service -o kadalu-mgr.service
+$ curl -L https://github.com/kadalu/moana/releases/latest/download/kadalu-agent.service -o kadalu-agent.service
+$ sudo cp kadalu-mgr.service kadalu-agent.service /lib/systemd/system/
+----
+
+== Setup
+
+Run Storage manager in any one Storage node or a dedicated node.
+
+[source,console]
+----
+# systemctl enable kadalu-mgr
+# systemctl start kadalu-mgr
+----
+
+== Create Cluster and add Storage nodes
+
+Create a Cluster and add the Storage manager node to the Cluster. Storage manager node is not part of any Cluster since it supports multiple Clusters.
+
+[source,console]
+----
+# kadalu cluster create neo
+Cluster created successfully.
+ID: 4e67989e-0c24-44ac-b0a7-81aa5cb4ec6b
+#
+# kadalu node join neo/server1.example.com
+Node server1.example.com joined to neo successfully
+ID: 3befd57b-1d31-4664-94e9-f87bf7ce90f9
+----
+
+== Create a Kadalu Storage Volume
+
+Now create a directory to use it as Storage unit and then create a Kadalu Storage Volume.
+
+[source,console]
+----
+# mkdir /exports/vol1
+#
+# kadalu volume create neo/vol1 server1.example.com:/exports/vol1/s1
+Volume vol1 created successfully
+ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
+----
+
+== Mount a Volume
+
+Not yet implemented.

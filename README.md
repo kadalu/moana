@@ -1,6 +1,6 @@
 # Kadalu Storage Management - Moana
 
-This README is structured for quickly getting started with the project (from the released binaries). If you want to develop, and contribute to the project, check our [Developer Documentation](./docs/development.md)
+This README is structured for quickly getting started with the project (from the released binaries). If you want to develop, and contribute to the project, check our [Developer Documentation](./docs/devel/README.adoc)
 
 ## Install Moana (Server, Node agent and CLI)
 

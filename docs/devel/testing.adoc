@@ -1,0 +1,44 @@
+= Testing Kadalu Storage Manager
+
+Download and install Binnacle
+
+----
+curl -L https://github.com/kadalu/binnacle/releases/latest/download/binnacle -o binnacle
+sudo install binnacle /usr/local/bin/
+----
+
+Build the Storage node container
+
+[source,console]
+----
+cd tests
+./build-container.sh
+----
+
+Three nodes(Container based) setup
+
+[source,console]
+----
+binnacle -v tests/setup.t
+----
+
+Build and Install Storage manager to the Nodes(Containers)
+
+[source,console]
+----
+binnacle -v tests/install.t
+----
+
+Now run the tests
+
+[source,console]
+----
+binnacle -v tests/all
+----
+
+or run a specific test
+
+[source,console]
+----
+binnacle -v tests/all/volumes.t
+----

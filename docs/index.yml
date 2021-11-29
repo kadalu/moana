@@ -1,0 +1,6 @@
+- section: User Guide
+  chapters:
+    - title: Quick Start
+    - title: Install
+    - title: Clusters
+    - title: Volumes

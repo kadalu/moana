@@ -1,0 +1,78 @@
+= Kadalu Storage Volumes
+
+Create a Kadalu Storage Volume with Storage units from multiple Storage nodes.
+
+[source,console]
+----
+[root@server1 ~]# kadalu volume create mycluster/vol1 server1.example.com:/exports/vol1/s1
+Volume vol1 created successfully
+ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
+----
+
+Where,
+
+- `mycluster` is Cluster name
+- `vol1` is the Volume name
+- `server1.example.com` is the node from which the Storage unit will be exported.
+- `/exports/vol/s1` is the mounted path of Storage Unit.
+
+To create a Replicated or Mirrored Volume,
+
+[source,console]
+----
+[root@server1 ~]# kadalu volume create mycluster/vol1 \
+    replica server1.example.com:/exports/vol1/s1 \
+            server2.example.com:/exports/vol1/s2 \
+            server3.example.com:/exports/vol1/s3
+Volume vol1 created successfully
+ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
+----
+
+Using `mirror` is also supported.
+
+[source,console]
+----
+[root@server1 ~]# kadalu volume create mycluster/vol1 \
+    mirror server1.example.com:/exports/vol1/s1 \
+           server2.example.com:/exports/vol1/s2 \
+           server3.example.com:/exports/vol1/s3
+Volume vol1 created successfully
+ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
+----
+
+Alternatively GlusterFS syntax is also supported.
+
+[source,console]
+----
+[root@server1 ~]# kadalu volume create mycluster/vol1 replica 3 \
+    server1.example.com:/exports/vol1/s1 \
+    server2.example.com:/exports/vol1/s2 \
+    server3.example.com:/exports/vol1/s3
+Volume vol1 created successfully
+ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
+----
+
+- Volumes are started on create. Use `--no-start` to override this behavior.
+- If the Storage unit path is not a mounted directory then use `--allow-rootdir` option (Not yet implemented).
+- To import a Volume, Use `--volume-id` option to set the Same Volume ID to the imported Volume (Not yet implemented).
++
+[source,console]
+----
+[root@server1 ~]# kadalu volume create mycluster/vol1 \
+    server1.example.com:/exports/vol1/s1 \
+   --volume-id=02b6a3a4-e704-47ee-bb05-e541a561a921
+----
++
+- To reuse a Storage unit directory that was part of other Volume earlier, use `--reuse-storage-unit` (Not yet implemented, only applicable if the Storage unit directory is empty).
+
+Storage Unit ports are assigned automatically(`49252` to `49452`) while creating the Volume. Restarting the Volume will not change the Ports of Storage units. Volume info command will show the assigned ports. It is also possible to manually specify the Port while creating the Volume.
+
+[source,console]
+----
+[root@server1 ~]# kadalu volume create mycluster/vol1 \
+    mirror server1.example.com:4501:/exports/vol1/s1 \
+           server2.example.com:4501:/exports/vol1/s2 \
+           server3.example.com:4501:/exports/vol1/s3
+Volume vol1 created successfully
+ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
+----
