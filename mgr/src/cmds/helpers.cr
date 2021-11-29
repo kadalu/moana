@@ -67,6 +67,9 @@ def api_call(args, message, &block : MoanaClient::Client -> Nil)
   rescue ex : MoanaClient::ClientException
     STDERR.puts message
     STDERR.puts "[HTTP Error: #{ex.status_code}] #{ex.message}"
+    ex.node_errors.each do |node_err|
+      STDERR.puts "  [#{node_err.node_name}] #{node_err.error} (HTTP Error: #{node_err.status_code})"
+    end
     exit 1
   rescue ex : Socket::ConnectError
     STDERR.puts message

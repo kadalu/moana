@@ -148,23 +148,20 @@ def node_names(req)
   names
 end
 
-struct NodeError
-  include JSON::Serializable
-
-  property status_code = 200, error : MoanaTypes::Error
-
-  def initialize(@status_code, @error)
-  end
-end
-
 def node_errors(message, node_responses)
-  errs = [] of NodeError
-  node_responses.each do |_, resp|
+  errs = MoanaTypes::Error.new(message)
+
+  node_responses.each do |node_name, resp|
     unless resp.ok
-      errs << NodeError.new(resp.status_code, MoanaTypes::Error.from_json(resp.response))
+      errs.node_errors << MoanaTypes::NodeError.new(
+        node_name,
+        resp.status_code,
+        MoanaTypes::Error.from_json(resp.response).error
+      )
     end
   end
-  {"error": message, "node_errors": errs}
+
+  errs
 end
 
 def port_used?(cluster_name, node_name, port)
