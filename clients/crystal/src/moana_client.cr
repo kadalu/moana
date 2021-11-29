@@ -19,6 +19,10 @@ module MoanaClient
       Cluster.create(self, name)
     end
 
+    def list_clusters
+      Cluster.list(self)
+    end
+
     def cluster(name : String)
       Cluster.new(self, name)
     end

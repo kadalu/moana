@@ -6,6 +6,19 @@ module MoanaClient
     def initialize(@client : Client, @name : String)
     end
 
+    def self.list(client : Client)
+      url = "#{client.url}/api/v1/clusters"
+      response = MoanaClient.http_get(
+        url,
+        headers: client.auth_header
+      )
+      if response.status_code == 200
+        Array(MoanaTypes::Cluster).from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
+
     def self.create(client : Client, name : String)
       url = "#{client.url}/api/v1/clusters"
 

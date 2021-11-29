@@ -22,6 +22,17 @@ module Datastore
     cluster
   end
 
+  def self.list_clusters
+    clusters = [] of MoanaTypes::Cluster
+    Dir.entries(Path.new(@@rootdir, "clusters")).each do |cluster_name|
+      if cluster_name != "." && cluster_name != ".."
+        clusters << get_cluster(cluster_name).not_nil!
+      end
+    end
+
+    clusters
+  end
+
   def self.get_cluster(cluster_name)
     cluster_file_path = cluster_file(cluster_name)
     return nil unless File.exists?(cluster_file_path)
