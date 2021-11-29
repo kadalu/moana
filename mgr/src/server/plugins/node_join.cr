@@ -39,7 +39,11 @@ end
 post "/api/v1/clusters/:cluster_name/nodes" do |env|
   cluster_name = env.params.url["cluster_name"]
   node_name = env.params.json["name"].as(String)
-  endpoint = env.params.json["endpoint"].as(String)
+
+  endpoint = env.params.json.fetch("endpoint", "").as(String)
+  # TODO: Add detault http/https and port values from config
+  endpoint = "http://#{node_name}:3000" if endpoint == ""
+
   node = Datastore.get_node(cluster_name, node_name)
 
   if !node.nil?

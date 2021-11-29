@@ -28,7 +28,7 @@ handler "cluster.list" do |args|
 
     puts "No clusters. Run `kadalu cluster create <name>` to create a Cluster." if clusters.size == 0
 
-    printf("%36s  %s\n", "ID", "Name")
+    printf("%36s  %s\n", "ID", "Name") if clusters.size > 0
 
     clusters.each do |cluster|
       printf("%36s  %s\n", cluster.id, cluster.name)

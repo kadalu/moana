@@ -20,7 +20,11 @@ module Datastore
 
   def self.list_nodes(cluster_name)
     nodes = [] of MoanaTypes::Node
-    Dir.entries(Path.new(@@rootdir, "clusters", cluster_name, "nodes")).each do |node_name|
+    nodes_dir = Path.new(@@rootdir, "clusters", cluster_name, "nodes")
+
+    return nodes unless File.exists?(nodes_dir)
+
+    Dir.entries(nodes_dir).each do |node_name|
       if node_name != "." && node_name != ".."
         nodes << get_node(cluster_name, node_name).not_nil!
       end
