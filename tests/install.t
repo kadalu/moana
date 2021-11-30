@@ -12,6 +12,7 @@ nodes.each do |node|
   TEST "docker cp ./mgr/bin/kadalu #{node}:/usr/sbin/kadalu"
   TEST "docker cp extra/kadalu-mgr.service #{node}:/lib/systemd/system/"
   TEST "docker cp extra/kadalu-agent.service #{node}:/lib/systemd/system/"
+  TEST "docker cp extra/mount.kadalu #{node}:/sbin/mount.kadalu"
 end
 
 # Sanity test
