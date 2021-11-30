@@ -25,5 +25,20 @@ module MoanaClient
       req.no_start = no_start
       create(client, cluster_name, req)
     end
+
+    def get_volfile(name : String, storage_unit = "")
+      url = "#{@client.url}/api/v1/clusters/#{@cluster_name}/volumes/#{@name}/volfiles/#{name}"
+      url += "?storage_unit=#{storage_unit}" if storage_unit != ""
+
+      response = MoanaClient.http_get(
+        url,
+        headers: @client.auth_header
+      )
+      if response.status_code == 200
+        MoanaTypes::Volfile.from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
   end
 end
