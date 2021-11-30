@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Pass all the arguments to Kadalu CLI
+kadalu mount "$@";
