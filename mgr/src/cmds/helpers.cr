@@ -77,3 +77,8 @@ def api_call(args, message, &block : MoanaClient::Client -> Nil)
     exit 1
   end
 end
+
+def command_error(message, exit_code = 1)
+  STDERR.puts message
+  exit exit_code
+end

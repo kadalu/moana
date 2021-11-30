@@ -52,5 +52,22 @@ module MoanaClient
     def create_volume(name : String, dist_grps : Array(MoanaTypes::VolumeDistributeGroup), no_start = false)
       Volume.create(@client, @name, name, dist_grps, no_start)
     end
+
+    def volume(name : String)
+      Volume.new(@client, @name, name)
+    end
+
+    def get_volfile(name : String)
+      url = "#{@client.url}/api/v1/clusters/#{@name}/volfiles/#{name}"
+      response = MoanaClient.http_get(
+        url,
+        headers: @client.auth_header
+      )
+      if response.status_code == 200
+        MoanaTypes::Volfile.from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
   end
 end

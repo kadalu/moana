@@ -112,7 +112,7 @@ class Volfile
   def self.include_when?(vol_tmpl, vars)
     case vol_tmpl.include_when
     when CONDITION_MORE_THAN_ONE_DISTRIBUTE_GROUP
-      vars["volume.number_of_distribute_groups"].to_i > 1
+      vars["volume.distribute_count"].to_i > 1
     else
       true
     end
