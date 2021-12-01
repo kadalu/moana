@@ -24,17 +24,61 @@ OPTION_ALIAS = {
 # # comments or userspace application-specific options, drop them
 
 module MountKadalu
+  extend self
+
   @@glusterfs_cmd = Process.find_executable("glusterfs")
   @@options = Hash(String, String).new
 
-  def self.error(message)
-    STDERR.puts message
-    exit 1
+  def handle_log_level_option(old_name, key, value)
+    if key == "log-level"
+      command_error "Invalid Log level(#{old_name}=#{value}" if LOG_LEVELS.includes?(value.upcase)
+      add_option("--#{key}", value.upcase)
+    end
   end
 
-  # TODO: Improve this Function and remove below line
-  # ameba:disable Metrics/CyclomaticComplexity
-  def self.validate_and_add_option(opt_name, opt_value)
+  def handle_root_squash_option(old_name, key, value)
+    if key == "root-squash" && ["no", "off", "disable", "false"].includes?(value.downcase)
+      add_option("--no-root-squash")
+    elsif key == "no-root-squash" && ["yes", "on", "enable", "true"].includes?(value.downcase)
+      add_option("--no-root-squash")
+    end
+  end
+
+  def handle_halo_options(old_name, key, value)
+    if ["halo-max-latency", "halo-max-replicas", "halo-min-replicas"].includes?(key)
+      add_option("--xlator-option", "*replicate*.#{key}=#{value}")
+    end
+  end
+
+  def add_fuse_mount_option(value)
+    if @@options["--fuse-mountopts"]?.nil?
+      add_option("--fuse-mountopts", value)
+    else
+      add_option("--fuse-mountopts", "#{@@options["--fuse-mountopts"]},#{value}")
+    end
+  end
+
+  def handle_fuse_mount_options(old_name, key, value)
+    # standard mount options to pass to the kernel
+    if key == "fuse-mountopts"
+      add_fuse_mount_option(value)
+    elsif FUSE_MOUNT_OPTIONS.includes?(key)
+      add_fuse_mount_option(key)
+    elsif FUSE_MOUNT_OPTIONS_WITH_VALUE.includes?(key)
+      add_fuse_mount_option("#{key}=\"#{value}\"")
+    end
+  end
+
+  def handle_volfile_id_and_transport(old_name, key, value)
+    if key == "volfile-server-transport"
+      add_option("--volfile-id", "#{@@options["--volfile-id"]}.#{value}") if @@options["--volfile-id"]?
+      add_option("--#{key}", value)
+    elsif key == "volfile-id"
+      add_option("--volfile-id", "#{value}.#{@@options["--volfile-server-transport"]}") if @@options["--volfile-server-transport"]?
+    end
+  end
+
+  def validate_and_add_option(opt_name, opt_value)
     new_name = opt_name
     if OPTION_ALIAS[opt_name]?
       new_name = OPTION_ALIAS[opt_name]
@@ -42,93 +86,59 @@ module MountKadalu
 
     new_name = "" if IGNORE_OPTIONS.includes?(new_name)
 
+    handle_log_level_option(opt_name, new_name, opt_value)
+    handle_root_squash_option(opt_name, new_name, opt_value)
+    handle_halo_options(opt_name, new_name, opt_value)
+    handle_fuse_mount_options(opt_name, new_name, opt_value)
+    handle_volfile_id_and_transport(opt_name, new_name, opt_value)
+
     case new_name
-    when "log-level"
-      error "Invalid Log level(#{opt_name}=#{opt_value}" if LOG_LEVELS.includes?(opt_value.upcase)
-      add_option("--#{new_name}", opt_value.upcase)
-    when "subdir-mount"
-      add_option("--#{new_name}", "/#{opt_value.lstrip("/")}")
-    when "root-squash"
-      if ["no", "off", "disable", "false"].includes?(opt_value.downcase)
-        add_option("--no-root-squash")
-      end
-    when "no-root-squash"
-      if ["yes", "on", "enable", "true"].includes?(opt_value.downcase)
-        add_option("--no-root-squash")
-      end
-    when "halo-max-latency", "halo-max-replicas", "halo-min-replicas"
-      add_option("--xlator-option", "*replicate*.#{new_name}=#{opt_value}")
     when "volfile-check"
+      # Add only Key
       add_option("--volfile-check")
-    when "volfile-server-transport"
-      add_option("--volfile-id", "#{@@options["--volfile-id"]}.#{opt_value}") if @@options["--volfile-id"]?
-      add_option("--#{new_name}", opt_value)
-    when "volfile-id"
-      add_option("--volfile-id", "#{opt_value}.#{@@options["--volfile-server-transport"]}") if @@options["--volfile-server-transport"]?
     when "fopen-keep-cache"
+      # Set default value if value is not provided
       add_option("--fopen-keep-cache", opt_value == "" ? "true" : opt_value)
-    when "fuse-mountopts"
-      if @@options["--fuse-mountopts"]?.nil?
-        add_option("--fuse-mountopts", opt_value)
-      else
-        add_option("--fuse-mountopts", "#{@@options["--fuse-mountopts"]},#{opt_value}")
-      end
     else
       add_option("--#{new_name}", opt_value)
     end
   end
 
-  def self.parse_options(raw_options)
-    raw_options.split(",").each do |opt|
-      opt = opt.strip
-      parts = opt.split("=")
-      opt_name = parts[0].strip
-      opt_value = parts.size > 1 ? parts[1].strip : ""
+  def parse_options(raw_options)
+    raw_options.strip.split(",").each do |opt|
+      next if opt.strip == ""
+
+      opt_name, _, opt_value = opt.strip.partition("=")
 
       if opt_value != ""
-        error "Invalid Option: #{opt}" unless OPTIONS_WITH_VALUE.includes?(opt_name)
-        error "Option doesn't take values: #{opt}" if OPTIONS_WITHOUT_VALUE.includes?(opt_name)
+        command_error "Invalid Option: #{opt}" unless OPTIONS_WITH_VALUE.includes?(opt_name)
+        command_error "Option doesn't take values: #{opt}" if OPTIONS_WITHOUT_VALUE.includes?(opt_name)
       else
-        error "Invalid Option: #{opt}" unless OPTIONS_WITHOUT_VALUE.includes?(opt_name)
+        command_error "Invalid Option: #{opt}" unless OPTIONS_WITHOUT_VALUE.includes?(opt_name)
       end
 
       STDERR.puts "mount option '#{opt_name}' is not handled (yet?)" if OPTIONS_NOT_HANDLED.includes?(opt_name)
 
-      # standard mount options to pass to the kernel
-      if FUSE_MOUNT_OPTIONS.includes?(opt_name)
-        if @@options["--fuse-mountopts"]?.nil?
-          add_option("--fuse-mountopts", opt_name)
-        else
-          add_option("--fuse-mountopts", "#{@@options["--fuse-mountopts"]},#{opt_name}")
-        end
-      elsif FUSE_MOUNT_OPTIONS_WITH_VALUE.includes?(opt_name)
-        if @@options["--fuse-mountopts"]?.nil?
-          add_option("--fuse-mountopts", "#{opt_name}=\"#{opt_value}\"")
-        else
-          add_option("--fuse-mountopts", "#{@@options["--fuse-mountopts"]},#{opt_name}=\"#{opt_value}\"")
-        end
-      else
-        validate_and_add_option(opt_name, opt_value)
-      end
+      validate_and_add_option(opt_name, opt_value)
     end
   end
 
-  def self.validate_mount_path(mount_path)
-    error "ERROR: Cannot mount over root" if mount_path == ""
-    error "ERROR: Cannot mount over /tmp" if mount_path == "/tmp"
-    error "ERROR: Mount point does not exist" unless File.exists?(mount_path)
-    error "ERROR: Mount path is not empty" unless Dir.children(mount_path).size == 0
+  def validate_mount_path(mount_path)
+    command_error "ERROR: Cannot mount over root" if mount_path == ""
+    command_error "ERROR: Cannot mount over /tmp" if mount_path == "/tmp"
+    command_error "ERROR: Mount point does not exist" unless File.exists?(mount_path)
+    command_error "ERROR: Mount path is not empty" unless Dir.children(mount_path).size == 0
 
     # TODO: Validate if already mounted
     # TODO: Validate if the mount path is another mount
     # TODO: Check recursive mount
   end
 
-  def self.add_option(opt_name, opt_value = "")
+  def add_option(opt_name, opt_value = "")
     @@options[opt_name] = opt_value
   end
 
-  def self.execute(cmd, args)
+  def execute(cmd, args)
     stdout = IO::Memory.new
     stderr = IO::Memory.new
     status = Process.run(cmd, args: args, output: stdout, error: stderr)
@@ -139,37 +149,52 @@ module MountKadalu
     end
   end
 
-  # TODO: Improve this Function and remove below line
-  # ameba:disable Metrics/CyclomaticComplexity
-  def self.run(volume, mount_path, raw_options)
-    if @@glusterfs_cmd.nil?
-      STDERR.puts "glusterfs client is not installed"
-      exit 1
-    end
-
-    unless Process.find_executable("getfattr")
-      STDERR.puts "WARNING: getfattr not found, certain checks will be skipped.."
-    end
-
-    hostname = ""
-    cluster_name = ""
-    volume_name = ""
-    volfile_path = ""
-
-    if File.exists?(volume)
-      volfile_path = volume
+  def set_process_name
+    if @@options["--process-name"]?
+      add_option("--process-name", "fuse.kadalu.#{@@options["--process-name"]}")
     else
-      # Example: server1.example.com:mycluster
-      hostname, _, cluster_volume_name = volume.rpartition(":")
-
-      error "Hostname not provided" if hostname == ""
-      cluster_name, _, volume_name = cluster_volume_name.rpartition("/")
-      cluster_name = cluster_name.strip("/")
-
-      error "Cluster name is not provided" if cluster_name == ""
-      error "Volume name is not provided" if volume_name == ""
+      add_option("--process-name", "fuse.kadalu")
     end
+  end
 
+  def set_volfile_server_options(hostname, volume_name, volfile_path)
+    # TODO: Validate Hostname
+    # TODO: Handle Backup Volfile servers
+    if volfile_path == ""
+      add_option("--volfile-server", hostname)
+      add_option("--volume-id", "/#{volume_name}")
+    else
+      add_option("--volfile", volfile_path)
+    end
+  end
+
+  def options_to_args
+    @@options.map do |name, value|
+      value == "" ? name : "#{name}=#{value}"
+    end
+  end
+
+  def volume_details(volume)
+    return {"", "", "", volume} if File.exists?(volume)
+
+    # Example: server1.example.com:mycluster
+    hostname, _, cluster_volume_name = volume.rpartition(":")
+
+    command_error "Hostname not provided" if hostname == ""
+    cluster_name, _, volume_name = cluster_volume_name.rpartition("/")
+    cluster_name = cluster_name.strip("/")
+
+    command_error "Cluster name is not provided" if cluster_name == ""
+    command_error "Volume name is not provided" if volume_name == ""
+
+    {hostname, cluster_name, volume_name, ""}
+  end
+
+  def run(volume, mount_path, raw_options)
+    command_error "glusterfs client is not installed" if @@glusterfs_cmd.nil?
+    STDERR.puts "WARNING: getfattr not found, certain checks will be skipped.." unless Process.find_executable("getfattr")
+
+    hostname, _, volume_name, volfile_path = volume_details(volume)
     validate_mount_path(mount_path)
 
     # Snapshot Volume mount is read only
@@ -185,45 +210,26 @@ module MountKadalu
     volume_name, _, subdir = volume_name.partition("/")
     add_option("--subdir-mount", "/#{subdir}") if subdir != ""
 
-    # TODO: Validate Hostname
-    # TODO: Handle Backup Volfile servers
-    if volfile_path == ""
-      add_option("--volfile-server", hostname)
-      add_option("--volume-id", "/#{volume_name}")
-    else
-      add_option("--volfile", volfile_path)
-    end
+    set_volfile_server_options(hostname, volume_name, volfile_path)
+    parse_options(raw_options)
+    set_process_name
 
-    parse_options(raw_options) unless raw_options.strip == ""
-
-    # Set Process name
-    if @@options["--process-name"]?
-      add_option("--process-name", "fuse.kadalu.#{@@options["--process-name"]}")
-    else
-      add_option("--process-name", "fuse.kadalu")
-    end
+    # Subdir mount: Add slash if not added
+    add_option("--subdir-mount", "/#{@@options["--subdir-mount"].lstrip("/")}") if @@options["--subdir-mount"]?
 
     add_option(mount_path)
 
     # TODO: Handle Updatedb settings
 
-    args = [] of String
-    @@options.each do |name, value|
-      if value == ""
-        args << name
-      else
-        args << "#{name}=#{value}"
-      end
-    end
-
-    rc, _, err = execute(@@glusterfs_cmd.not_nil!, args)
+    # Execute glusterfs with all Options
+    rc, _, err = execute(@@glusterfs_cmd.not_nil!, options_to_args)
 
     # If this is true, then glusterfs process returned error without
     # getting daemonized. We have made sure the logs are posted to
     # 'stderr', so no need to point them to logfile.
     unless rc == 0
       STDERR.puts err.strip
-      error "Mounting glusterfs on $mount_point failed."
+      command_error "Mounting glusterfs on #{mount_path} failed."
     end
 
     # TODO: Mount path inode check
