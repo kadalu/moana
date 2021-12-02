@@ -162,8 +162,11 @@ module MountKadalu
     # TODO: Handle Backup Volfile servers
     if volfile_path == ""
       add_option("--volfile-server", hostname)
-      add_option("--volume-id", "/#{volume_name}")
+      add_option("--volfile-id", "/#{volume_name}") if @@options["--volfile-id"]?.nil?
     else
+      if volume_name != "" && @@options["--volfile-id"]?.nil?
+        add_option("--volfile-id", "/#{volume_name}")
+      end
       add_option("--volfile", volfile_path)
     end
   end
@@ -190,11 +193,10 @@ module MountKadalu
     {hostname, cluster_name, volume_name, ""}
   end
 
-  def run(volume, mount_path, raw_options)
+  def run(hostname, cluster_name, volume_name, volfile_path, mount_path, raw_options)
     command_error "glusterfs client is not installed" if @@glusterfs_cmd.nil?
     STDERR.puts "WARNING: getfattr not found, certain checks will be skipped.." unless Process.find_executable("getfattr")
 
-    hostname, _, volume_name, volfile_path = volume_details(volume)
     validate_mount_path(mount_path)
 
     # Snapshot Volume mount is read only
@@ -210,8 +212,8 @@ module MountKadalu
     volume_name, _, subdir = volume_name.partition("/")
     add_option("--subdir-mount", "/#{subdir}") if subdir != ""
 
-    set_volfile_server_options(hostname, volume_name, volfile_path)
     parse_options(raw_options)
+    set_volfile_server_options(hostname, volume_name, volfile_path)
     set_process_name
 
     # Subdir mount: Add slash if not added

@@ -33,5 +33,19 @@ handler "mount" do |args|
   volume, mount_path = args.pos_args
   mount_path = mount_path.rstrip("/")
 
-  MountKadalu.run(volume, mount_path, args.mount_args.options)
+  hostname, cluster_name, volume_name, volfile_path = MountKadalu.volume_details(volume)
+
+  # Download the Client Volfile from the Server
+  if volfile_path == ""
+    api_call(args, "Failed to generate the Volfile") do |client|
+      volfile = client.cluster(cluster_name).volume(volume_name).get_volfile("client")
+
+      volfile_dir = Path.new(GlobalConfig.workdir, "volfiles")
+      volfile_path = Path.new(volfile_dir, "client-#{cluster_name}-#{volume_name}.vol").to_s
+      Dir.mkdir_p(volfile_dir)
+      File.write(volfile_path, volfile.content)
+    end
+  end
+
+  MountKadalu.run(hostname, cluster_name, volume_name, volfile_path, mount_path, args.mount_args.options)
 end
