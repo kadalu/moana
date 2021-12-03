@@ -107,7 +107,12 @@ post "/api/v1/clusters/:cluster_name/volumes" do |env|
   # Generate Services and Volfiles if Volume to be started
   services, volfiles = services_and_volfiles(req)
 
-  action = req.no_start ? ACTION_VOLUME_CREATE_STOPPED : ACTION_VOLUME_CREATE
+  action = ACTION_VOLUME_CREATE
+  req.state = "Started"
+  if req.no_start
+    action = ACTION_VOLUME_CREATE_STOPPED
+    req.state = "Created"
+  end
 
   # Volume create action {req, services, volfiles}
   resp = dispatch_action(

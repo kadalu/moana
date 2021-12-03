@@ -18,6 +18,21 @@ module Datastore
     volume
   end
 
+  def self.list_volumes(cluster_name)
+    volumes = [] of MoanaTypes::Volume
+    volumes_dir = Path.new(@@rootdir, "clusters", cluster_name, "volumes")
+
+    return volumes unless File.exists?(volumes_dir)
+
+    Dir.entries(volumes_dir).each do |volume_name|
+      if volume_name != "." && volume_name != ".."
+        volumes << get_volume(cluster_name, volume_name).not_nil!
+      end
+    end
+
+    volumes
+  end
+
   def self.get_volume(cluster_name, volume_name)
     volume_file_path = volume_file(cluster_name, volume_name)
     return nil unless File.exists?(volume_file_path)

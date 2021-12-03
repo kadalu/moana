@@ -40,5 +40,31 @@ module MoanaClient
         MoanaClient.error_response(response)
       end
     end
+
+    def get(state = false)
+      url = "#{@client.url}/api/v1/clusters/#{@cluster_name}/volumes/#{@name}?state=#{state ? 1 : 0}"
+      response = MoanaClient.http_get(
+        url,
+        headers: @client.auth_header
+      )
+      if response.status_code == 200
+        MoanaTypes::Volume.from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
+
+    def self.list(client : Client, cluster_name : String, state = false)
+      url = "#{client.url}/api/v1/clusters/#{cluster_name}/volumes?state=#{state ? 1 : 0}"
+      response = MoanaClient.http_get(
+        url,
+        headers: client.auth_header
+      )
+      if response.status_code == 200
+        Array(MoanaTypes::Volume).from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
   end
 end

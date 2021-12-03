@@ -45,6 +45,10 @@ module MoanaClient
       Node.list(@client, @name, state)
     end
 
+    def list_volumes(state = false)
+      Volume.list(@client, @name, state)
+    end
+
     def create_volume(req : MoanaTypes::Volume)
       Volume.create(@client, @name, req)
     end

@@ -40,10 +40,19 @@ module MoanaTypes
     end
   end
 
+  class Metrics
+    include JSON::Serializable
+    # TODO: Include CPU, Memory and Uptime details
+    property health = "", size_used_bytes : UInt64 = 0, size_free_bytes : UInt64 = 0, inodes_used_count : UInt64 = 0, inodes_free_count : UInt64 = 0
+
+    def initialize
+    end
+  end
+
   class StorageUnit
     include JSON::Serializable
 
-    property id = "", node_name = "", port = 0, path = "", node = Node.new, type = ""
+    property id = "", node_name = "", port = 0, path = "", node = Node.new, type = "", fs = "", metrics = Metrics.new, service = ServiceUnit.new
 
     def initialize(@node_name, @port, @path)
     end
@@ -57,7 +66,8 @@ module MoanaTypes
       arbiter_count = 0,
       disperse_count = 0,
       redundancy_count = 0,
-      replica_keyword = ""
+      replica_keyword = "",
+      metrics = Metrics.new
 
     def initialize
     end
@@ -76,7 +86,7 @@ module MoanaTypes
   class Volume
     include JSON::Serializable
 
-    property id = "", name = "", cluster_name = "", distribute_groups = [] of VolumeDistributeGroup, no_start = false, options = Hash(String, String).new
+    property id = "", name = "", state = "", cluster_name = "", distribute_groups = [] of VolumeDistributeGroup, no_start = false, options = Hash(String, String).new, metrics = Metrics.new
 
     def initialize
     end
@@ -110,7 +120,7 @@ module MoanaTypes
   struct ServiceUnit
     include JSON::Serializable
 
-    property id = "", name = "", args = [] of String, pid_file = "", path = ""
+    property id = "", name = "", args = [] of String, pid_file = "", path = "", metrics = Metrics.new
 
     def initialize
     end
