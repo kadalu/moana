@@ -9,21 +9,21 @@ class Args
   property volume_args = VolumeArgs.new
 end
 
-def cluster_and_volume_name(value)
-  cluster_name, _, volume_name = value.partition("/")
-  {cluster_name, volume_name}
+def pool_and_volume_name(value)
+  pool_name, _, volume_name = value.partition("/")
+  {pool_name, volume_name}
 end
 
 command "volume.create", "Kadalu Storage Volume Create" do |parser, _|
-  parser.banner = "Usage: kadalu volume create CLUSTER/VOLNAME TYPE STORAGE_UNITS [arguments]"
+  parser.banner = "Usage: kadalu volume create POOL/VOLNAME TYPE STORAGE_UNITS [arguments]"
 end
 
 handler "volume.create" do |args|
   begin
     req = VolumeRequestParser.parse(args.pos_args)
-    args.cluster_name = req.cluster_name
+    args.pool_name = req.pool_name
     api_call(args, "Failed to Create Volume") do |client|
-      volume = client.cluster(args.cluster_name).create_volume(req)
+      volume = client.pool(args.pool_name).create_volume(req)
       puts "Volume #{req.name} created successfully"
       puts "ID: #{volume.id}"
     end
@@ -34,8 +34,8 @@ handler "volume.create" do |args|
   end
 end
 
-command "volume.list", "Volumes list of a Kadalu Storage Cluster" do |parser, args|
-  parser.banner = "Usage: kadalu volume list CLUSTER [arguments]"
+command "volume.list", "Volumes list of a Kadalu Storage Pool" do |parser, args|
+  parser.banner = "Usage: kadalu volume list POOL [arguments]"
   parser.on("--status", "Show Volumes states") do
     args.volume_args.status = true
   end
@@ -75,19 +75,19 @@ def volume_detail(volume, status = false)
 end
 
 handler "volume.list" do |args|
-  args.cluster_name, args.volume_args.name = cluster_and_volume_name(args.pos_args.size < 1 ? "" : args.pos_args[0])
-  if args.cluster_name == ""
-    STDERR.puts "Cluster name is required."
+  args.pool_name, args.volume_args.name = pool_and_volume_name(args.pos_args.size < 1 ? "" : args.pos_args[0])
+  if args.pool_name == ""
+    STDERR.puts "Pool name is required."
     exit 1
   end
 
   api_call(args, "Failed to get list of volumes") do |client|
     if args.volume_args.name == ""
-      volumes = client.cluster(args.cluster_name).list_volumes(state: args.volume_args.status)
+      volumes = client.pool(args.pool_name).list_volumes(state: args.volume_args.status)
     else
-      volumes = [client.cluster(args.cluster_name).volume(args.volume_args.name).get(state: args.volume_args.status)]
+      volumes = [client.pool(args.pool_name).volume(args.volume_args.name).get(state: args.volume_args.status)]
     end
-    puts "No Volumes available in the Cluster. Run `kadalu volume create #{args.cluster_name}/<volume-name> ...` to create a volume." if volumes.size == 0
+    puts "No Volumes available in the Pool. Run `kadalu volume create #{args.pool_name}/<volume-name> ...` to create a volume." if volumes.size == 0
 
     if args.volume_args.detail
       volumes.each do |volume|

@@ -1,4 +1,4 @@
-= Kadalu Storage Cluster
+= Kadalu Storage Pools
 
 Identify a node where Storage manager will be deployed. The node can be one of the storage nodes or it can be a spare node that is highly available.
 
@@ -12,28 +12,28 @@ Enable and start the `kadalu-mgr`
 
 [source,console]
 ----
-[root@server1 ~]# kadalu cluster create mycluster
-Cluster created successfully.
+[root@server1 ~]# kadalu pool create DEV
+Pool created successfully.
 ID: 4e67989e-0c24-44ac-b0a7-81aa5cb4ec6b
 ----
 
-Run `cluster list` command to see the list of Clusters.
+Run `pool list` command to see the list of Pools.
 
 [source,console]
 ----
-[root@server1 ~]# kadalu cluster list
+[root@server1 ~]# kadalu pool list
                                                 ID  Name
-4e67989e-0c24-44ac-b0a7-81aa5cb4ec6b  mycluster
+4e67989e-0c24-44ac-b0a7-81aa5cb4ec6b  DEV
 ----
 
-The cluster data and the configurations stored in `/var/lib/kadalu`. Since the storage manager is running in single node, high availability is not available by default. Use `kadalu-lite` Volume for high availability or backup the Cluster data in regular interval. Refer "High availability" chapter for more details.
+The pool data and the configurations stored in `/var/lib/kadalu`. Since the storage manager is running in single node, high availability is not available by default. Use `kadalu-lite` Volume for high availability or backup the Pool data in regular interval. Refer "High availability" chapter for more details.
 
-Manager node is not part of any Cluster by default since Kadalu Storage manager supports multiple Clusters. Optionally invite the Storage manager node to join the Cluster similar to inviting other Storage nodes.
+Manager node is not part of any Pool by default since Kadalu Storage manager supports multiple Pools. Optionally invite the Storage manager node to join the Pool similar to inviting other Storage nodes.
 
 [source,console]
 ----
-[root@server1 ~]# kadalu node join mycluster/server1.example.com
-Node server1.example.com joined to mycluster successfully
+[root@server1 ~]# kadalu node join DEV/server1.example.com
+Node server1.example.com joined to DEV successfully
 ID: 3befd57b-1d31-4664-94e9-f87bf7ce90f9
 ----
 
@@ -41,12 +41,12 @@ Default node endpoint is `http://<nodename>:3000`. If it is different then provi
 
 [source,console]
 ----
-[root@server1 ~]# kadalu node join mycluster/server1.example.com --endpoint=http://server1.example.com:3001
-Node server1.example.com joined to mycluster successfully
+[root@server1 ~]# kadalu node join DEV/server1.example.com --endpoint=http://server1.example.com:3001
+Node server1.example.com joined to DEV successfully
 ID: 3befd57b-1d31-4664-94e9-f87bf7ce90f9
 ----
 
-Before inviting other nodes to join the Cluster, start the `kadalu-agent` service.
+Before inviting other nodes to join the Pool, start the `kadalu-agent` service.
 
 [source,console]
 ----
@@ -56,8 +56,8 @@ Before inviting other nodes to join the Cluster, start the `kadalu-agent` servic
 
 [source,console]
 ----
-[root@server1 ~]# kadalu node join mycluster/server2.example.com
-Node server2.example.com joined to mycluster successfully
+[root@server1 ~]# kadalu node join DEV/server2.example.com
+Node server2.example.com joined to DEV successfully
 ID: 34aabcae-1052-4a78-91a5-d71c89458e8d
 ----
 
@@ -65,7 +65,7 @@ Run `node list` to view the list of the nodes and the status.
 
 [source,console]
 ----
-[root@server1 ~]# kadalu node list mycluster
+[root@server1 ~]# kadalu node list DEV
                                                 ID                 Name  Endpoint
 322b9883-9d00-4b30-b084-953306f0d431  server1.example.com  http://server1.example.com:3000
 34aabcae-1052-4a78-91a5-d71c89458e8d  server2.example.com  http://server2.example.com:3000
@@ -75,7 +75,7 @@ To include the Status information,
 
 [source,console]
 ----
-[root@server1 ~]# kadalu node list mycluster --status
+[root@server1 ~]# kadalu node list DEV --status
                                                 ID   State                    Name  Endpoint
 322b9883-9d00-4b30-b084-953306f0d431      Up     server1.example.com  http://server1.example.com:3000
 34aabcae-1052-4a78-91a5-d71c89458e8d      Up     server2.example.com  http://server2.example.com:3000

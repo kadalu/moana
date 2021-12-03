@@ -2,26 +2,26 @@ require "./helpers"
 require "../conf"
 require "../datastore/*"
 
-get "/api/v1/clusters/:cluster_name/volfiles/:volfile_name" do |env|
-  # cluster_name = env.params.url["cluster_name"]
+get "/api/v1/pools/:pool_name/volfiles/:volfile_name" do |env|
+  # pool_name = env.params.url["pool_name"]
   volfile_name = env.params.url["volfile_name"]
 
   # TODO: List volumes to be implemented
-  # volumes = Datastore.list_volumes(cluster_name)
+  # volumes = Datastore.list_volumes(pool_name)
   volumes = [] of MoanaTypes::Volume
 
   tmpl = volfile_get(volfile_name)
-  content = Volfile.cluster_level(volfile_name, tmpl, volumes)
+  content = Volfile.pool_level(volfile_name, tmpl, volumes)
   MoanaTypes::Volfile.new(volfile_name, content).to_json
 end
 
-get "/api/v1/clusters/:cluster_name/volumes/:volume_name/volfiles/:volfile_name" do |env|
-  cluster_name = env.params.url["cluster_name"]
+get "/api/v1/pools/:pool_name/volumes/:volume_name/volfiles/:volfile_name" do |env|
+  pool_name = env.params.url["pool_name"]
   volume_name = env.params.url["volume_name"]
   volfile_name = env.params.url["volfile_name"]
   storage_unit = env.params.query["storage_unit"]?
 
-  volume = Datastore.get_volume(cluster_name, volume_name)
+  volume = Datastore.get_volume(pool_name, volume_name)
   unless volume
     halt(env, status_code: 400, response: ({"error": "Invalid Volume name"}.to_json))
   end

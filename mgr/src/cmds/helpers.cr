@@ -3,7 +3,7 @@ require "option_parser"
 require "moana_client"
 
 class Args
-  property cmd = "", pos_args = [] of String, url = "", cluster_name = ""
+  property cmd = "", pos_args = [] of String, url = "", pool_name = ""
 end
 
 struct Command

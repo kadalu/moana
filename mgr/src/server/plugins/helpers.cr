@@ -24,16 +24,12 @@ def node_action(name, &block : String -> NodeResponse)
   Action.add(name, &block)
 end
 
-def dispatch_action(name, cluster_name, nodes, data)
-  Action.dispatch(name, cluster_name, nodes, data)
+def dispatch_action(name, pool_name, nodes, data)
+  Action.dispatch(name, pool_name, nodes, data)
 end
 
-def dispatch_action(name, cluster_name, nodes)
-  Action.dispatch(name, cluster_name, nodes, "")
-end
-
-def metrics_collector(name : String, &block : MgrTypes::Cluster -> Nil)
-  MetricsCollector.add(name, &block)
+def dispatch_action(name, pool_name, nodes)
+  Action.dispatch(name, pool_name, nodes, "")
 end
 
 def hash_sha256(value : String)

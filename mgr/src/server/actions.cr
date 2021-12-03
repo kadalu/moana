@@ -35,7 +35,7 @@ module Action
     @@actions[name].call(data)
   end
 
-  def self.dispatch(name : String, cluster_name : String, nodes : Array(MoanaTypes::Node), data : String)
+  def self.dispatch(name : String, pool_name : String, nodes : Array(MoanaTypes::Node), data : String)
     # TODO Set token
     headers = HTTP::Headers.new
     headers["Content-Type"] = "application/json"

@@ -1,10 +1,10 @@
 module MoanaClient
   class Volume
-    def initialize(@client : Client, @cluster_name : String, @name : String)
+    def initialize(@client : Client, @pool_name : String, @name : String)
     end
 
-    def self.create(client : Client, cluster_name : String, volume : MoanaTypes::Volume)
-      url = "#{client.url}/api/v1/clusters/#{cluster_name}/volumes"
+    def self.create(client : Client, pool_name : String, volume : MoanaTypes::Volume)
+      url = "#{client.url}/api/v1/pools/#{pool_name}/volumes"
 
       response = MoanaClient.http_post(
         url,
@@ -18,16 +18,16 @@ module MoanaClient
       end
     end
 
-    def self.create(client : Client, cluster_name : String, name : String, dist_grps : Array(MoanaTypes::VolumeDistributeGroup), no_start = false)
+    def self.create(client : Client, pool_name : String, name : String, dist_grps : Array(MoanaTypes::VolumeDistributeGroup), no_start = false)
       req = MoanaTypes::Volume.new
       req.name = name
       req.distribute_groups = dist_grps
       req.no_start = no_start
-      create(client, cluster_name, req)
+      create(client, pool_name, req)
     end
 
     def get_volfile(name : String, storage_unit = "")
-      url = "#{@client.url}/api/v1/clusters/#{@cluster_name}/volumes/#{@name}/volfiles/#{name}"
+      url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}/volfiles/#{name}"
       url += "?storage_unit=#{storage_unit}" if storage_unit != ""
 
       response = MoanaClient.http_get(
@@ -42,7 +42,7 @@ module MoanaClient
     end
 
     def get(state = false)
-      url = "#{@client.url}/api/v1/clusters/#{@cluster_name}/volumes/#{@name}?state=#{state ? 1 : 0}"
+      url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}?state=#{state ? 1 : 0}"
       response = MoanaClient.http_get(
         url,
         headers: @client.auth_header
@@ -54,8 +54,8 @@ module MoanaClient
       end
     end
 
-    def self.list(client : Client, cluster_name : String, state = false)
-      url = "#{client.url}/api/v1/clusters/#{cluster_name}/volumes?state=#{state ? 1 : 0}"
+    def self.list(client : Client, pool_name : String, state = false)
+      url = "#{client.url}/api/v1/pools/#{pool_name}/volumes?state=#{state ? 1 : 0}"
       response = MoanaClient.http_get(
         url,
         headers: client.auth_header

@@ -8,8 +8,8 @@ nodes = ["server1", "server2", "server3"]
 USE_NODE nodes[0]
 TEST "systemctl enable kadalu-mgr"
 TEST "systemctl start kadalu-mgr"
-puts TEST "kadalu cluster create mycluster"
-TEST "cat /var/lib/kadalu/meta/clusters/mycluster/info"
+puts TEST "kadalu pool create DEV"
+TEST "cat /var/lib/kadalu/meta/pools/DEV/info"
 
 nodes[1 .. -1].each do |node|
   USE_NODE node
@@ -18,4 +18,4 @@ nodes[1 .. -1].each do |node|
 end
 
 USE_NODE nodes[0]
-puts TEST "kadalu cluster list"
+puts TEST "kadalu pool list"

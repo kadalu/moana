@@ -11,7 +11,7 @@ end
 class VolfileTmpl
   include YAML::Serializable
 
-  property cluster = [] of Graph, volume = [] of Graph, distribute_group = [] of Graph, storage_unit = [] of Graph
+  property pool = [] of Graph, volume = [] of Graph, distribute_group = [] of Graph, storage_unit = [] of Graph
 end
 
 def apply_filters(vars)
@@ -213,11 +213,11 @@ class Volfile
     vars
   end
 
-  def self.cluster_level(name, tmpl, volumes)
+  def self.pool_level(name, tmpl, volumes)
     volfile_tmpl = VolfileTmpl.from_yaml(tmpl)
 
     # Create graph instance with first template element
-    graph = Volfile.new(name, volfile_tmpl.cluster[0], Hash(String, String).new, Hash(String, String).new)
+    graph = Volfile.new(name, volfile_tmpl.pool[0], Hash(String, String).new, Hash(String, String).new)
 
     volumes.each_with_index do |volume, vidx|
       opts = volume.options

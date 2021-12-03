@@ -2,27 +2,27 @@ require "./nodes"
 require "./volumes"
 
 module MoanaClient
-  class Cluster
+  class Pool
     def initialize(@client : Client, @name : String)
     end
 
     def self.list(client : Client)
-      url = "#{client.url}/api/v1/clusters"
+      url = "#{client.url}/api/v1/pools"
       response = MoanaClient.http_get(
         url,
         headers: client.auth_header
       )
       if response.status_code == 200
-        Array(MoanaTypes::Cluster).from_json(response.body)
+        Array(MoanaTypes::Pool).from_json(response.body)
       else
         MoanaClient.error_response(response)
       end
     end
 
     def self.create(client : Client, name : String)
-      url = "#{client.url}/api/v1/clusters"
+      url = "#{client.url}/api/v1/pools"
 
-      req = MoanaTypes::ClusterCreateRequest.new
+      req = MoanaTypes::PoolCreateRequest.new
       req.name = name
 
       response = MoanaClient.http_post(
@@ -31,7 +31,7 @@ module MoanaClient
         headers: client.auth_header
       )
       if response.status_code == 201
-        MoanaTypes::Cluster.from_json(response.body)
+        MoanaTypes::Pool.from_json(response.body)
       else
         MoanaClient.error_response(response)
       end
@@ -62,7 +62,7 @@ module MoanaClient
     end
 
     def get_volfile(name : String)
-      url = "#{@client.url}/api/v1/clusters/#{@name}/volfiles/#{name}"
+      url = "#{@client.url}/api/v1/pools/#{@name}/volfiles/#{name}"
       response = MoanaClient.http_get(
         url,
         headers: @client.auth_header

@@ -8,14 +8,14 @@ class Args
   property node_args = NodeArgs.new
 end
 
-command "node.join", "Join a node to Kadalu Storage Cluster" do |parser, args|
-  parser.banner = "Usage: kadalu node join CLUSTER/NAME ENDPOINT [arguments]"
+command "node.join", "Join a node to Kadalu Storage Pool" do |parser, args|
+  parser.banner = "Usage: kadalu node join POOL/NAME ENDPOINT [arguments]"
   parser.on("--endpoint", "Node Endpoint. Default is http://<nodename>:3000") do |endpoint|
     args.node_args.endpoint = endpoint
   end
 end
 
-def cluster_and_node_name(value)
+def pool_and_node_name(value)
   parts = value.split("/")
   return {parts[0], parts[1]} if parts.size == 2
 
@@ -23,9 +23,9 @@ def cluster_and_node_name(value)
 end
 
 handler "node.join" do |args|
-  args.cluster_name, name = cluster_and_node_name(args.pos_args.size < 1 ? "" : args.pos_args[0])
-  if args.cluster_name == ""
-    STDERR.puts "Cluster name is required."
+  args.pool_name, name = pool_and_node_name(args.pos_args.size < 1 ? "" : args.pos_args[0])
+  if args.pool_name == ""
+    STDERR.puts "Pool name is required."
     exit 1
   end
 
@@ -35,29 +35,29 @@ handler "node.join" do |args|
   end
 
   api_call(args, "Failed to join the Node") do |client|
-    node = client.cluster(args.cluster_name).join_node(name, args.node_args.endpoint)
-    puts "Node #{name} joined to #{args.cluster_name} successfully"
+    node = client.pool(args.pool_name).join_node(name, args.node_args.endpoint)
+    puts "Node #{name} joined to #{args.pool_name} successfully"
     puts "ID: #{node.id}"
   end
 end
 
-command "node.list", "Nodes list of a Kadalu Storage Cluster" do |parser, args|
-  parser.banner = "Usage: kadalu node list CLUSTER [arguments]"
+command "node.list", "Nodes list of a Kadalu Storage Pool" do |parser, args|
+  parser.banner = "Usage: kadalu node list POOL [arguments]"
   parser.on("--status", "Show nodes states") do
     args.node_args.status = true
   end
 end
 
 handler "node.list" do |args|
-  args.cluster_name, _ = cluster_and_node_name(args.pos_args.size < 1 ? "" : args.pos_args[0])
-  if args.cluster_name == ""
-    STDERR.puts "Cluster name is required."
+  args.pool_name, _ = pool_and_node_name(args.pos_args.size < 1 ? "" : args.pos_args[0])
+  if args.pool_name == ""
+    STDERR.puts "Pool name is required."
     exit 1
   end
 
   api_call(args, "Failed to get list of nodes") do |client|
-    nodes = client.cluster(args.cluster_name).list_nodes(state: args.node_args.status)
-    puts "No nodes added to the Cluster. Run `kadalu node join #{args.cluster_name}/<node-name>` to add a node." if nodes.size == 0
+    nodes = client.pool(args.pool_name).list_nodes(state: args.node_args.status)
+    puts "No nodes added to the Pool. Run `kadalu node join #{args.pool_name}/<node-name>` to add a node." if nodes.size == 0
 
     if args.node_args.status
       printf("%36s  %6s  %20s  %s\n", "ID", "State", "Name", "Endpoint") if nodes.size > 0

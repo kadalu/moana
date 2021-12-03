@@ -59,7 +59,7 @@ node_action ACTION_VOLUME_STATUS do |data|
   NodeResponse.new(true, resp.to_json)
 end
 
-def volume_status_node_request_prepare(cluster_name, volumes)
+def volume_status_node_request_prepare(pool_name, volumes)
   req = Hash(String, VolumeStatusRequestToNode).new
 
   # TODO: Generate SHD service one per Volume per Storage node
@@ -187,11 +187,11 @@ def set_volume_metrics(volume)
   volume.metrics.inodes_free_count = inodes_free_count
 end
 
-def volume_list_detail_status(env, cluster_name, volume_name, state)
+def volume_list_detail_status(env, pool_name, volume_name, state)
   if volume_name.nil?
-    volumes = Datastore.list_volumes(cluster_name)
+    volumes = Datastore.list_volumes(pool_name)
   else
-    vol = Datastore.get_volume(cluster_name, volume_name)
+    vol = Datastore.get_volume(pool_name, volume_name)
     raise VolumeNotFound.new("Volume #{volume_name} not found") unless vol
 
     volumes = [vol]
@@ -199,11 +199,11 @@ def volume_list_detail_status(env, cluster_name, volume_name, state)
 
   return volumes.to_json unless state
 
-  nodes = participating_nodes(cluster_name, volumes)
+  nodes = participating_nodes(pool_name, volumes)
 
   # Collect list of services and Storage Units
-  data = volume_status_node_request_prepare(cluster_name, volumes)
-  resp = dispatch_action(ACTION_VOLUME_STATUS, cluster_name, nodes, data.to_json)
+  data = volume_status_node_request_prepare(pool_name, volumes)
+  resp = dispatch_action(ACTION_VOLUME_STATUS, pool_name, nodes, data.to_json)
 
   volumes.each do |volume|
     volume.distribute_groups.each do |dist_grp|
@@ -232,21 +232,21 @@ def volume_list_detail_status(env, cluster_name, volume_name, state)
   volumes.to_json
 end
 
-get "/api/v1/clusters/:cluster_name/volumes" do |env|
-  cluster_name = env.params.url["cluster_name"]
+get "/api/v1/pools/:pool_name/volumes" do |env|
+  pool_name = env.params.url["pool_name"]
   state = env.params.query["state"]
 
-  volume_list_detail_status(env, cluster_name, nil, state ? true : false)
+  volume_list_detail_status(env, pool_name, nil, state ? true : false)
 rescue ex : VolumeNotFound
   halt(env, status_code: 400, response: ({"error": "#{ex}"}.to_json))
 end
 
-get "/api/v1/clusters/:cluster_name/volumes/:volume_name" do |env|
-  cluster_name = env.params.url["cluster_name"]
+get "/api/v1/pools/:pool_name/volumes/:volume_name" do |env|
+  pool_name = env.params.url["pool_name"]
   volume_name = env.params.url["volume_name"]
   state = env.params.query["state"]
 
-  volume_list_detail_status(env, cluster_name, volume_name, state ? true : false)
+  volume_list_detail_status(env, pool_name, volume_name, state ? true : false)
 rescue ex : VolumeNotFound
   halt(env, status_code: 400, response: ({"error": "#{ex}"}.to_json))
 end

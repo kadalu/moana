@@ -9,9 +9,9 @@ class Args
 end
 
 VOLFILE_GET_BANNER = "
-Usage: kadalu volfile get NAME CLUSTER [arguments]
-       kadalu volfile get NAME CLUSTER/VOLUME [arguments]
-       kadalu volfile get NAME CLUSTER/VOLUME STORAGE_UNIT [arguments]
+Usage: kadalu volfile get NAME POOL [arguments]
+       kadalu volfile get NAME POOL/VOLUME [arguments]
+       kadalu volfile get NAME POOL/VOLUME STORAGE_UNIT [arguments]
 "
 
 command "volfile.get", "Get Kadalu Storage Volfile" do |parser, args|
@@ -23,12 +23,12 @@ end
 
 handler "volfile.get" do |args|
   tmpl = args.pos_args.size > 0 ? args.pos_args[0] : ""
-  cluster_volume = args.pos_args.size > 1 ? args.pos_args[1] : ""
-  args.cluster_name, _, volume = cluster_volume.partition("/")
+  pool_volume = args.pos_args.size > 1 ? args.pos_args[1] : ""
+  args.pool_name, _, volume = pool_volume.partition("/")
   storage_unit = args.pos_args.size > 2 ? args.pos_args[2] : ""
 
   command_error "Volfile Template name is required" if tmpl == ""
-  command_error "Cluster name is required" if args.cluster_name == ""
+  command_error "Pool name is required" if args.pool_name == ""
 
   if args.volfile_args.output_file != ""
     command_error "Output file exists" if File.exists?(args.volfile_args.output_file)
@@ -40,15 +40,15 @@ handler "volfile.get" do |args|
   api_call(args, "Failed to generate the Volfile") do |client|
     if storage_unit != "" && volume != ""
       # Storage Unit level Volfile
-      volfile = client.cluster(args.cluster_name).volume(
+      volfile = client.pool(args.pool_name).volume(
         volume).get_volfile(tmpl, storage_unit)
     elsif volume == ""
-      # Cluster level Volfile
-      volfile = client.cluster(args.cluster_name).get_volfile(
+      # Pool level Volfile
+      volfile = client.pool(args.pool_name).get_volfile(
         tmpl)
     else
       # Volume level Volfile
-      volfile = client.cluster(args.cluster_name).volume(
+      volfile = client.pool(args.pool_name).volume(
         volume).get_volfile(tmpl)
     end
 

@@ -4,14 +4,14 @@ from kadalu.helpers import APIError, http_post
 
 
 class Node:
-    def __init__(self, mgr, cluster_name, name):
+    def __init__(self, mgr, pool_name, name):
         self.mgr = mgr
-        self.cluster_name = cluster_name
+        self.pool_name = pool_name
         self.name = name
 
     @classmethod
-    def join(cls, mgr, cluster_name, name, endpoint):
-        req = http_post(f"{mgr.url}/api/v1/clusters/{cluster_name}/nodes",
+    def join(cls, mgr, pool_name, name, endpoint):
+        req = http_post(f"{mgr.url}/api/v1/pools/{pool_name}/nodes",
                         {"name": name, "endpoint": endpoint})
         resp = json.loads(req.data.decode('utf-8'))
         if req.status == 201:
