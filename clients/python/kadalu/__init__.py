@@ -1,4 +1,4 @@
-from kadalu.clusters import Cluster
+from kadalu.pools import Pool
 
 
 class StorageManager:
@@ -17,11 +17,11 @@ class StorageManager:
         """
         self.url = url.strip("/")
 
-    def create_cluster(self, name):
+    def create_pool(self, name):
         """
-        == Create a new Cluster
+        == Create a new Pool
 
-        Create a new Cluster
+        Create a new Pool
 
         Example:
 
@@ -31,16 +31,16 @@ class StorageManager:
 
         sm = StorageManager("http://localhost:3000")
 
-        sm.create_cluster("mycluster")
+        sm.create_pool("DEV")
         ----
         """
-        return Cluster.create(self, name)
+        return Pool.create(self, name)
 
-    def cluster(self, name):
+    def pool(self, name):
         """
-        == Cluster instance
+        == Pool instance
 
-        Cluster instance
+        Pool instance
 
         Example:
 
@@ -50,7 +50,7 @@ class StorageManager:
 
         sm = StorageManager("http://localhost:3000")
 
-        sm.cluster("mycluster")
+        sm.pool("DEV")
         ----
         """
-        return Cluster(self, name)
+        return Pool(self, name)

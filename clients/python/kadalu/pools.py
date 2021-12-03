@@ -4,14 +4,14 @@ from kadalu.helpers import APIError, http_post
 from kadalu.nodes import Node
 
 
-class Cluster:
+class Pool:
     def __init__(self, mgr, name):
         self.mgr = mgr
         self.name = name
 
     @classmethod
     def create(cls, mgr, name):
-        req = http_post(mgr.url + "/api/v1/clusters", {"name": name})
+        req = http_post(mgr.url + "/api/v1/pools", {"name": name})
         resp = json.loads(req.data.decode('utf-8'))
         if req.status == 201:
             return resp
@@ -20,9 +20,9 @@ class Cluster:
 
     def join_node(self, node_name, endpoint):
         """
-        == Join a node to a Cluster
+        == Join a node to a Pool
 
-        Join a node to a Cluster
+        Join a node to a Pool
 
         Example:
 
@@ -32,7 +32,7 @@ class Cluster:
 
         sm = StorageManager("http://localhost:3000")
 
-        sm.cluster("mycluster").join_node(
+        sm.pool("DEV").join_node(
             "server1",
             "http://localhost:3000"
         )

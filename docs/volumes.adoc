@@ -4,14 +4,14 @@ Create a Kadalu Storage Volume with Storage units from multiple Storage nodes.
 
 [source,console]
 ----
-[root@server1 ~]# kadalu volume create mycluster/vol1 server1.example.com:/exports/vol1/s1
+[root@server1 ~]# kadalu volume create DEV/vol1 server1.example.com:/exports/vol1/s1
 Volume vol1 created successfully
 ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
 ----
 
 Where,
 
-- `mycluster` is Cluster name
+- `DEV` is Pool name
 - `vol1` is the Volume name
 - `server1.example.com` is the node from which the Storage unit will be exported.
 - `/exports/vol/s1` is the mounted path of Storage Unit.
@@ -20,7 +20,7 @@ To create a Replicated or Mirrored Volume,
 
 [source,console]
 ----
-[root@server1 ~]# kadalu volume create mycluster/vol1 \
+[root@server1 ~]# kadalu volume create DEV/vol1 \
     replica server1.example.com:/exports/vol1/s1 \
             server2.example.com:/exports/vol1/s2 \
             server3.example.com:/exports/vol1/s3
@@ -32,7 +32,7 @@ Using `mirror` is also supported.
 
 [source,console]
 ----
-[root@server1 ~]# kadalu volume create mycluster/vol1 \
+[root@server1 ~]# kadalu volume create DEV/vol1 \
     mirror server1.example.com:/exports/vol1/s1 \
            server2.example.com:/exports/vol1/s2 \
            server3.example.com:/exports/vol1/s3
@@ -44,7 +44,7 @@ Alternatively GlusterFS syntax is also supported.
 
 [source,console]
 ----
-[root@server1 ~]# kadalu volume create mycluster/vol1 replica 3 \
+[root@server1 ~]# kadalu volume create DEV/vol1 replica 3 \
     server1.example.com:/exports/vol1/s1 \
     server2.example.com:/exports/vol1/s2 \
     server3.example.com:/exports/vol1/s3
@@ -58,7 +58,7 @@ ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
 +
 [source,console]
 ----
-[root@server1 ~]# kadalu volume create mycluster/vol1 \
+[root@server1 ~]# kadalu volume create DEV/vol1 \
     server1.example.com:/exports/vol1/s1 \
    --volume-id=02b6a3a4-e704-47ee-bb05-e541a561a921
 ----
@@ -69,7 +69,7 @@ Storage Unit ports are assigned automatically(`49252` to `49452`) while creating
 
 [source,console]
 ----
-[root@server1 ~]# kadalu volume create mycluster/vol1 \
+[root@server1 ~]# kadalu volume create DEV/vol1 \
     mirror server1.example.com:4501:/exports/vol1/s1 \
            server2.example.com:4501:/exports/vol1/s2 \
            server3.example.com:4501:/exports/vol1/s3

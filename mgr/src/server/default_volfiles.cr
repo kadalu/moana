@@ -2,7 +2,7 @@ require "moana_volgen"
 
 SHD_VOLFILE = <<-YAML
 ---
-cluster:
+pool:
   - type: debug/io-stats
     name: "glustershd"
 distribute_group:

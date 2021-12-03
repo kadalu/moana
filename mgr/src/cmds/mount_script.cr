@@ -180,20 +180,20 @@ module MountKadalu
   def volume_details(volume)
     return {"", "", "", volume} if File.exists?(volume)
 
-    # Example: server1.example.com:mycluster
-    hostname, _, cluster_volume_name = volume.rpartition(":")
+    # Example: server1.example.com:mypool
+    hostname, _, pool_volume_name = volume.rpartition(":")
 
     command_error "Hostname not provided" if hostname == ""
-    cluster_name, _, volume_name = cluster_volume_name.rpartition("/")
-    cluster_name = cluster_name.strip("/")
+    pool_name, _, volume_name = pool_volume_name.rpartition("/")
+    pool_name = pool_name.strip("/")
 
-    command_error "Cluster name is not provided" if cluster_name == ""
+    command_error "Pool name is not provided" if pool_name == ""
     command_error "Volume name is not provided" if volume_name == ""
 
-    {hostname, cluster_name, volume_name, ""}
+    {hostname, pool_name, volume_name, ""}
   end
 
-  def run(hostname, cluster_name, volume_name, volfile_path, mount_path, raw_options)
+  def run(hostname, pool_name, volume_name, volfile_path, mount_path, raw_options)
     command_error "glusterfs client is not installed" if @@glusterfs_cmd.nil?
     STDERR.puts "WARNING: getfattr not found, certain checks will be skipped.." unless Process.find_executable("getfattr")
 

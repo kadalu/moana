@@ -1,10 +1,10 @@
 module MoanaClient
   class Node
-    def initialize(@client : Client, @cluster_name : String, @name : String)
+    def initialize(@client : Client, @pool_name : String, @name : String)
     end
 
-    def self.join(client : Client, cluster_name : String, name : String, endpoint : String)
-      url = "#{client.url}/api/v1/clusters/#{cluster_name}/nodes"
+    def self.join(client : Client, pool_name : String, name : String, endpoint : String)
+      url = "#{client.url}/api/v1/pools/#{pool_name}/nodes"
 
       req = MoanaTypes::NodeRequest.new
       req.name = name
@@ -22,8 +22,8 @@ module MoanaClient
       end
     end
 
-    def self.list(client : Client, cluster_name : String, state = false)
-      url = "#{client.url}/api/v1/clusters/#{cluster_name}/nodes?state=#{state ? 1 : 0}"
+    def self.list(client : Client, pool_name : String, state = false)
+      url = "#{client.url}/api/v1/pools/#{pool_name}/nodes?state=#{state ? 1 : 0}"
       response = MoanaClient.http_get(
         url,
         headers: client.auth_header

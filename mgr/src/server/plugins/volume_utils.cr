@@ -24,7 +24,7 @@ def volfile_get(name)
   end
 end
 
-def participating_nodes(cluster_name, req)
+def participating_nodes(pool_name, req)
   case req
   when MoanaTypes::Volume
     nodes = [] of String
@@ -34,11 +34,11 @@ def participating_nodes(cluster_name, req)
       end
     end
     nodes.uniq!
-    Datastore.get_nodes(cluster_name, nodes)
+    Datastore.get_nodes(pool_name, nodes)
   when Array(MoanaTypes::Volume)
     nodes = [] of MoanaTypes::Node
     req.each do |volume|
-      nodes += participating_nodes(cluster_name, volume)
+      nodes += participating_nodes(pool_name, volume)
     end
     nodes
   else
@@ -168,8 +168,8 @@ def node_errors(message, node_responses)
   errs
 end
 
-def port_used?(cluster_name, node_name, port)
-  Datastore.port_active?(cluster_name, node_name, port) || Datastore.port_reserved?(cluster_name, node_name, port)
+def port_used?(pool_name, node_name, port)
+  Datastore.port_active?(pool_name, node_name, port) || Datastore.port_reserved?(pool_name, node_name, port)
 end
 
 def services_and_volfiles(req)

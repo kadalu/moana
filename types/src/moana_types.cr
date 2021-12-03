@@ -1,7 +1,7 @@
 require "json"
 
 module MoanaTypes
-  struct ClusterCreateRequest
+  struct PoolCreateRequest
     include JSON::Serializable
 
     property name = ""
@@ -10,7 +10,7 @@ module MoanaTypes
     end
   end
 
-  struct Cluster
+  struct Pool
     include JSON::Serializable
 
     property id = "", name = ""
@@ -25,7 +25,7 @@ module MoanaTypes
   struct NodeRequest
     include JSON::Serializable
 
-    property name = "", endpoint = "", cluster_name = ""
+    property name = "", endpoint = "", pool_name = ""
 
     def initialize
     end
@@ -86,7 +86,7 @@ module MoanaTypes
   class Volume
     include JSON::Serializable
 
-    property id = "", name = "", state = "", cluster_name = "", distribute_groups = [] of VolumeDistributeGroup, no_start = false, options = Hash(String, String).new, metrics = Metrics.new
+    property id = "", name = "", state = "", pool_name = "", distribute_groups = [] of VolumeDistributeGroup, no_start = false, options = Hash(String, String).new, metrics = Metrics.new
 
     def initialize
     end

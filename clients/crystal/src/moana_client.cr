@@ -1,7 +1,7 @@
 require "moana_types"
 
 require "./helpers"
-require "./clusters"
+require "./pools"
 
 module MoanaClient
   class Client
@@ -15,16 +15,16 @@ module MoanaClient
       @token = ""
     end
 
-    def create_cluster(name : String)
-      Cluster.create(self, name)
+    def create_pool(name : String)
+      Pool.create(self, name)
     end
 
-    def list_clusters
-      Cluster.list(self)
+    def list_pools
+      Pool.list(self)
     end
 
-    def cluster(name : String)
-      Cluster.new(self, name)
+    def pool(name : String)
+      Pool.new(self, name)
     end
   end
 end
