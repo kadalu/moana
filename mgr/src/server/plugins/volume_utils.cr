@@ -35,6 +35,12 @@ def participating_nodes(cluster_name, req)
     end
     nodes.uniq!
     Datastore.get_nodes(cluster_name, nodes)
+  when Array(MoanaTypes::Volume)
+    nodes = [] of MoanaTypes::Node
+    req.each do |volume|
+      nodes += participating_nodes(cluster_name, volume)
+    end
+    nodes
   else
     [] of MoanaTypes::Node
   end
