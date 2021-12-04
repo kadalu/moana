@@ -1,6 +1,6 @@
 import json
 
-from kadalu.helpers import APIError, http_post
+from kadalu.helpers import APIError, http_post, http_get
 from kadalu.nodes import Node
 
 
@@ -14,6 +14,15 @@ class Pool:
         req = http_post(mgr.url + "/api/v1/pools", {"name": name})
         resp = json.loads(req.data.decode('utf-8'))
         if req.status == 201:
+            return resp
+
+        raise APIError(resp["error"], req.status)
+
+    @classmethod
+    def list(cls, mgr):
+        req = http_get(mgr.url + "/api/v1/pools")
+        resp = json.loads(req.data.decode('utf-8'))
+        if req.status == 200:
             return resp
 
         raise APIError(resp["error"], req.status)

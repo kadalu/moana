@@ -54,3 +54,22 @@ class StorageManager:
         ----
         """
         return Pool(self, name)
+
+    def list_pools(self):
+        """
+        == List Kadalu Storage Pools
+
+        List Pools
+
+        Example:
+
+        [source,python]
+        ----
+        from kadalu import StorageManager
+
+        sm = StorageManager("http://localhost:3000")
+
+        sm.list_pools()
+        ----
+        """
+        return Pool.list(self)
