@@ -21,3 +21,14 @@ def http_post(url, data):
     )
 
     return req
+
+
+def http_get(url):
+    http = urllib3.PoolManager()
+    req = http.request(
+        'GET',
+        url,
+        headers={'Content-Type': 'application/json'}
+    )
+
+    return req
