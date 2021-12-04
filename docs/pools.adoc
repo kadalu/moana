@@ -22,7 +22,7 @@ Run `pool list` command to see the list of Pools.
 [source,console]
 ----
 [root@server1 ~]# kadalu pool list
-                                                ID  Name
+                                  ID  Name
 4e67989e-0c24-44ac-b0a7-81aa5cb4ec6b  DEV
 ----
 

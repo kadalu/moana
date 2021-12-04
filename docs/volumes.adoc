@@ -53,7 +53,7 @@ ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
 ----
 
 - Volumes are started on create. Use `--no-start` to override this behavior.
-- If the Storage unit path is not a mounted directory then use `--allow-rootdir` option (Not yet implemented).
+- If the Storage unit path is not a mounted directory then use `--allow-root-partition` option (Not yet implemented). This is not optimal setup since the Kadalu Volume can fill up the root partition or other application can fill up Kadalu Volume.
 - To import a Volume, Use `--volume-id` option to set the Same Volume ID to the imported Volume (Not yet implemented).
 +
 [source,console]
@@ -64,6 +64,7 @@ ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
 ----
 +
 - To reuse a Storage unit directory that was part of other Volume earlier, use `--reuse-storage-unit` (Not yet implemented, only applicable if the Storage unit directory is empty).
+- To allow using Replicate/Mirrored/Disperse Storage units from same node, use `--from-same-node`. This is not Optimal setup since no high availability for the distribute group if one node goes down (Not yet implemented).
 
 Storage Unit ports are assigned automatically(`49252` to `49452`) while creating the Volume. Restarting the Volume will not change the Ports of Storage units. Volume info command will show the assigned ports. It is also possible to manually specify the Port while creating the Volume.
 
