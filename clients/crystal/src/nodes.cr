@@ -3,7 +3,7 @@ module MoanaClient
     def initialize(@client : Client, @pool_name : String, @name : String)
     end
 
-    def self.join(client : Client, pool_name : String, name : String, endpoint : String)
+    def self.add(client : Client, pool_name : String, name : String, endpoint : String)
       url = "#{client.url}/api/v1/pools/#{pool_name}/nodes"
 
       req = MoanaTypes::NodeRequest.new

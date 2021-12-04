@@ -19,7 +19,7 @@ end
 
 nodes.each do |node|
   USE_NODE nodes[0]
-  TEST "kadalu node join DEV/#{node}"
+  TEST "kadalu node add DEV/#{node}"
   puts TEST "cat /var/lib/kadalu/meta/pools/DEV/nodes/server1/info"
 
   USE_NODE node

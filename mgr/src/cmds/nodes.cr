@@ -8,8 +8,8 @@ class Args
   property node_args = NodeArgs.new
 end
 
-command "node.join", "Join a node to Kadalu Storage Pool" do |parser, args|
-  parser.banner = "Usage: kadalu node join POOL/NAME ENDPOINT [arguments]"
+command "node.add", "Add a node to Kadalu Storage Pool" do |parser, args|
+  parser.banner = "Usage: kadalu node add POOL/NAME ENDPOINT [arguments]"
   parser.on("--endpoint", "Node Endpoint. Default is http://<nodename>:3000") do |endpoint|
     args.node_args.endpoint = endpoint
   end
@@ -22,7 +22,7 @@ def pool_and_node_name(value)
   {parts[0], ""}
 end
 
-handler "node.join" do |args|
+handler "node.add" do |args|
   args.pool_name, name = pool_and_node_name(args.pos_args.size < 1 ? "" : args.pos_args[0])
   if args.pool_name == ""
     STDERR.puts "Pool name is required."
@@ -34,9 +34,9 @@ handler "node.join" do |args|
     exit 1
   end
 
-  api_call(args, "Failed to join the Node") do |client|
-    node = client.pool(args.pool_name).join_node(name, args.node_args.endpoint)
-    puts "Node #{name} joined to #{args.pool_name} successfully"
+  api_call(args, "Failed to add the Node") do |client|
+    node = client.pool(args.pool_name).add_node(name, args.node_args.endpoint)
+    puts "Node #{name} added to #{args.pool_name} successfully"
     puts "ID: #{node.id}"
   end
 end
@@ -57,7 +57,7 @@ handler "node.list" do |args|
 
   api_call(args, "Failed to get list of nodes") do |client|
     nodes = client.pool(args.pool_name).list_nodes(state: args.node_args.status)
-    puts "No nodes added to the Pool. Run `kadalu node join #{args.pool_name}/<node-name>` to add a node." if nodes.size == 0
+    puts "No nodes added to the Pool. Run `kadalu node add #{args.pool_name}/<node-name>` to add a node." if nodes.size == 0
 
     if args.node_args.status
       printf("%36s  %6s  %20s  %s\n", "ID", "State", "Name", "Endpoint") if nodes.size > 0

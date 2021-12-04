@@ -40,8 +40,8 @@ Create a Pool and add the Storage manager node to the Pool. Storage manager node
 Pool created successfully.
 ID: 4e67989e-0c24-44ac-b0a7-81aa5cb4ec6b
 #
-# kadalu node join DEV/server1.example.com
-Node server1.example.com joined to DEV successfully
+# kadalu node add DEV/server1.example.com
+Node server1.example.com added to DEV successfully
 ID: 3befd57b-1d31-4664-94e9-f87bf7ce90f9
 ----
 
