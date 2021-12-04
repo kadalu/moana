@@ -27,11 +27,11 @@ class Pool:
 
         raise APIError(resp["error"], req.status)
 
-    def join_node(self, node_name, endpoint):
+    def add_node(self, node_name, endpoint):
         """
-        == Join a node to a Pool
+        == Add a node to a Pool
 
-        Join a node to a Pool
+        Add a node to a Pool
 
         Example:
 
@@ -41,10 +41,10 @@ class Pool:
 
         sm = StorageManager("http://localhost:3000")
 
-        sm.pool("DEV").join_node(
+        sm.pool("DEV").add_node(
             "server1",
             "http://localhost:3000"
         )
         ----
         """
-        return Node.join(self.mgr, self.name, node_name, endpoint)
+        return Node.add(self.mgr, self.name, node_name, endpoint)

@@ -37,8 +37,8 @@ module MoanaClient
       end
     end
 
-    def join_node(name : String, endpoint : String)
-      Node.join(@client, @name, name, endpoint)
+    def add_node(name : String, endpoint : String)
+      Node.add(@client, @name, name, endpoint)
     end
 
     def list_nodes(state = false)

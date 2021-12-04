@@ -10,7 +10,7 @@ class Node:
         self.name = name
 
     @classmethod
-    def join(cls, mgr, pool_name, name, endpoint):
+    def add(cls, mgr, pool_name, name, endpoint):
         req = http_post(f"{mgr.url}/api/v1/pools/{pool_name}/nodes",
                         {"name": name, "endpoint": endpoint})
         resp = json.loads(req.data.decode('utf-8'))

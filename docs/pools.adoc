@@ -32,8 +32,8 @@ Manager node is not part of any Pool by default since Kadalu Storage manager sup
 
 [source,console]
 ----
-[root@server1 ~]# kadalu node join DEV/server1.example.com
-Node server1.example.com joined to DEV successfully
+[root@server1 ~]# kadalu node add DEV/server1.example.com
+Node server1.example.com added to DEV successfully
 ID: 3befd57b-1d31-4664-94e9-f87bf7ce90f9
 ----
 
@@ -41,8 +41,8 @@ Default node endpoint is `http://<nodename>:3000`. If it is different then provi
 
 [source,console]
 ----
-[root@server1 ~]# kadalu node join DEV/server1.example.com --endpoint=http://server1.example.com:3001
-Node server1.example.com joined to DEV successfully
+[root@server1 ~]# kadalu node add DEV/server1.example.com --endpoint=http://server1.example.com:3001
+Node server1.example.com added to DEV successfully
 ID: 3befd57b-1d31-4664-94e9-f87bf7ce90f9
 ----
 
@@ -56,8 +56,8 @@ Before inviting other nodes to join the Pool, start the `kadalu-agent` service.
 
 [source,console]
 ----
-[root@server1 ~]# kadalu node join DEV/server2.example.com
-Node server2.example.com joined to DEV successfully
+[root@server1 ~]# kadalu node add DEV/server2.example.com
+Node server2.example.com added to DEV successfully
 ID: 34aabcae-1052-4a78-91a5-d71c89458e8d
 ----
 

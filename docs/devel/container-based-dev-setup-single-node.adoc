@@ -35,17 +35,17 @@ Open another terminal(or screen window) and run the commands.
 
 [source,console]
 ----
-root@kadalu-dev:/src# /src/mgr/bin/kadalu cluster create mycluster
-Cluster mycluster created successfully
+root@kadalu-dev:/src# /src/mgr/bin/kadalu pool create DEV
+Pool DEV created successfully
 ID: 487bb25b-d92d-46f2-a326-d1272d44f206
 ----
 
-Add the current node to the Cluster
+Add the current node to the Pool
 
 [source,console]
 ----
-root@kadalu-dev:/src# /src/mgr/bin/kadalu node join -c mycluster kadalu-dev http://kadalu-dev:3000
-Node kadalu-dev(http://kadalu-dev:3000) joined to mycluster successfully
+root@kadalu-dev:/src# /src/mgr/bin/kadalu node add DEV/kadalu-dev
+Node kadalu-dev added to DEV successfully
 ID: 322b9883-9d00-4b30-b084-953306f0d431
 ----
 
