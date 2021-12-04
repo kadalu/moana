@@ -2,7 +2,7 @@ require "./helpers"
 require "./volume_create_parser"
 
 struct VolumeArgs
-  property status = false, detail = false, name = ""
+  property status = false, detail = false, name = "", no_start = false
 end
 
 class Args
@@ -14,13 +14,17 @@ def pool_and_volume_name(value)
   {pool_name, volume_name}
 end
 
-command "volume.create", "Kadalu Storage Volume Create" do |parser, _|
+command "volume.create", "Kadalu Storage Volume Create" do |parser, args|
   parser.banner = "Usage: kadalu volume create POOL/VOLNAME TYPE STORAGE_UNITS [arguments]"
+  parser.on("--no-start", "Don't start the Volume on Create") do
+    args.volume_args.no_start = true
+  end
 end
 
 handler "volume.create" do |args|
   begin
     req = VolumeRequestParser.parse(args.pos_args)
+    req.no_start = args.volume_args.no_start
     args.pool_name = req.pool_name
     api_call(args, "Failed to Create Volume") do |client|
       volume = client.pool(args.pool_name).create_volume(req)
