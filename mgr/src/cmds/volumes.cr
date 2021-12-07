@@ -54,11 +54,18 @@ def volume_detail(volume, status = false)
   puts "ID                      : #{volume.id}"
   puts "Status                  : #{volume.state}"
   puts "Health                  : #{volume.metrics.health}" if status
+  puts "Size                    : #{(volume.metrics.size_used_bytes + volume.metrics.size_free_bytes).humanize_bytes}"
+  puts "Inodes                  : #{(volume.metrics.inodes_used_count + volume.metrics.inodes_free_count).humanize}"
   puts "Utilization             : #{volume.metrics.size_used_bytes.humanize_bytes}/#{(volume.metrics.size_used_bytes + volume.metrics.size_free_bytes).humanize_bytes}" if status
   puts "Utilization (Inodes)    : #{volume.metrics.inodes_used_count.humanize}/#{(volume.metrics.inodes_used_count + volume.metrics.inodes_free_count).humanize}" if status
+  puts "Options                 :#{volume.options.size > 0 ? "" : " -"}"
+
+  volume.options.each do |k, v|
+    printf("    %20s: %s\n", k, v)
+  end
   puts "Number of Storage units : #{volume.distribute_groups.size * volume.distribute_groups[0].storage_units.size}"
   volume.distribute_groups.each_with_index do |dist_grp, grp_idx|
-    printf("Distribute Group %-2s%s     :\n", grp_idx + 1, status ? " (#{dist_grp.metrics.health})" : "")
+    printf("Distribute Group %-2s     :%s\n", grp_idx + 1, status ? " Health: #{dist_grp.metrics.health}" : "")
     dist_grp.storage_units.each_with_index do |storage_unit, idx|
       printf(
         "    Storage Unit %-3s    : %s:%s (Port: %s%s)\n",
@@ -71,11 +78,8 @@ def volume_detail(volume, status = false)
       puts
     end
   end
-  puts "Options:" + (volume.options.size > 0 ? "" : " -")
 
-  volume.options.each do |k, v|
-    printf("    %20s: %s\n", k, v)
-  end
+  puts
 end
 
 handler "volume.list" do |args|
@@ -105,7 +109,7 @@ handler "volume.list" do |args|
     if args.volume_args.status
       printf("%36s  %20s  %10s  %20s  %20s  %s\n", "ID", "Name", "Health", "Type", "Utilization", "Utilization(Inodes)") if volumes.size > 0
     else
-      printf("%36s  %20s  %s\n", "ID", "Name", "Type") if volumes.size > 0
+      printf("%36s  %20s  %20s  %10s  %10s\n", "ID", "Name", "Type", "Size", "Inodes") if volumes.size > 0
     end
 
     volumes.each do |volume|
@@ -116,7 +120,11 @@ handler "volume.list" do |args|
           "#{volume.metrics.inodes_used_count.humanize}/#{(volume.metrics.inodes_used_count + volume.metrics.inodes_free_count).humanize}",
         )
       else
-        printf("%36s  %20s  %s\n", volume.id, volume.name, volume.name, volume.type)
+        printf(
+          "%36s  %20s  %20s  %10s  %10s\n", volume.id, volume.name, volume.type,
+          (volume.metrics.size_used_bytes + volume.metrics.size_free_bytes).humanize_bytes,
+          (volume.metrics.inodes_used_count + volume.metrics.inodes_free_count).humanize
+        )
       end
     end
   end

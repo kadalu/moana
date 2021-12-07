@@ -134,12 +134,21 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
     end
   end
 
-  # Save Ports details
+  storage_units = Hash(String, Hash(String, MoanaTypes::StorageUnit)).new
+  resp.node_responses.each do |node, node_resp|
+    storage_units[node] = Hash(String, MoanaTypes::StorageUnit).from_json(node_resp.response)
+  end
+
+  # Save Ports details and Update Storage unit metrics and FS type
   req.distribute_groups.each do |dist_grp|
     dist_grp.storage_units.each do |storage_unit|
       Datastore.activate_port(pool_name, storage_unit.node_name, storage_unit.port)
+      storage_unit.metrics = storage_units[storage_unit.node_name][storage_unit.path].metrics
+      storage_unit.fs = storage_units[storage_unit.node_name][storage_unit.path].fs
     end
   end
+
+  set_volume_metrics(req)
 
   # Save Volume info
   Datastore.create_volume(pool_name, req)
