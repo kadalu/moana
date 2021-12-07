@@ -108,12 +108,14 @@ module StorageMgr
     # Set the Datastore root directory
     Datastore.rootdir = "#{GlobalConfig.workdir}/meta"
 
-    # TODO: Enable/Disable access logging if configured
-    # Kemal.config.logging = false
-    Kemal.config.logger = StorageManagerAPILogHandler.new
-
     Log.info &.emit("Starting the Storage manager ReST API server", port: "#{Kemal.config.port}")
     # Start the API server
-    Kemal.run
+    Kemal.run do |config|
+      # TODO: Enable/Disable access logging if configured
+      # Kemal.config.logging = false
+      config.logger = StorageManagerAPILogHandler.new
+      server = config.server.not_nil!
+      server.bind_tcp "0.0.0.0", 3000, reuse_port: true
+    end
   end
 end
