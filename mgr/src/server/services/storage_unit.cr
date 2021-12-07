@@ -11,12 +11,16 @@ class StorageUnitService < Service
   end
 
   def initialize(volume_name, storage_unit)
+    @wait = true
+    @create_pid_file = false
+
     @path = "glusterfsd"
     @id = "#{volume_name}.#{storage_unit.node_name}.#{escaped_path(storage_unit.path)}"
+    @pid_file = "/var/run/kadalu/#{@id}.pid"
     @args = [
-      "-N",
       "--volfile-id", @id,
       "-S", "/var/run/kadalu/#{@id}.socket",
+      "-p", @pid_file,
       "--brick-name", storage_unit.path,
       "-l", "/var/log/kadalu/storage_units/#{@id}.log",
       "--xlator-option",
@@ -27,6 +31,5 @@ class StorageUnitService < Service
       "%s-server.listen-port=24007" % volume_name,
       "-f", Path.new(GlobalConfig.workdir, "volfiles", "#{@id}.vol").to_s,
     ]
-    @pid_file = "#{@id}.pid"
   end
 end

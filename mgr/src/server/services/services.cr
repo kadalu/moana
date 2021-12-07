@@ -20,6 +20,9 @@ abstract class Service
   @[JSON::Field(ignore: true)]
   @proc : Process | Nil = nil
 
+  @wait = true
+  @create_pid_file = true
+
   macro inherited
     getter name : String = {{@type.stringify.downcase}}
   end
@@ -59,7 +62,14 @@ abstract class Service
     return if running?
 
     @proc = Process.new(path, args)
-    File.write(pid_file, "#{@proc.not_nil!.pid}")
+    File.write(pid_file, "#{@proc.not_nil!.pid}") if @create_pid_file
+    if @wait
+      @proc.not_nil!.wait
+    else
+      spawn do
+        @proc.not_nil!.wait
+      end
+    end
   end
 
   def stop(force = false)
