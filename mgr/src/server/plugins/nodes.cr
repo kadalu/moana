@@ -22,3 +22,10 @@ get "/api/v1/pools/:pool_name/nodes" do |env|
 
   nodes.to_json
 end
+
+get "/api/v1/pools/:pool_name/nodes/:node_name/services" do |env|
+  pool_name = env.params.url["pool_name"]
+  node_name = env.params.url["node_name"]
+
+  Datastore.list_services(pool_name, node_name).to_json
+end

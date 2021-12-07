@@ -28,7 +28,7 @@ class StorageUnitService < Service
       "--process-name", "storage-unit",
       "--brick-port", "#{storage_unit.port}",
       "--xlator-option",
-      "%s-server.listen-port=24007" % volume_name,
+      "#{volume_name}-server.listen-port=#{storage_unit.port}",
       "-f", Path.new(GlobalConfig.workdir, "volfiles", "#{@id}.vol").to_s,
     ]
   end
