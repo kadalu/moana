@@ -19,4 +19,24 @@ module Datastore
   def self.disable_service(pool_name, node_name, service)
     File.remove(service_file(pool_name, node_name, service.id))
   end
+
+  def self.list_services(pool_name, node_name)
+    services = [] of MoanaTypes::ServiceUnit
+
+    svc_dir = services_dir(pool_name, node_name)
+    return services unless File.exists?(svc_dir)
+
+    Dir.children(svc_dir).each do |svc_name|
+      services << get_service(pool_name, node_name, svc_name).not_nil!
+    end
+
+    services
+  end
+
+  def self.get_service(pool_name, node_name, svc_name)
+    service_file_path = service_file(pool_name, node_name, svc_name)
+    return nil unless File.exists?(service_file_path)
+
+    MoanaTypes::ServiceUnit.from_json(File.read(service_file_path).strip)
+  end
 end

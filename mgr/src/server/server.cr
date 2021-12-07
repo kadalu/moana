@@ -108,6 +108,32 @@ module StorageMgr
     # Set the Datastore root directory
     Datastore.rootdir = "#{GlobalConfig.workdir}/meta"
 
+    # TODO: Fetch all the Volfiles from the Storage Manager
+
+    # Fetch all the Services that belong to this node
+    services = [] of MoanaTypes::ServiceUnit
+    if GlobalConfig.agent
+      # TODO: Handle Authentication
+      # TODO: Get Server URL from GlobalConfig.local_node
+      url = "http://localhost:3000/api/v1/pools/#{GlobalConfig.local_node.pool_name}/nodes/#{GlobalConfig.local_node.name}/services"
+      resp = HTTP::Client.get(url)
+      # TODO: Exit on error
+      if resp.status_code == 200
+        services = Array(MoanaTypes::ServiceUnit).from_json(resp.body)
+      end
+    else
+      services = Datastore.list_services(
+        GlobalConfig.local_node.pool_name,
+        GlobalConfig.local_node.name
+      )
+    end
+
+    # Start all the services that were started previously
+    services.each do |service|
+      svc = Service.from_json(service.to_json)
+      svc.start
+    end
+
     Log.info &.emit("Starting the Storage manager ReST API server", port: "#{Kemal.config.port}")
     # Start the API server
     Kemal.run do |config|

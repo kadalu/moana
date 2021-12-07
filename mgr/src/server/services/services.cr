@@ -20,8 +20,7 @@ abstract class Service
   @[JSON::Field(ignore: true)]
   @proc : Process | Nil = nil
 
-  @wait = true
-  @create_pid_file = true
+  getter wait = true, create_pid_file = true
 
   macro inherited
     getter name : String = {{@type.stringify.downcase}}
@@ -33,14 +32,7 @@ abstract class Service
   abstract def id : String
 
   def unit
-    service_unit = MoanaTypes::ServiceUnit.new
-    service_unit.name = @name
-    service_unit.id = @id
-    service_unit.path = @path
-    service_unit.pid_file = @pid_file
-    service_unit.args = @args
-
-    service_unit
+    MoanaTypes::ServiceUnit.from_json(self.to_json)
   end
 
   def pid

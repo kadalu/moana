@@ -120,7 +120,7 @@ module MoanaTypes
   struct ServiceUnit
     include JSON::Serializable
 
-    property id = "", name = "", args = [] of String, pid_file = "", path = "", metrics = Metrics.new
+    property id = "", name = "", args = [] of String, pid_file = "", path = "", metrics = Metrics.new, wait = true, create_pid_file = true
 
     def initialize
     end
