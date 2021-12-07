@@ -17,7 +17,7 @@ module Datastore
   end
 
   def self.disable_service(pool_name, node_name, service)
-    File.remove(service_file(pool_name, node_name, service.id))
+    File.delete(service_file(pool_name, node_name, service.id))
   end
 
   def self.list_services(pool_name, node_name)

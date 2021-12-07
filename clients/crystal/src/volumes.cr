@@ -66,5 +66,24 @@ module MoanaClient
         MoanaClient.error_response(response)
       end
     end
+
+    def start_stop_volume(action)
+      url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}/#{action}"
+
+      response = MoanaClient.http_post(url, "{}", headers: @client.auth_header)
+      if response.status_code == 200
+        MoanaTypes::Volume.from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
+
+    def start
+      start_stop_volume("start")
+    end
+
+    def stop
+      start_stop_volume("stop")
+    end
   end
 end
