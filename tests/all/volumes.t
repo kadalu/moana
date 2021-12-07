@@ -10,6 +10,8 @@ TEST "systemctl enable kadalu-mgr"
 TEST "systemctl start kadalu-mgr"
 puts TEST "kadalu pool create DEV"
 TEST "cat /var/lib/kadalu/meta/pools/DEV/info"
+RUN "umount /mnt/vol2"
+RUN "rm -rf /mnt/vol2"
 
 nodes[1 .. -1].each do |node|
   USE_NODE node
@@ -60,4 +62,23 @@ nodes.each do |node|
   puts TEST "ps ax | grep storage_unit | grep vol2"
   puts TEST "ps ax | grep storage_unit | grep vol3"
   puts TEST "ps ax | grep storage_unit | grep vol4"
+end
+
+USE_NODE nodes[0]
+TEST "mkdir /mnt/vol2"
+TEST "chattr +i /mnt/vol2"
+# TODO: Mount script fails to find glusterfsd installed in /usr/local/sbin
+# TEST "mount -t kadalu #{nodes[0]}:DEV/vol2 /mnt/vol2"
+# But `kadalu mount` command works
+TEST "kadalu mount #{nodes[0]}:DEV/vol2 /mnt/vol2"
+TEST "echo \"Hello World\" > /mnt/vol2/f1"
+# TODO: Validate this value below
+content = TEST "cat /mnt/vol2/f1"
+EQUAL content.strip, "Hello World", "/mnt/vol2/f1 content is \"Hello World\""
+
+nodes.each_with_index do |node, idx|
+  USE_NODE node
+
+  content = TEST "cat /exports/vol2/s#{idx+1}/f1"
+  EQUAL content.strip, "Hello World", "/exports/vol2/s#{idx+1}/f1 content is \"Hello World\""
 end
