@@ -115,12 +115,13 @@ module StorageMgr
     if GlobalConfig.agent
       # TODO: Handle Authentication
       # TODO: Get Server URL from GlobalConfig.local_node
-      url = "http://localhost:3000/api/v1/pools/#{GlobalConfig.local_node.pool_name}/nodes/#{GlobalConfig.local_node.name}/services"
-      resp = HTTP::Client.get(url)
-      # TODO: Exit on error
-      if resp.status_code == 200
-        services = Array(MoanaTypes::ServiceUnit).from_json(resp.body)
-      end
+      # url = "http://localhost:3000/api/v1/pools/#{GlobalConfig.local_node.pool_name}/nodes/#{GlobalConfig.local_node.name}/services"
+      # resp = HTTP::Client.get(url)
+      # # TODO: Exit on error
+      # if resp.status_code == 200
+      #   services = Array(MoanaTypes::ServiceUnit).from_json(resp.body)
+      # end
+      Log.debug &.emit("Fetch services of this node")
     else
       services = Datastore.list_services(
         GlobalConfig.local_node.pool_name,
