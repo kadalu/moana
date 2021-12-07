@@ -38,6 +38,42 @@ handler "volume.create" do |args|
   end
 end
 
+command "volume.start", "Start the Kadalu Storage Volume" do |parser, _|
+  parser.banner = "Usage: kadalu volume start POOL/VOLNAME [arguments]"
+end
+
+handler "volume.start" do |args|
+  begin
+    args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
+    api_call(args, "Failed to Start the Volume") do |client|
+      volume = client.pool(args.pool_name).volume(volume_name).start
+      puts "Volume #{volume.name} started successfully"
+    end
+  rescue ex : InvalidVolumeRequest
+    STDERR.puts "Volume start failed"
+    STDERR.puts ex
+    exit 1
+  end
+end
+
+command "volume.stop", "Stop the Kadalu Storage Volume" do |parser, _|
+  parser.banner = "Usage: kadalu volume stop POOL/VOLNAME [arguments]"
+end
+
+handler "volume.stop" do |args|
+  begin
+    args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
+    api_call(args, "Failed to Stop the Volume") do |client|
+      volume = client.pool(args.pool_name).volume(volume_name).stop
+      puts "Volume #{volume.name} stopped successfully"
+    end
+  rescue ex : InvalidVolumeRequest
+    STDERR.puts "Volume stop failed"
+    STDERR.puts ex
+    exit 1
+  end
+end
+
 command "volume.list", "Volumes list of a Kadalu Storage Pool" do |parser, args|
   parser.banner = "Usage: kadalu volume list POOL [arguments]"
   parser.on("--status", "Show Volumes states") do

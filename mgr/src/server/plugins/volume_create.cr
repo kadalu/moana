@@ -15,8 +15,6 @@ node_action ACTION_VALIDATE_VOLUME_CREATE do |data|
   validate_volume_create(req)
 end
 
-alias VolumeRequestToNode = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, Array(MoanaTypes::Volfile)), MoanaTypes::Volume)
-
 node_action ACTION_VOLUME_CREATE do |data|
   handle_volume_create(data, stopped: false)
 end

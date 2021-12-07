@@ -11,13 +11,6 @@ module Datastore
     Path.new(volume_dir(pool_name, volume_name), "info")
   end
 
-  def self.save_volume(pool_name, volume)
-    Dir.mkdir_p(volume_dir(pool_name, volume.name))
-    File.write(volume_file(pool_name, volume.name), volume.to_json)
-
-    volume
-  end
-
   def self.list_volumes(pool_name)
     volumes = [] of MoanaTypes::Volume
     volumes_dir = Path.new(@@rootdir, "pools", pool_name, "volumes")
@@ -44,6 +37,10 @@ module Datastore
     vol = get_volume(pool_name, volume.name)
     raise DatastoreError.new("Volume already exists") unless vol.nil?
 
+    update_volume(pool_name, volume)
+  end
+
+  def self.update_volume(pool_name, volume)
     volume.distribute_groups.each do |dist_grp|
       dist_grp.storage_units.each do |storage_unit|
         # Do not store the redundant node information.
@@ -51,6 +48,9 @@ module Datastore
         storage_unit.node = MoanaTypes::Node.new
       end
     end
-    save_volume(pool_name, volume)
+    Dir.mkdir_p(volume_dir(pool_name, volume.name))
+    File.write(volume_file(pool_name, volume.name), volume.to_json)
+
+    volume
   end
 end

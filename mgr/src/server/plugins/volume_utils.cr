@@ -9,6 +9,7 @@ require "../datastore/*"
 require "../default_volfiles"
 
 VOLUME_ID_XATTR_NAME = "trusted.glusterfs.volume-id"
+alias VolumeRequestToNode = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, Array(MoanaTypes::Volfile)), MoanaTypes::Volume)
 
 def volfile_get(name)
   # TODO: Add logic to read from the Templates directory
@@ -72,6 +73,33 @@ def validate_volume_create(req)
         return NodeResponse.new(false, {"error": "Extended attributes are not supported for #{storage_unit.path} (Error: #{ex})"}.to_json)
       ensure
         FileUtils.rmdir storage_unit.path
+      end
+    end
+  end
+
+  NodeResponse.new(true, "")
+end
+
+def handle_node_volume_start_stop(data, action)
+  services, volfiles, _ = VolumeRequestToNode.from_json(data)
+
+  if action == "start" && !volfiles[GlobalConfig.local_node.name]?.nil?
+    Dir.mkdir_p(Path.new(GlobalConfig.workdir, "volfiles"))
+    volfiles[GlobalConfig.local_node.name].each do |volfile|
+      File.write(Path.new(GlobalConfig.workdir, "volfiles", "#{volfile.name}.vol"), volfile.content)
+    end
+  end
+
+  unless services[GlobalConfig.local_node.name]?.nil?
+    # TODO: Hard coded path change?
+    Dir.mkdir_p("/var/log/kadalu")
+    Dir.mkdir_p("/var/run/kadalu")
+    services[GlobalConfig.local_node.name].each do |service|
+      svc = Service.from_json(service.to_json)
+      if action == "start"
+        svc.start
+      else
+        svc.stop
       end
     end
   end
