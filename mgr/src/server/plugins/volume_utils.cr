@@ -81,6 +81,7 @@ end
 
 def handle_volume_create(data, stopped = false)
   services, volfiles, req = VolumeRequestToNode.from_json(data)
+  resp = Hash(String, MoanaTypes::StorageUnit).new
 
   req.distribute_groups.each do |dist_grp|
     dist_grp.storage_units.each do |storage_unit|
@@ -104,6 +105,24 @@ def handle_volume_create(data, stopped = false)
 
       # Create Meta directories
       Dir.mkdir_p "#{storage_unit.path}/.glusterfs/indices"
+
+      # Collect and Update FS type and Size
+      rc, out, err = execute("df", ["-B1", "--output=fstype,used,avail,iused,iavail", storage_unit.path])
+      if rc == 0
+        # Example output
+        #     Used      Avail IUsed  IFree
+        # 41259008 1021997056     3 524285
+        _, line = out.strip.split("\n")
+        fstype, used, avail, iused, ifree = line.split
+        storage_unit.fs = fstype
+        storage_unit.metrics.size_used_bytes = used.to_u64
+        storage_unit.metrics.size_free_bytes = avail.to_u64
+        storage_unit.metrics.inodes_used_count = iused.to_u64
+        storage_unit.metrics.inodes_free_count = ifree.to_u64
+      else
+        Log.error &.emit("Failed to collect Storage Unit Metrics", storage_unit: "#{storage_unit.path}", rc: "#{rc}", error: "#{err.strip}")
+      end
+      resp[storage_unit.path] = storage_unit
     end
   end
 
@@ -124,7 +143,7 @@ def handle_volume_create(data, stopped = false)
     end
   end
 
-  NodeResponse.new(true, "")
+  NodeResponse.new(true, resp.to_json)
 end
 
 def node_details_add_to_volume(volume, nodes)
@@ -201,4 +220,114 @@ def services_and_volfiles(req)
   end
 
   {services, volfiles}
+end
+
+def set_default_storage_unit_metrics(storage_unit)
+  storage_unit.metrics.health = "Down"
+end
+
+def distribute_group_quorum(dist_grp)
+  if dist_grp.replica_count > 0
+    cnt = dist_grp.replica_count + dist_grp.arbiter_count
+    (dist_grp.storage_units.size/cnt).ceil
+  elsif dist_grp.disperse_count > 0
+    dist_grp.disperse_count - dist_grp.redundancy_count
+  else
+    dist_grp.storage_units.size
+  end
+end
+
+def distribute_group_health(dist_grp, up_storage_units_count)
+  if up_storage_units_count == dist_grp.storage_units.size
+    "Up"
+  elsif up_storage_units_count >= distribute_group_quorum(dist_grp)
+    "Partial"
+  elsif up_storage_units_count > 0 && up_storage_units_count < distribute_group_quorum(dist_grp)
+    "Degraded"
+  else
+    "Down"
+  end
+end
+
+def volume_health(volume, up_dist_grps_count, down_dist_grps_count)
+  if volume.distribute_groups.size == up_dist_grps_count
+    "Up"
+  elsif down_dist_grps_count > 0
+    "Degraded"
+  elsif up_dist_grps_count > 0
+    "Partial"
+  else
+    "Down"
+  end
+end
+
+def set_distribute_group_metrics(dist_grp)
+  up_count = 0
+  size_used_bytes : UInt64 = 0
+  size_free_bytes : UInt64 = 0
+  inodes_used_count : UInt64 = 0
+  inodes_free_count : UInt64 = 0
+
+  dist_grp.storage_units.each do |storage_unit|
+    up_count += 1 if storage_unit.metrics.health == "Up"
+
+    next if storage_unit.metrics.health == "Unknown"
+
+    if dist_grp.replica_count > 0 || dist_grp.disperse_count > 0
+      if size_used_bytes < storage_unit.metrics.size_used_bytes
+        size_used_bytes = storage_unit.metrics.size_used_bytes
+        size_free_bytes = storage_unit.metrics.size_free_bytes
+        inodes_used_count = storage_unit.metrics.inodes_used_count
+        inodes_free_count = storage_unit.metrics.inodes_free_count
+      end
+    else
+      size_used_bytes += storage_unit.metrics.size_used_bytes
+      size_free_bytes += storage_unit.metrics.size_free_bytes
+      inodes_used_count += storage_unit.metrics.inodes_used_count
+      inodes_free_count += storage_unit.metrics.inodes_free_count
+    end
+  end
+
+  if dist_grp.disperse_count > 0
+    # TODO: Calculate for disperse based on data and redundancy count
+    data_count = (dist_grp.disperse_count - dist_grp.redundancy_count)
+    size_used_bytes = size_used_bytes * data_count
+    size_free_bytes = size_free_bytes * data_count
+    inodes_used_count = inodes_used_count * data_count
+    inodes_free_count = inodes_free_count * data_count
+  end
+
+  dist_grp.metrics.health = distribute_group_health(dist_grp, up_count)
+  dist_grp.metrics.size_used_bytes = size_used_bytes
+  dist_grp.metrics.size_free_bytes = size_free_bytes
+  dist_grp.metrics.inodes_used_count = inodes_used_count
+  dist_grp.metrics.inodes_free_count = inodes_free_count
+end
+
+def set_volume_metrics(volume)
+  up_count : UInt64 = 0
+  down_count : UInt64 = 0
+  size_used_bytes : UInt64 = 0
+  size_free_bytes : UInt64 = 0
+  inodes_used_count : UInt64 = 0
+  inodes_free_count : UInt64 = 0
+
+  volume.distribute_groups.each do |dist_grp|
+    next if dist_grp.metrics.health == "Unknown"
+
+    set_distribute_group_metrics(dist_grp)
+    up_count += 1 if dist_grp.metrics.health == "Up"
+    down_count += 1 if dist_grp.metrics.health == "Down"
+
+    size_used_bytes += dist_grp.metrics.size_used_bytes
+    size_free_bytes += dist_grp.metrics.size_free_bytes
+    inodes_used_count += dist_grp.metrics.inodes_used_count
+    inodes_free_count += dist_grp.metrics.inodes_free_count
+  end
+
+  volume.metrics.health = volume_health(volume, up_count, down_count)
+  volume.metrics.size_used_bytes = size_used_bytes
+  volume.metrics.size_free_bytes = size_free_bytes
+  volume.metrics.inodes_used_count = inodes_used_count
+  volume.metrics.inodes_free_count = inodes_free_count
 end
