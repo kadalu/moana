@@ -18,7 +18,6 @@ nodes.each do |node|
   TEST "docker cp ./clients/python/kadalu #{node}:/usr/lib/python3/dist-packages/kadalu"
   TEST "docker cp ./clients/python/test_scripts #{node}:/moana_python_sdk_test_scripts"
   TEST "docker cp extra/kadalu-mgr.service #{node}:/lib/systemd/system/"
-  TEST "docker cp extra/kadalu-agent.service #{node}:/lib/systemd/system/"
   TEST "docker cp extra/mount.kadalu #{node}:/sbin/mount.kadalu"
 end
 

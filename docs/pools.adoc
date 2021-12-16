@@ -46,12 +46,12 @@ Node server1.example.com added to DEV successfully
 ID: 3befd57b-1d31-4664-94e9-f87bf7ce90f9
 ----
 
-Before inviting other nodes to join the Pool, start the `kadalu-agent` service.
+Before inviting other nodes to join the Pool, start the `kadalu-mgr` service.
 
 [source,console]
 ----
-[root@server2 ~]# systemctl enable kadalu-agent
-[root@server2 ~]# systemctl start kadalu-agent
+[root@server2 ~]# systemctl enable kadalu-mgr
+[root@server2 ~]# systemctl start kadalu-mgr
 ----
 
 [source,console]

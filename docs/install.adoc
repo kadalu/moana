@@ -13,6 +13,5 @@ Download the systemd service files and install
 
 ----
 $ curl -L https://github.com/kadalu/moana/releases/latest/download/kadalu-mgr.service -o kadalu-mgr.service
-$ curl -L https://github.com/kadalu/moana/releases/latest/download/kadalu-agent.service -o kadalu-agent.service
-$ sudo cp kadalu-mgr.service kadalu-agent.service /lib/systemd/system/
+$ sudo cp kadalu-mgr.service /lib/systemd/system/
 ----

@@ -9,14 +9,18 @@ node_action ACTION_NODE_INVITE_ACCEPT do |data|
 
   data_file = Path.new(GlobalConfig.workdir, "info")
   if !File.exists?(data_file)
-    mgr_name = GlobalConfig.agent ? "kadalu-agent" : "kadalu-mgr"
-    next NodeResponse.new(false, {"error": "Node info file is not found in #{req.name}. Restart #{mgr_name} to regenerate the info file"}.to_json)
+    next NodeResponse.new(false, {"error": "Node info file is not found in #{req.name}. Restart kadalu-mgr to regenerate the info file"}.to_json)
   end
 
   local_node_data = LocalNodeData.from_json(File.read(data_file))
   if local_node_data.pool_name != ""
     msg = local_node_data.pool_name == req.pool_name ? "the " : "a different "
     next NodeResponse.new(false, {"error": "Node is already part of #{msg} Pool"}.to_json)
+  end
+
+  # TODO: Change this to user check once user management is implemented
+  if Datastore.pools_exists? && local_node_data.id != req.mgr_node_id
+    next NodeResponse.new(false, {"error": "Node is already a Storage Manager for different Pools"}.to_json)
   end
 
   node = MoanaTypes::Node.new
@@ -31,6 +35,12 @@ node_action ACTION_NODE_INVITE_ACCEPT do |data|
 
   # TODO: Handle error while writing node data
   File.write(data_file, local_node_data.to_json)
+
+  # If this node is not a Manager
+  # then set as agent.
+  if !Datastore.manager?
+    Datastore.set_agent
+  end
 
   GlobalConfig.local_node = local_node_data
   NodeResponse.new(true, node.to_json)
@@ -54,6 +64,7 @@ post "/api/v1/pools/:pool_name/nodes" do |env|
   invite.endpoint = endpoint
   invite.pool_name = pool_name
   invite.name = node_name
+  invite.mgr_node_id = GlobalConfig.local_node.id
 
   participating_node = MoanaTypes::Node.new
   participating_node.endpoint = endpoint
