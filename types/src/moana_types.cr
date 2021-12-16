@@ -25,7 +25,7 @@ module MoanaTypes
   struct NodeRequest
     include JSON::Serializable
 
-    property name = "", endpoint = "", pool_name = ""
+    property name = "", endpoint = "", pool_name = "", mgr_node_id = ""
 
     def initialize
     end

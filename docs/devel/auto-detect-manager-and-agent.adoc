@@ -1,0 +1,15 @@
+= Auto detect Manager and Agent
+
+Manager instances can take the incoming API requests and communicate with other Agents. But agents can't handle the API requests directly. Agent instances forwards the incoming requests to the Manager instance.
+
+When started, all instances are Managers. The instance will be marked as Manager if the following conditions are satisfied.
+
+- When a first user is created.
+- Node is not part of any Storage Pool
+
+When a node add request comes, reject the request if
+
+- Node is part of another Storage Pool
+- It is a Manager instance different than the instance that initiated the request.
+
+After accepting the Node add/join request mark itself as Agent(If not marked already as Manager)

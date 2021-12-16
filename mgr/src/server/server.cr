@@ -56,7 +56,11 @@ module StorageMgr
   def self.start(args)
     GlobalConfig.workdir = args.mgr_args.workdir
     GlobalConfig.logdir = args.mgr_args.logdir
-    GlobalConfig.agent = args.mgr_args.agent
+
+    # Set the Datastore root directory
+    Datastore.rootdir = "#{GlobalConfig.workdir}/meta"
+
+    GlobalConfig.agent = Datastore.agent?
 
     # Create workdir if not exists
     Dir.mkdir_p("#{GlobalConfig.workdir}")
@@ -104,9 +108,6 @@ module StorageMgr
         sleep 5.seconds
       end
     end
-
-    # Set the Datastore root directory
-    Datastore.rootdir = "#{GlobalConfig.workdir}/meta"
 
     # TODO: Fetch all the Volfiles from the Storage Manager
 

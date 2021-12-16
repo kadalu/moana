@@ -1,6 +1,7 @@
 require "uuid"
 
 require "moana_types"
+require "../conf"
 
 # WORKDIR/
 #   - pools/
@@ -15,11 +16,38 @@ module Datastore
     Path.new(pool_dir(pool_name), "info")
   end
 
+  def self.belongs_to_a_pool?
+    pool_name = ""
+
+    # Check if the current node is part of
+    # any pool. Collect the Pool name from the
+    # local data file.
+    data_file = Path.new(@@rootdir, "info")
+    if File.exists?(data_file)
+      local_node_data = LocalNodeData.from_json(File.read(data_file))
+      pool_name = local_node_data.pool_name
+    end
+
+    pool_name != ""
+  end
+
   def self.save_pool(pool)
     Dir.mkdir_p(pool_dir(pool.name))
     File.write(pool_file(pool.name), pool.to_json)
 
     pool
+  end
+
+  def self.pools_exists?
+    pools_dir = Path.new(@@rootdir, "pools")
+
+    return false unless File.exists?(pools_dir)
+
+    Dir.children(pools_dir).each do |_|
+      return true
+    end
+
+    false
   end
 
   def self.list_pools
