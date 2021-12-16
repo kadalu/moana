@@ -13,18 +13,11 @@ install kadalu /usr/sbin/
 
 ## Usage:
 
-Start the Kadalu Management Server(in any one of the Storage node or dedicated management node)
+Start the Kadalu Management Server in all the Storage nodes
 
 ```
 # systemctl enable kadalu-mgr
 # systemctl start kadalu-mgr
-```
-
-Start the node agent in all Storage nodes.
-
-```
-# systemctl enable kadalu-agent
-# systemctl start kadalu-agent
 ```
 
 Refer [docs](./docs) for more details.
