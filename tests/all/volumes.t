@@ -65,10 +65,8 @@ end
 USE_NODE nodes[0]
 TEST "mkdir /mnt/vol2"
 TEST "chattr +i /mnt/vol2"
-# TODO: Mount script fails to find glusterfsd installed in /usr/local/sbin
-# TEST "mount -t kadalu #{nodes[0]}:DEV/vol2 /mnt/vol2"
-# But `kadalu mount` command works
-TEST "kadalu mount #{nodes[0]}:DEV/vol2 /mnt/vol2"
+TEST "mount -t kadalu #{nodes[0]}:DEV/vol2 /mnt/vol2"
+
 TEST "echo \"Hello World\" > /mnt/vol2/f1"
 # TODO: Validate this value below
 content = TEST "cat /mnt/vol2/f1"

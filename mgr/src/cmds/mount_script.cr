@@ -26,7 +26,12 @@ OPTION_ALIAS = {
 module MountKadalu
   extend self
 
-  @@glusterfs_cmd = Process.find_executable("glusterfs")
+  def system_path
+    ENV.fetch("PATH", "/usr/sbin:/usr/local/sbin:/usr/bin")
+  end
+
+  @@glusterfs_cmd = Process.find_executable("glusterfs", path: system_path)
+  @@getfattr_cmd = Process.find_executable("getfattr", path: system_path)
   @@options = Hash(String, String).new
 
   def handle_log_level_option(old_name, key, value)
@@ -100,7 +105,7 @@ module MountKadalu
       # Set default value if value is not provided
       add_option("--fopen-keep-cache", opt_value == "" ? "true" : opt_value)
     else
-      add_option("--#{new_name}", opt_value)
+      add_option("--#{new_name}", opt_value) if new_name != ""
     end
   end
 
@@ -195,7 +200,7 @@ module MountKadalu
 
   def run(hostname, pool_name, volume_name, volfile_path, mount_path, raw_options)
     command_error "glusterfs client is not installed" if @@glusterfs_cmd.nil?
-    STDERR.puts "WARNING: getfattr not found, certain checks will be skipped.." unless Process.find_executable("getfattr")
+    STDERR.puts "WARNING: getfattr not found, certain checks will be skipped.." unless @@getfattr_cmd
 
     validate_mount_path(mount_path)
 
