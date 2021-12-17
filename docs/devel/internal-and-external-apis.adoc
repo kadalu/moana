@@ -1,0 +1,33 @@
+= Internal and External APIs
+
+Every Storage nodes will run an instance of `kadalu-mgr`, One among them will become `Manager` when a first user is created. After joining the nodes to a Pool, the instances in those nodes will become `Agent`.
+
+`Manager` instances handles the requests from users and Agent handles the requests coming from Manager. For example, When a Manager receives the Volume create request, it identifies the participant nodes and sends request to all node agents using the internal APIs. Manager collects the responses from the internal APIs and sends response back to User.
+
+.Example command
+----
+$ kadalu volume create DEV/vol1 \
+    mirror server1.example.com:/exports/vol1/s1 \
+              server2.example.com:/exports/vol1/s2 \
+              server3.example.com:/exports/vol1/s3
+----
+
+.Example API call from the above command
+----
+POST /api/v1/pools/:pool_name/volumes
+----
+
+.Converted node requests
+----
+POST server1.example.com/_api/v1/volume_create
+POST server2.example.com/_api/v1/volume_create
+POST server3.example.com/_api/v1/volume_create
+----
+
+**Note**: One public API may have multiple node requests, for example Volume create will have the following steps/node requests.
+
+- `POST /_api/v1/ping` - To check if the Node is reachable.
+- `POST /_api/v1/validate_volume_create` - Node level validations.
+- `POST /_api/v1/volume_create` - Final steps at node.
+
+When a Agent receives the external API request then it acts as Proxy and sends the request to Manager (Yet to be implemented).

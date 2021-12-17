@@ -1,0 +1,23 @@
+= Add a node to a Pool
+
+Storage manager receives the Node add request. Before sending invite to the node, Storage manager constructs the invite as follows.
+
+
+[source,text]
+----
+NodeRequest
+    endpoint
+    pool_name
+    name
+    mgr_node_id
+    mgr_url
+----
+
+Node validates the request and joins to the Pool only if
+
+- Node is not part of another Pool.
+- Node is a Storage Manager and not a self join request.
+
+Once it accepts the invite, it generates a token and shares it back to Manager. Node saves Hash of the token.
+
+Manager sends the Token in `Authorization` header while making API calls to that node (Not yet implemented: https://github.com/kadalu/moana/issues/56).

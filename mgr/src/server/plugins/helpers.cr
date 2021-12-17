@@ -4,7 +4,7 @@ require "kemal"
 
 require "../actions"
 
-post "/_apis/v1/:action" do |env|
+post "/_api/v1/:action" do |env|
   action = env.params.url["action"]
   begin
     req = env.params.json["data"].as(String)

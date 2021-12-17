@@ -43,7 +43,7 @@ module Action
     # TODO: Send requests concurrently and handle
     # the response
     nodes.each do |node|
-      url = "#{node.endpoint}/_apis/v1/#{name}"
+      url = "#{node.endpoint}/_api/v1/#{name}"
       begin
         node_resp = HTTP::Client.post(url, body: {"data": data}.to_json, headers: headers)
         resp.set_node_response(
