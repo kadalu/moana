@@ -1,0 +1,35 @@
+= New feature checklist
+
+== Server APIs and Node actions
+
+Path: `$SRC/mgr/src/server/plugins/`
+
+Add API routes and node actions in this file.
+
+== Update Clients/Crystal
+
+Path: `$SRC/clients/crystal`
+
+== Update Clients/Python
+
+Path: `$SRC/clients/python`
+
+== CLI
+
+Path: `$SRC/mgr/src/cmds`
+
+== Tests
+
+Clients/Crystal gets tested by running the CLI. But separate tests are needed to test Python SDK. Refer link:testing.adoc[Testing] or `$SRC/tests/all` directory for adding new tests.
+
+== Documentation update CLI based
+
+Developer documentation: `$SRC/docs/devel` and
+User documentation: `$SRC/docs/`
+
+== Additional things
+
+These are required in future, but not yet started.
+
+- Manpage Update
+- API Documentation
