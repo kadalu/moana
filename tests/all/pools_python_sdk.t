@@ -16,5 +16,4 @@ end
 USE_NODE nodes[0]
 URL = "http://#{nodes[0]}:3000"
 puts TEST "#{TEST_SCRIPTS}/pools.py #{URL} create DEV"
-TEST "cat /var/lib/kadalu/meta/pools/DEV/info"
 puts TEST "#{TEST_SCRIPTS}/pools.py #{URL} list"

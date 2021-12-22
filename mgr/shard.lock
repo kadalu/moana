@@ -4,6 +4,10 @@ shards:
     git: https://github.com/sija/backtracer.cr.git
     version: 1.2.1
 
+  db:
+    git: https://github.com/crystal-lang/crystal-db.git
+    version: 0.10.1
+
   exception_page:
     git: https://github.com/crystal-loot/exception_page.git
     version: 0.2.0
@@ -31,6 +35,10 @@ shards:
   radix:
     git: https://github.com/luislavena/radix.git
     version: 0.4.1
+
+  sqlite3:
+    git: https://github.com/crystal-lang/crystal-sqlite3.git
+    version: 0.18.0
 
   xattr:
     git: https://github.com/ettomatic/xattr.git

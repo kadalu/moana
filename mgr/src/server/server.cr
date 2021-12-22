@@ -58,7 +58,7 @@ module StorageMgr
     GlobalConfig.logdir = args.mgr_args.logdir
 
     # Set the Datastore root directory
-    Datastore.rootdir = "#{GlobalConfig.workdir}/meta"
+    Datastore.init(GlobalConfig.workdir)
 
     GlobalConfig.agent = Datastore.agent?
 

@@ -65,7 +65,7 @@ def volume_start_stop(env, action)
   end
 
   volume.state = action == "start" ? "Started" : "Stopped"
-  Datastore.update_volume(pool_name, volume)
+  Datastore.update_volume_state(volume.id, volume.state)
 
   volume.to_json
 end

@@ -13,16 +13,10 @@ end
 
 USE_NODE nodes[0]
 puts TEST "kadalu pool create DEV"
-TEST "cat /var/lib/kadalu/meta/pools/DEV/info"
 
 nodes.each do |node|
   USE_NODE nodes[0]
   TEST "kadalu node add DEV/#{node}"
-  puts TEST "cat /var/lib/kadalu/meta/pools/DEV/nodes/server1/info"
-
-  USE_NODE node
-  puts TEST "cat /var/lib/kadalu/info"
-  puts TEST "ls /var/lib/kadalu/meta"
 end
 
 USE_NODE nodes[0]

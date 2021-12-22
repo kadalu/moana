@@ -54,6 +54,11 @@ post "/api/v1/pools/:pool_name/nodes" do |env|
   # TODO: Add detault http/https and port values from config
   endpoint = "http://#{node_name}:3000" if endpoint == ""
 
+  pool = Datastore.get_pool(pool_name)
+  if pool.nil?
+    halt(env, status_code: 400, response: ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
+  end
+
   node = Datastore.get_node(pool_name, node_name)
 
   if !node.nil?
@@ -82,7 +87,7 @@ post "/api/v1/pools/:pool_name/nodes" do |env|
   end
 
   node = MoanaTypes::Node.from_json(resp.node_responses[node_name].response)
-  Datastore.create_node(pool_name, node.id, node_name, endpoint, node.addresses, node.token)
+  Datastore.create_node(pool.id, node.id, node_name, endpoint, node.token)
 
   # TODO: If Datastore.create_node fails then call Rollback
 

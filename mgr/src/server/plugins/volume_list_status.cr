@@ -48,10 +48,12 @@ node_action ACTION_VOLUME_STATUS do |data|
       # 41259008 1021997056     3 524285
       _, line = out.strip.split("\n")
       used, avail, iused, ifree = line.split
-      storage_unit.metrics.size_used_bytes = used.to_u64
-      storage_unit.metrics.size_free_bytes = avail.to_u64
-      storage_unit.metrics.inodes_used_count = iused.to_u64
-      storage_unit.metrics.inodes_free_count = ifree.to_u64
+      storage_unit.metrics.size_used_bytes = used.to_i64
+      storage_unit.metrics.size_free_bytes = avail.to_i64
+      storage_unit.metrics.size_bytes = used.to_i64 + avail.to_i64
+      storage_unit.metrics.inodes_used_count = iused.to_i64
+      storage_unit.metrics.inodes_free_count = ifree.to_i64
+      storage_unit.metrics.inodes_count = iused.to_i64 + ifree.to_i64
       resp.storage_units << storage_unit
     end
   end
@@ -66,10 +68,10 @@ def volume_status_node_request_prepare(pool_name, volumes)
   volumes.each do |volume|
     volume.distribute_groups.each do |dist_grp|
       dist_grp.storage_units.each do |storage_unit|
-        req[storage_unit.node_name] = VolumeStatusRequestToNode.new if req[storage_unit.node_name]?.nil?
+        req[storage_unit.node.name] = VolumeStatusRequestToNode.new if req[storage_unit.node.name]?.nil?
         # Generate Service Unit
         storage_unit.service = StorageUnitService.new(volume.name, storage_unit).unit
-        req[storage_unit.node_name].storage_units << storage_unit
+        req[storage_unit.node.name].storage_units << storage_unit
       end
     end
   end
@@ -98,10 +100,10 @@ def volume_list_detail_status(env, pool_name, volume_name, state)
   volumes.each do |volume|
     volume.distribute_groups.each do |dist_grp|
       dist_grp.storage_units.each do |storage_unit|
-        if resp.node_responses[storage_unit.node_name].ok
-          node_resp = VolumeStatusRequestToNode.from_json(resp.node_responses[storage_unit.node_name].response)
+        if resp.node_responses[storage_unit.node.name].ok
+          node_resp = VolumeStatusRequestToNode.from_json(resp.node_responses[storage_unit.node.name].response)
           node_resp.storage_units.each do |su|
-            if su.node_name == storage_unit.node_name && su.path == storage_unit.path
+            if su.node.name == storage_unit.node.name && su.path == storage_unit.path
               storage_unit.metrics = su.metrics
             end
           end

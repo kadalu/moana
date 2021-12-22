@@ -13,5 +13,4 @@ end
 
 USE_NODE nodes[0]
 puts TEST "kadalu pool create DEV"
-TEST "cat /var/lib/kadalu/meta/pools/DEV/info"
 puts TEST "kadalu pool list"

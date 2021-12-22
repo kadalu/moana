@@ -1,6 +1,8 @@
 require "uuid"
 
 require "moana_types"
+require "db"
+
 require "../conf"
 
 # WORKDIR/
@@ -8,12 +10,11 @@ require "../conf"
 #       - mypool/
 #           - info
 module Datastore
-  def self.pool_dir(pool_name)
-    Path.new(@@rootdir, "pools", pool_name)
-  end
+  struct PoolView
+    include DB::Serializable
 
-  def self.pool_file(pool_name)
-    Path.new(pool_dir(pool_name), "info")
+    # TODO: Add all node fields
+    property id = "", name = "", node_id = "", node_name = "", node_endpoint = ""
   end
 
   def self.belongs_to_a_pool?
@@ -31,55 +32,72 @@ module Datastore
     pool_name != ""
   end
 
-  def self.save_pool(pool)
-    Dir.mkdir_p(pool_dir(pool.name))
-    File.write(pool_file(pool.name), pool.to_json)
-
-    pool
+  private def self.pool_query
+    # TODO: Add all node fields
+    "SELECT pools.id AS id,
+            pools.name AS name,
+            nodes.id AS node_id,
+            nodes.name AS node_name,
+            nodes.endpoint AS node_endpoint
+     FROM pools
+     LEFT OUTER JOIN nodes ON pools.id = nodes.pool_id
+     "
   end
 
-  def self.pools_exists?
-    pools_dir = Path.new(@@rootdir, "pools")
+  private def self.pool_query_order_by
+    " ORDER BY pools.created_on DESC, nodes.created_on DESC "
+  end
 
-    return false unless File.exists?(pools_dir)
-
-    Dir.children(pools_dir).each do |_|
-      return true
+  private def self.group_pools(pools)
+    grouped_data = pools.group_by do |rec|
+      [rec.id, rec.name]
     end
 
-    false
+    grouped_data.map do |_, rows|
+      pool = MoanaTypes::Pool.new
+      pool.id = rows[0].id
+      pool.name = rows[0].name
+
+      # Left outer Join, Node details may be nil if
+      # no nodes joined the Pool
+      rows = rows.select { |row| !row.node_id.nil? }
+
+      pool.nodes = rows.map do |row|
+        node = MoanaTypes::Node.new
+        node.id = row.node_id
+        node.name = row.node_name
+        node.endpoint = row.node_endpoint
+
+        node
+      end
+
+      pool
+    end
   end
 
   def self.list_pools
-    pools = [] of MoanaTypes::Pool
-    pools_dir = Path.new(@@rootdir, "pools")
+    group_pools(connection.query_all(pool_query + pool_query_order_by, as: PoolView))
+  end
 
-    return pools unless File.exists?(pools_dir)
-
-    Dir.entries(pools_dir).each do |pool_name|
-      if pool_name != "." && pool_name != ".."
-        pools << get_pool(pool_name).not_nil!
-      end
-    end
-
-    pools
+  def self.pools_exists?
+    query = "SELECT COUNT(id) FROM pools"
+    connection.scalar(query).as(Int64) > 0
   end
 
   def self.get_pool(pool_name)
-    pool_file_path = pool_file(pool_name)
-    return nil unless File.exists?(pool_file_path)
+    pools = group_pools(connection.query_all(
+      pool_query + " WHERE pools.name = ? " + pool_query_order_by,
+      pool_name,
+      as: PoolView))
 
-    MoanaTypes::Pool.from_json(File.read(pool_file_path).strip)
+    pools.size > 0 ? pools[0] : nil
   end
 
   def self.create_pool(pool_name)
-    pool = get_pool(pool_name)
-    return pool unless pool.nil?
-
     pool_id = UUID.random.to_s
-    pool = MoanaTypes::Pool.new
-    pool.id = pool_id
-    pool.name = pool_name
-    save_pool(pool)
+    query = insert_query("pools", %w[id name])
+    connection.exec(query, pool_id, pool_name)
+
+    get_pool(pool_name)
   end
 end

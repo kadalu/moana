@@ -31,7 +31,7 @@ def participating_nodes(pool_name, req)
     nodes = [] of String
     req.distribute_groups.each do |dist_grp|
       dist_grp.storage_units.each do |storage_unit|
-        nodes << storage_unit.node_name
+        nodes << storage_unit.node.name
       end
     end
     nodes.uniq!
@@ -54,7 +54,7 @@ def validate_volume_create(req)
   # TODO: Validate Rootdir
   req.distribute_groups.each do |dist_grp|
     dist_grp.storage_units.each do |storage_unit|
-      next unless storage_unit.node_name == GlobalConfig.local_node.name
+      next unless storage_unit.node.name == GlobalConfig.local_node.name
 
       unless File.exists?(Path[storage_unit.path].parent)
         return NodeResponse.new(false, {"error": "Storage unit parent directory(#{Path[storage_unit.path].parent}) not exists"}.to_json)
@@ -113,7 +113,7 @@ def handle_volume_create(data, stopped = false)
 
   req.distribute_groups.each do |dist_grp|
     dist_grp.storage_units.each do |storage_unit|
-      next unless storage_unit.node_name == GlobalConfig.local_node.name
+      next unless storage_unit.node.name == GlobalConfig.local_node.name
 
       # Create the Storage Unit
       Dir.mkdir storage_unit.path
@@ -125,7 +125,7 @@ def handle_volume_create(data, stopped = false)
         xattr[VOLUME_ID_XATTR_NAME] = volume_id.bytes.to_slice
       rescue ex : IO::Error
         if ex.os_error == Errno::EEXIST && xattr.not_nil![VOLUME_ID_XATTR_NAME] != volume_id.bytes.to_slice
-          return NodeResponse.new(false, {"error": "Storage Unit #{storage_unit.node_name}:#{storage_unit.path} is already used with another Volume"}.to_json)
+          return NodeResponse.new(false, {"error": "Storage Unit #{storage_unit.node.name}:#{storage_unit.path} is already used with another Volume"}.to_json)
         else
           return NodeResponse.new(false, {"error": "Failed to set Volume ID Xattr. Error=#{ex}"}.to_json)
         end
@@ -143,10 +143,12 @@ def handle_volume_create(data, stopped = false)
         _, line = out.strip.split("\n")
         fstype, used, avail, iused, ifree = line.split
         storage_unit.fs = fstype
-        storage_unit.metrics.size_used_bytes = used.to_u64
-        storage_unit.metrics.size_free_bytes = avail.to_u64
-        storage_unit.metrics.inodes_used_count = iused.to_u64
-        storage_unit.metrics.inodes_free_count = ifree.to_u64
+        storage_unit.metrics.size_used_bytes = used.to_i64
+        storage_unit.metrics.size_free_bytes = avail.to_i64
+        storage_unit.metrics.size_bytes = used.to_i64 + avail.to_i64
+        storage_unit.metrics.inodes_used_count = iused.to_i64
+        storage_unit.metrics.inodes_free_count = ifree.to_i64
+        storage_unit.metrics.inodes_count = iused.to_i64 + ifree.to_i64
       else
         Log.error &.emit("Failed to collect Storage Unit Metrics", storage_unit: "#{storage_unit.path}", rc: "#{rc}", error: "#{err.strip}")
       end
@@ -183,7 +185,7 @@ def node_details_add_to_volume(volume, nodes)
 
   volume.distribute_groups.each do |dist_grp|
     dist_grp.storage_units.each do |storage_unit|
-      storage_unit.node = nodes_lookup[storage_unit.node_name]
+      storage_unit.node = nodes_lookup[storage_unit.node.name]
     end
   end
 end
@@ -192,7 +194,7 @@ def node_names(req)
   names = [] of String
   req.distribute_groups.each do |dist_grp|
     dist_grp.storage_units.each do |storage_unit|
-      names << storage_unit.node_name
+      names << storage_unit.node.name
     end
   end
 
@@ -215,10 +217,6 @@ def node_errors(message, node_responses)
   errs
 end
 
-def port_used?(pool_name, node_name, port)
-  Datastore.port_active?(pool_name, node_name, port) || Datastore.port_reserved?(pool_name, node_name, port)
-end
-
 def services_and_volfiles(req)
   services = Hash(String, Array(MoanaTypes::ServiceUnit)).new
   volfiles = Hash(String, Array(MoanaTypes::Volfile)).new
@@ -229,16 +227,16 @@ def services_and_volfiles(req)
     dist_grp.storage_units.each do |storage_unit|
       # Generate Service Unit
       service = StorageUnitService.new(req.name, storage_unit)
-      services[storage_unit.node_name] = [] of MoanaTypes::ServiceUnit unless services[storage_unit.node_name]?
+      services[storage_unit.node.name] = [] of MoanaTypes::ServiceUnit unless services[storage_unit.node.name]?
 
-      services[storage_unit.node_name] << service.unit
+      services[storage_unit.node.name] << service.unit
 
       # Generate Storage Unit Volfile
       # TODO: Expose option as req.storage_unit_volfile_template
       tmpl = volfile_get("storage_unit")
       content = Volfile.storage_unit_level("storage_unit", tmpl, req, storage_unit.id)
-      volfiles[storage_unit.node_name] = [] of MoanaTypes::Volfile unless volfiles[storage_unit.node_name]?
-      volfiles[storage_unit.node_name] << MoanaTypes::Volfile.new(service.id, content)
+      volfiles[storage_unit.node.name] = [] of MoanaTypes::Volfile unless volfiles[storage_unit.node.name]?
+      volfiles[storage_unit.node.name] << MoanaTypes::Volfile.new(service.id, content)
 
       if req.replicate_family?
         # Generate Self-Heal service file
@@ -291,10 +289,10 @@ end
 
 def set_distribute_group_metrics(dist_grp)
   up_count = 0
-  size_used_bytes : UInt64 = 0
-  size_free_bytes : UInt64 = 0
-  inodes_used_count : UInt64 = 0
-  inodes_free_count : UInt64 = 0
+  size_used_bytes : Int64 = 0
+  size_free_bytes : Int64 = 0
+  inodes_used_count : Int64 = 0
+  inodes_free_count : Int64 = 0
 
   dist_grp.storage_units.each do |storage_unit|
     up_count += 1 if storage_unit.metrics.health == "Up"
@@ -328,17 +326,19 @@ def set_distribute_group_metrics(dist_grp)
   dist_grp.metrics.health = distribute_group_health(dist_grp, up_count)
   dist_grp.metrics.size_used_bytes = size_used_bytes
   dist_grp.metrics.size_free_bytes = size_free_bytes
+  dist_grp.metrics.size_bytes = size_used_bytes + size_free_bytes
   dist_grp.metrics.inodes_used_count = inodes_used_count
   dist_grp.metrics.inodes_free_count = inodes_free_count
+  dist_grp.metrics.inodes_count = inodes_used_count + inodes_free_count
 end
 
 def set_volume_metrics(volume)
-  up_count : UInt64 = 0
-  down_count : UInt64 = 0
-  size_used_bytes : UInt64 = 0
-  size_free_bytes : UInt64 = 0
-  inodes_used_count : UInt64 = 0
-  inodes_free_count : UInt64 = 0
+  up_count : Int32 = 0
+  down_count : Int32 = 0
+  size_used_bytes : Int64 = 0
+  size_free_bytes : Int64 = 0
+  inodes_used_count : Int64 = 0
+  inodes_free_count : Int64 = 0
 
   volume.distribute_groups.each do |dist_grp|
     next if dist_grp.metrics.health == "Unknown"
@@ -356,6 +356,8 @@ def set_volume_metrics(volume)
   volume.metrics.health = volume_health(volume, up_count, down_count)
   volume.metrics.size_used_bytes = size_used_bytes
   volume.metrics.size_free_bytes = size_free_bytes
+  volume.metrics.size_bytes = size_used_bytes + size_free_bytes
   volume.metrics.inodes_used_count = inodes_used_count
   volume.metrics.inodes_free_count = inodes_free_count
+  volume.metrics.inodes_count = inodes_used_count + inodes_free_count
 end
