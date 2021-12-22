@@ -1,36 +1,41 @@
 require "uuid"
 
 require "moana_types"
+require "db"
 
 module Datastore
-  def self.node_dir(pool_name, node_name)
-    Path.new(@@rootdir, "pools", pool_name, "nodes", node_name)
+  struct NodeView
+    include DB::Serializable
+    property id = "", name = "", endpoint = "", pool_id = "", pool_name = ""
   end
 
-  def self.node_file(pool_name, node_name)
-    Path.new(node_dir(pool_name, node_name), "info")
+  def self.nodes_query
+    "SELECT nodes.id AS id,
+            nodes.name AS name,
+            nodes.endpoint AS endpoint,
+            pools.id AS pool_id,
+            pools.name AS pool_name
+     FROM nodes
+     INNER JOIN pools ON nodes.pool_id = pools.id
+    "
   end
 
-  def self.save_node(pool_name, node)
-    Dir.mkdir_p(node_dir(pool_name, node.name))
-    File.write(node_file(pool_name, node.name), node.to_json)
+  private def self.grouped_nodes(nodes)
+    nodes.map do |row|
+      node = MoanaTypes::Node.new
+      node.id = row.id
+      node.name = row.name
+      node.endpoint = row.endpoint
+      node.pool = MoanaTypes::Pool.new
+      node.pool.id = row.pool_id
+      node.pool.name = row.pool_name
 
-    node
+      node
+    end
   end
 
   def self.list_nodes(pool_name)
-    nodes = [] of MoanaTypes::Node
-    nodes_dir = Path.new(@@rootdir, "pools", pool_name, "nodes")
-
-    return nodes unless File.exists?(nodes_dir)
-
-    Dir.entries(nodes_dir).each do |node_name|
-      if node_name != "." && node_name != ".."
-        nodes << get_node(pool_name, node_name).not_nil!
-      end
-    end
-
-    nodes
+    grouped_nodes(connection.query_all(nodes_query, as: NodeView))
   end
 
   def self.get_nodes(pool_name, node_names)
@@ -44,30 +49,19 @@ module Datastore
   end
 
   def self.node_exists?(pool_name, node_name)
-    node_file_path = node_file(pool_name, node_name)
-    File.exists?(node_file_path)
+    query = "SELECT COUNT(nodes.id) FROM nodes INNER JOIN pools ON pools.id = nodes.pool_id WHERE pools.name = ? AND nodes.name = ?"
+    connection.scalar(query, pool_name, node_name).as(Int64) > 0
   end
 
   def self.get_node(pool_name, node_name)
-    node_file_path = node_file(pool_name, node_name)
-    return nil unless File.exists?(node_file_path)
-
-    MoanaTypes::Node.from_json(File.read(node_file_path).strip)
+    nodes = grouped_nodes(
+      connection.query_all(nodes_query + " WHERE pools.name = ? AND nodes.name = ?", pool_name, node_name, as: NodeView)
+    )
+    nodes.size > 0 ? nodes[0] : nil
   end
 
-  def self.create_node(pool_name, node_id, node_name, endpoint, addresses, token)
-    node = get_node(pool_name, node_name)
-    return node unless node.nil?
-
-    node = MoanaTypes::Node.new
-    node.id = node_id
-    node.name = node_name
-    node.addresses = addresses
-    if addresses.size == 0
-      node.addresses = [node_name]
-    end
-    node.endpoint = endpoint
-    node.token = token
-    save_node(pool_name, node)
+  def self.create_node(pool_id, node_id, node_name, endpoint, token)
+    query = insert_query("nodes", %w[pool_id id name endpoint token])
+    connection.exec(query, pool_id, node_id, node_name, endpoint, token)
   end
 end

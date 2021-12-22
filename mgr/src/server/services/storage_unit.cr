@@ -15,7 +15,7 @@ class StorageUnitService < Service
     @create_pid_file = false
 
     @path = "glusterfsd"
-    @id = "#{volume_name}.#{storage_unit.node_name}.#{escaped_path(storage_unit.path)}"
+    @id = "#{volume_name}.#{storage_unit.node.name}.#{escaped_path(storage_unit.path)}"
     @pid_file = "/var/run/kadalu/#{@id}.pid"
     @args = [
       "--volfile-id", @id,

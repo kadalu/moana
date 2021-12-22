@@ -106,7 +106,7 @@ def volume_detail(volume, status = false)
       printf(
         "    Storage Unit %-3s    : %s:%s (Port: %s%s)\n",
         idx + 1,
-        storage_unit.node_name,
+        storage_unit.node.name,
         storage_unit.path,
         storage_unit.port,
         status ? ", Health: #{storage_unit.metrics.health}" : ""

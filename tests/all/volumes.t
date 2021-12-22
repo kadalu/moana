@@ -13,17 +13,12 @@ end
 
 USE_NODE nodes[0]
 puts TEST "kadalu pool create DEV"
-TEST "cat /var/lib/kadalu/meta/pools/DEV/info"
 RUN "umount /mnt/vol2"
 RUN "rm -rf /mnt/vol2"
 
 nodes.each do |node|
   USE_NODE nodes[0]
   TEST "kadalu node add DEV/#{node}"
-  puts TEST "cat /var/lib/kadalu/meta/pools/DEV/nodes/server1/info"
-
-  USE_NODE node
-  puts TEST "cat /var/lib/kadalu/info"
 end
 
 nodes.each do |node|
@@ -38,19 +33,15 @@ end
 USE_NODE nodes[0]
 # Distribute
 TEST "kadalu volume create DEV/vol1 server1:/exports/vol1/s1 server2:/exports/vol1/s2 server3:/exports/vol1/s3"
-puts TEST "cat /var/lib/kadalu/meta/pools/DEV/volumes/vol1/info"
 
 # Replicate
 TEST "kadalu volume create DEV/vol2 replica server1:/exports/vol2/s1 server2:/exports/vol2/s2 server3:/exports/vol2/s3"
-puts TEST "cat /var/lib/kadalu/meta/pools/DEV/volumes/vol2/info"
 
 # Disperse
 TEST "kadalu volume create DEV/vol3 data server1:/exports/vol3/s1 server2:/exports/vol3/s2 redundancy server3:/exports/vol3/s3"
-puts TEST "cat /var/lib/kadalu/meta/pools/DEV/volumes/vol3/info"
 
 # Distributed Replicate
 TEST "kadalu volume create DEV/vol4 replica server1:/exports/vol4/s1 server2:/exports/vol4/s2 server3:/exports/vol4/s3 replica server1:/exports/vol4/s4 server2:/exports/vol4/s5 server3:/exports/vol4/s6"
-puts TEST "cat /var/lib/kadalu/meta/pools/DEV/volumes/vol4/info"
 
 nodes.each do |node|
   USE_NODE node

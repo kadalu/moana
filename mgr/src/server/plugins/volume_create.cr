@@ -35,11 +35,17 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
     halt(env, status_code: 400, response: ({"error": "Volume already exists"}.to_json))
   end
 
+  pool = Datastore.get_pool(pool_name)
+  if pool.nil?
+    halt(env, status_code: 400, response: ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
+  end
+
   # TODO: Validate the request, dist count, storage_units count etc
 
   # Validate if the nodes are part of the Pool
   node_names(req).each do |node|
     unless Datastore.node_exists?(pool_name, node)
+      # TODO: Move this halt out of the Loop
       halt(env, status_code: 400, response: ({"error": "Node #{node} is not part of the Pool"}.to_json))
     end
   end
@@ -59,8 +65,9 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
     dist_grp.storage_units.each do |storage_unit|
       next if storage_unit.port == 0
 
-      if port_used?(pool_name, storage_unit.node_name, storage_unit.port)
-        halt(env, status_code: 400, response: ({"error": "Port is already used(#{storage_unit.node_name}:#{storage_unit.port})"}).to_json)
+      unless Datastore.port_available?(pool.id, storage_unit.node.id, storage_unit.port)
+        # TODO: Move this halt out of the loop
+        halt(env, status_code: 400, response: ({"error": "Port is already used(#{storage_unit.node.name}:#{storage_unit.port})"}).to_json)
       end
     end
   end
@@ -80,26 +87,34 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
   # Update Free Ports and reserve it
   # Also generate Brick ID
   # TODO: Update Brick type
+  no_port_available = false
+  no_port_storage_node = ""
   req.distribute_groups.each do |dist_grp|
     dist_grp.storage_units.each do |storage_unit|
       storage_unit.id = UUID.random.to_s
       # Request doesn't contain the Port, find a free port
       if storage_unit.port == 0
-        (49252..49452).each do |p|
-          unless port_used?(pool_name, storage_unit.node_name, p)
-            storage_unit.port = p
-            break
-          end
-        end
+        free_port = Datastore.free_port(pool.id, storage_unit.node.id)
+        storage_unit.port = free_port unless free_port.nil?
       end
 
       # No free port found
       if storage_unit.port == 0
-        halt(env, status_code: 400, response: ({"error": "No free Port available in #{storage_unit.node_name}"}).to_json)
+        # Using halt directly from here will not work. Since it adds `next`
+        # and it just breaks the Storage_unit loop
+        no_port_available = true
+        no_port_storage_node = storage_unit.node.name
+        break
       end
 
-      Datastore.reserve_port(pool_name, storage_unit.node_name, storage_unit.port)
+      Datastore.reserve_port(pool.id, storage_unit.node.id, storage_unit.port)
     end
+
+    break if no_port_available
+  end
+
+  if no_port_available
+    halt(env, status_code: 400, response: ({"error": "No free Port available in #{no_port_storage_node}"}).to_json)
   end
 
   # Generate Services and Volfiles if Volume to be started
@@ -140,16 +155,15 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
   # Save Ports details and Update Storage unit metrics and FS type
   req.distribute_groups.each do |dist_grp|
     dist_grp.storage_units.each do |storage_unit|
-      Datastore.activate_port(pool_name, storage_unit.node_name, storage_unit.port)
-      storage_unit.metrics = storage_units[storage_unit.node_name][storage_unit.path].metrics
-      storage_unit.fs = storage_units[storage_unit.node_name][storage_unit.path].fs
+      storage_unit.metrics = storage_units[storage_unit.node.name][storage_unit.path].metrics
+      storage_unit.fs = storage_units[storage_unit.node.name][storage_unit.path].fs
     end
   end
 
   set_volume_metrics(req)
 
   # Save Volume info
-  Datastore.create_volume(pool_name, req)
+  Datastore.create_volume(pool.id, req)
 
   env.response.status_code = 201
   req.to_json

@@ -13,7 +13,7 @@ module MoanaTypes
   struct Pool
     include JSON::Serializable
 
-    property id = "", name = ""
+    property id = "", name = "", nodes = [] of Node
 
     def initialize(@id : String, @name : String)
     end
@@ -34,7 +34,7 @@ module MoanaTypes
   class Node
     include JSON::Serializable
 
-    property id = "", name = "", state = "", endpoint = "", addresses = [] of String, token = ""
+    property id = "", name = "", state = "", endpoint = "", addresses = [] of String, token = "", pool = Pool.new
 
     def initialize
     end
@@ -43,7 +43,13 @@ module MoanaTypes
   class Metrics
     include JSON::Serializable
     # TODO: Include CPU, Memory and Uptime details
-    property health = "", size_used_bytes : UInt64 = 0, size_free_bytes : UInt64 = 0, inodes_used_count : UInt64 = 0, inodes_free_count : UInt64 = 0
+    property health = "",
+      size_bytes : Int64 = 0,
+      inodes_count : Int64 = 0,
+      size_used_bytes : Int64 = 0,
+      size_free_bytes : Int64 = 0,
+      inodes_used_count : Int64 = 0,
+      inodes_free_count : Int64 = 0
 
     def initialize
     end
@@ -52,13 +58,24 @@ module MoanaTypes
   class StorageUnit
     include JSON::Serializable
 
-    property id = "", node_name = "", port = 0, path = "", node = Node.new, type = "", fs = "", metrics = Metrics.new, service = ServiceUnit.new
+    property id = "",
+      port = 0,
+      path = "",
+      node = Node.new,
+      type = "",
+      fs = "",
+      metrics = Metrics.new,
+      service = ServiceUnit.new
 
-    def initialize(@node_name, @port, @path)
+    def initialize(node_name, @port, @path)
+      @node.name = node_name
+    end
+
+    def initialize
     end
   end
 
-  class VolumeDistributeGroup
+  class DistributeGroup
     include JSON::Serializable
 
     property storage_units = [] of StorageUnit,
@@ -86,7 +103,15 @@ module MoanaTypes
   class Volume
     include JSON::Serializable
 
-    property id = "", name = "", state = "", pool_name = "", distribute_groups = [] of VolumeDistributeGroup, no_start = false, options = Hash(String, String).new, metrics = Metrics.new
+    property id = "",
+      name = "",
+      state = "",
+      pool_name = "",
+      distribute_groups = [] of DistributeGroup,
+      no_start = false,
+      options = Hash(String, String).new,
+      metrics = Metrics.new,
+      snapshot_plugin = ""
 
     def initialize
     end

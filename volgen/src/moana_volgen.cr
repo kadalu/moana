@@ -203,7 +203,7 @@ class Volfile
 
   def self.storage_unit_variables(volume, dist_grp, storage_unit, vidx, grp_idx, unit_idx)
     vars = distribute_group_variables volume, dist_grp, vidx, grp_idx
-    vars["storage_unit.node"] = storage_unit.node_name
+    vars["storage_unit.node"] = storage_unit.node.name
     vars["storage_unit.node_id"] = storage_unit.node.id
     vars["storage_unit.type"] = storage_unit.type.downcase
     vars["storage_unit.path"] = storage_unit.path

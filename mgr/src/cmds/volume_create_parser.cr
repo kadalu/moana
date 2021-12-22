@@ -118,10 +118,10 @@ module VolumeRequestParser
   end
 
   def self.distribute_group_count_based(counts, storage_units)
-    grps = [] of MoanaTypes::VolumeDistributeGroup
+    grps = [] of MoanaTypes::DistributeGroup
     subvol_size = subvol_size(counts)
     storage_units.each_slice(subvol_size) do |grp_storage_units|
-      dist_group = MoanaTypes::VolumeDistributeGroup.new
+      dist_group = MoanaTypes::DistributeGroup.new
       dist_group.replica_count = counts["replica"] + counts["mirror"]
       dist_group.arbiter_count = counts["arbiter"]
       dist_group.disperse_count, dist_group.redundancy_count = disperse_and_redundancy_count(
@@ -172,7 +172,7 @@ module VolumeRequestParser
       return nil
     end
 
-    dist_group = MoanaTypes::VolumeDistributeGroup.new
+    dist_group = MoanaTypes::DistributeGroup.new
     grp_storage_units = [] of String
 
     if storage_units["replica"].size > 0 || storage_units["mirror"].size > 0
@@ -316,7 +316,7 @@ module VolumeRequestParser
       dist_grp.storage_units.each do |storage_unit|
         msg = storage_unit.port > 0 ? "#{storage_unit.port}:" : ""
         msg += storage_unit.path
-        raise InvalidVolumeRequest.new("Node name is not specified for #{msg}") if storage_unit.node_name == ""
+        raise InvalidVolumeRequest.new("Node name is not specified for #{msg}") if storage_unit.node.name == ""
       end
     end
   end

@@ -8,7 +8,7 @@ RUN apt-get update -yq &&                                                 \
     sudo curl wget git build-essential automake autoconf automake libtool \
     flex bison libssl-dev pkg-config uuid-dev acl-dev zlib1g-dev          \
     libxml2-dev libxml2-utils liburcu-dev xfsprogs gdb attr               \
-    libgoogle-perftools-dev zfsutils-linux screen
+    libgoogle-perftools-dev zfsutils-linux screen libsqlite3-dev sqlite3
 
 RUN echo "root:kadalu" | chpasswd
 
