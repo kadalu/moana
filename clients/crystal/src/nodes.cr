@@ -34,5 +34,18 @@ module MoanaClient
         MoanaClient.error_response(response)
       end
     end
+
+    def self.list(client : Client, state = false)
+      url = "#{client.url}/api/v1/nodes?state=#{state ? 1 : 0}"
+      response = MoanaClient.http_get(
+        url,
+        headers: client.auth_header
+      )
+      if response.status_code == 200
+        Array(MoanaTypes::Node).from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
   end
 end

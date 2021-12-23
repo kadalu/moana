@@ -246,7 +246,7 @@ module VolumeRequestParser
 
       case token.kind
       when TokenKind::VolumeName  then req.name = token.value
-      when TokenKind::PoolName    then req.pool_name = token.value
+      when TokenKind::PoolName    then req.pool.name = token.value
       when TokenKind::StorageUnit then all_storage_units << token.value
       when TokenKind::TypeKeyword
         keyword = token.value
@@ -296,7 +296,7 @@ module VolumeRequestParser
   # Validate the Volume create request after parsing
   def self.validate(req)
     raise InvalidVolumeRequest.new("Volume name not specified (Example: mypool/vol1)") if req.name == ""
-    raise InvalidVolumeRequest.new("Pool name not specified (Example: mypool/vol1)") if req.pool_name == ""
+    raise InvalidVolumeRequest.new("Pool name not specified (Example: mypool/vol1)") if req.pool.name == ""
     raise InvalidVolumeRequest.new("Atleast one Storage unit is required") if req.distribute_groups.size == 0
 
     # TODO: Volume name validations

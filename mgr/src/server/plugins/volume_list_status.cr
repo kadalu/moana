@@ -80,7 +80,9 @@ def volume_status_node_request_prepare(pool_name, volumes)
 end
 
 def volume_list_detail_status(env, pool_name, volume_name, state)
-  if volume_name.nil?
+  if pool_name == ""
+    volumes = Datastore.list_volumes
+  elsif volume_name.nil?
     volumes = Datastore.list_volumes(pool_name)
   else
     vol = Datastore.get_volume(pool_name, volume_name)
@@ -121,7 +123,13 @@ def volume_list_detail_status(env, pool_name, volume_name, state)
     set_volume_metrics(volume)
   end
 
-  volumes.to_json
+  volume_name.nil? ? volumes.to_json : volumes[0].to_json
+end
+
+get "/api/v1/volumes" do |env|
+  state = env.params.query["state"]
+
+  volume_list_detail_status(env, "", nil, state ? true : false)
 end
 
 get "/api/v1/pools/:pool_name/volumes" do |env|

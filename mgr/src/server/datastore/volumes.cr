@@ -28,6 +28,8 @@ module Datastore
       volume.state = rows[0].state
       volume.metrics.size_bytes = rows[0].size_bytes
       volume.metrics.inodes_count = rows[0].inodes_count
+      volume.pool.id = rows[0].pool_id
+      volume.pool.name = rows[0].pool_name
 
       dist_grp_data = rows.group_by do |rec|
         [rec.distribute_group_index]
@@ -107,6 +109,13 @@ module Datastore
 
   def self.volumes_query_order_by
     " ORDER BY volumes.created_on DESC, distribute_groups.idx ASC, storage_units.idx ASC "
+  end
+
+  def self.list_volumes
+    query = volumes_query + volumes_query_order_by
+    group_volumes(
+      connection.query_all(query, as: VolumeView)
+    )
   end
 
   def self.list_volumes(pool_name)
