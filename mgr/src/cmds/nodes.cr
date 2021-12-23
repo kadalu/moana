@@ -60,17 +60,21 @@ handler "node.list" do |args|
     puts "No nodes added to the Pool. Run `kadalu node add #{args.pool_name}/<node-name>` to add a node." if nodes.size == 0
 
     if args.node_args.status
-      printf("%36s  %6s  %20s  %s\n", "ID", "State", "Name", "Endpoint") if nodes.size > 0
+      table = CliTable.new(4)
+      table.header("Name", "ID", "State", "Endpoint")
     else
-      printf("%36s  %20s  %s\n", "ID", "Name", "Endpoint") if nodes.size > 0
+      table = CliTable.new(3)
+      table.header("Name", "ID", "Endpoint")
     end
 
     nodes.each do |node|
       if args.node_args.status
-        printf("%36s  %6s  %20s  %s\n", node.id, node.state, node.name, node.endpoint)
+        table.record(node.name, node.id, node.state, node.endpoint)
       else
-        printf("%36s  %20s  %s\n", node.id, node.name, node.endpoint)
+        table.record(node.name, node.id, node.endpoint)
       end
     end
+
+    table.render
   end
 end
