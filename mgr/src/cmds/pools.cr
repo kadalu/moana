@@ -28,10 +28,11 @@ handler "pool.list" do |args|
 
     puts "No pools. Run `kadalu pool create <name>` to create a Pool." if pools.size == 0
 
-    printf("%36s  %s\n", "ID", "Name") if pools.size > 0
-
+    table = CliTable.new(2)
+    table.header("Name", "ID")
     pools.each do |pool|
-      printf("%36s  %s\n", pool.id, pool.name)
+      table.record(pool.name, pool.id)
     end
+    table.render
   end
 end

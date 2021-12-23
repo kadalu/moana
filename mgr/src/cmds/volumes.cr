@@ -141,27 +141,37 @@ handler "volume.list" do |args|
       next
     end
 
-    # TODO: Include volume.state
+    table = CliTable.new(6)
+    table.right_align(5)
+    table.right_align(6)
     if args.volume_args.status
-      printf("%36s  %20s  %10s  %20s  %20s  %s\n", "ID", "Name", "Health", "Type", "Utilization", "Utilization(Inodes)") if volumes.size > 0
+      table.header("Name", "ID", "State", "Type", "Utilization", "Utilization(Inodes)")
     else
-      printf("%36s  %20s  %20s  %10s  %10s\n", "ID", "Name", "Type", "Size", "Inodes") if volumes.size > 0
+      table.header("Name", "ID", "State", "Type", "Size", "Inodes")
     end
 
     volumes.each do |volume|
       if args.volume_args.status
-        printf(
-          "%36s  %20s  %10s  %20s  %20s  %s\n", volume.id, volume.name, volume.metrics.health, volume.type,
-          "#{volume.metrics.size_used_bytes.humanize_bytes}/#{(volume.metrics.size_used_bytes + volume.metrics.size_free_bytes).humanize_bytes}",
-          "#{volume.metrics.inodes_used_count.humanize}/#{(volume.metrics.inodes_used_count + volume.metrics.inodes_free_count).humanize}",
+        table.record(
+          volume.name,
+          volume.id,
+          volume.state == "Started" ? "#{volume.state} (#{volume.metrics.health})" : volume.state,
+          volume.type,
+          "#{volume.metrics.size_used_bytes.humanize_bytes}/#{volume.metrics.size_bytes.humanize_bytes}",
+          "#{volume.metrics.inodes_used_count.humanize}/#{volume.metrics.inodes_count.humanize}"
         )
       else
-        printf(
-          "%36s  %20s  %20s  %10s  %10s\n", volume.id, volume.name, volume.type,
-          (volume.metrics.size_used_bytes + volume.metrics.size_free_bytes).humanize_bytes,
-          (volume.metrics.inodes_used_count + volume.metrics.inodes_free_count).humanize
+        table.record(
+          volume.name,
+          volume.id,
+          volume.state,
+          volume.type,
+          volume.metrics.size_bytes.humanize_bytes,
+          volume.metrics.inodes_count.humanize
         )
       end
     end
+
+    table.render
   end
 end
