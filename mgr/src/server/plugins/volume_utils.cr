@@ -28,19 +28,25 @@ end
 def participating_nodes(pool_name, req)
   case req
   when MoanaTypes::Volume
-    nodes = [] of String
+    nodes = [] of MoanaTypes::Node
     req.distribute_groups.each do |dist_grp|
       dist_grp.storage_units.each do |storage_unit|
-        nodes << storage_unit.node.name
+        nodes << storage_unit.node
       end
     end
-    nodes.uniq!
-    Datastore.get_nodes(pool_name, nodes)
+    # Shorthand equivalant to
+    # nodes.uniq! do |node|
+    #   node.name
+    # end
+    nodes.uniq!(&.name)
+    nodes
   when Array(MoanaTypes::Volume)
     nodes = [] of MoanaTypes::Node
     req.each do |volume|
-      nodes += participating_nodes(pool_name, volume)
+      nodes += participating_nodes(volume.pool.name, volume)
     end
+
+    nodes.uniq!(&.name)
     nodes
   else
     [] of MoanaTypes::Node

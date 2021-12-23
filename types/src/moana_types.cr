@@ -106,7 +106,7 @@ module MoanaTypes
     property id = "",
       name = "",
       state = "",
-      pool_name = "",
+      pool = Pool.new,
       distribute_groups = [] of DistributeGroup,
       no_start = false,
       options = Hash(String, String).new,

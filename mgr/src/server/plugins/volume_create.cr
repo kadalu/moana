@@ -42,15 +42,26 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
 
   # TODO: Validate the request, dist count, storage_units count etc
 
+  nodes = [] of MoanaTypes::Node
+
   # Validate if the nodes are part of the Pool
-  node_names(req).each do |node|
-    unless Datastore.node_exists?(pool_name, node)
-      # TODO: Move this halt out of the Loop
-      halt(env, status_code: 400, response: ({"error": "Node #{node} is not part of the Pool"}.to_json))
+  # Also fetch the full node details
+  invalid_node = false
+  invalid_node_name = ""
+  participating_nodes(pool_name, req).each do |n|
+    node = Datastore.get_node(pool_name, n.name)
+    if node.nil?
+      invalid_node = true
+      invalid_node_name = n.name
+      break
     end
+    nodes << node
   end
 
-  nodes = participating_nodes(pool_name, req)
+  if invalid_node
+    halt(env, status_code: 400, response: ({"error": "Node #{invalid_node_name} is not part of the Pool"}.to_json))
+  end
+
   node_details_add_to_volume(req, nodes)
 
   # Validate if all the nodes are reachable.

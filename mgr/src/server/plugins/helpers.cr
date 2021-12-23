@@ -13,7 +13,7 @@ post "/_api/v1/:action" do |env|
   rescue ex : Exception
     Log.error &.emit("#{action} Failed", error: "#{ex}")
     env.response.status_code = 500
-    resp = NodeResponse.new(false, {"error": "#{action} Failed"}.to_json)
+    resp = NodeResponse.new(false, ({"error": "#{action} Failed"}).to_json)
   end
 
   resp.status_code = env.response.status_code

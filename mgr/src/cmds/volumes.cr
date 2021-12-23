@@ -25,7 +25,7 @@ handler "volume.create" do |args|
   begin
     req = VolumeRequestParser.parse(args.pos_args)
     req.no_start = args.volume_args.no_start
-    args.pool_name = req.pool_name
+    args.pool_name = req.pool.name
     api_call(args, "Failed to Create Volume") do |client|
       volume = client.pool(args.pool_name).create_volume(req)
       puts "Volume #{req.name} created successfully"
@@ -85,11 +85,12 @@ command "volume.list", "Volumes list of a Kadalu Storage Pool" do |parser, args|
 end
 
 def volume_detail(volume, status = false)
-  puts "Name                    : #{volume.name}"
+  health = volume.state == "Started" && status ? "#{volume.state} (#{volume.metrics.health})" : volume.state
+
+  puts "Name                    : #{volume.pool.name}/#{volume.name}"
   puts "Type                    : #{volume.type}"
   puts "ID                      : #{volume.id}"
-  puts "Status                  : #{volume.state}"
-  puts "Health                  : #{volume.metrics.health}" if status
+  puts "State                   : #{health}"
   puts "Size                    : #{(volume.metrics.size_used_bytes + volume.metrics.size_free_bytes).humanize_bytes}"
   puts "Inodes                  : #{(volume.metrics.inodes_used_count + volume.metrics.inodes_free_count).humanize}"
   puts "Utilization             : #{volume.metrics.size_used_bytes.humanize_bytes}/#{(volume.metrics.size_used_bytes + volume.metrics.size_free_bytes).humanize_bytes}" if status
@@ -120,13 +121,11 @@ end
 
 handler "volume.list" do |args|
   args.pool_name, args.volume_args.name = pool_and_volume_name(args.pos_args.size < 1 ? "" : args.pos_args[0])
-  if args.pool_name == ""
-    STDERR.puts "Pool name is required."
-    exit 1
-  end
 
   api_call(args, "Failed to get list of volumes") do |client|
-    if args.volume_args.name == ""
+    if args.pool_name == ""
+      volumes = client.list_volumes(state: args.volume_args.status)
+    elsif args.volume_args.name == ""
       volumes = client.pool(args.pool_name).list_volumes(state: args.volume_args.status)
     else
       volumes = [client.pool(args.pool_name).volume(args.volume_args.name).get(state: args.volume_args.status)]
@@ -153,7 +152,7 @@ handler "volume.list" do |args|
     volumes.each do |volume|
       if args.volume_args.status
         table.record(
-          volume.name,
+          "#{volume.pool.name}/#{volume.name}",
           volume.id,
           volume.state == "Started" ? "#{volume.state} (#{volume.metrics.health})" : volume.state,
           volume.type,
@@ -162,7 +161,7 @@ handler "volume.list" do |args|
         )
       else
         table.record(
-          volume.name,
+          "#{volume.pool.name}/#{volume.name}",
           volume.id,
           volume.state,
           volume.type,

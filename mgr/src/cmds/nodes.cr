@@ -50,13 +50,13 @@ end
 
 handler "node.list" do |args|
   args.pool_name, _ = pool_and_node_name(args.pos_args.size < 1 ? "" : args.pos_args[0])
-  if args.pool_name == ""
-    STDERR.puts "Pool name is required."
-    exit 1
-  end
 
   api_call(args, "Failed to get list of nodes") do |client|
-    nodes = client.pool(args.pool_name).list_nodes(state: args.node_args.status)
+    if args.pool_name == ""
+      nodes = client.list_nodes(state: args.node_args.status)
+    else
+      nodes = client.pool(args.pool_name).list_nodes(state: args.node_args.status)
+    end
     puts "No nodes added to the Pool. Run `kadalu node add #{args.pool_name}/<node-name>` to add a node." if nodes.size == 0
 
     if args.node_args.status
@@ -69,9 +69,9 @@ handler "node.list" do |args|
 
     nodes.each do |node|
       if args.node_args.status
-        table.record(node.name, node.id, node.state, node.endpoint)
+        table.record("#{node.pool.name}/#{node.name}", node.id, node.state, node.endpoint)
       else
-        table.record(node.name, node.id, node.endpoint)
+        table.record("#{node.pool.name}/#{node.name}", node.id, node.endpoint)
       end
     end
 

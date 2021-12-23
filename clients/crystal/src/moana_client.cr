@@ -23,6 +23,14 @@ module MoanaClient
       Pool.list(self)
     end
 
+    def list_nodes(state = false)
+      Node.list(self, state)
+    end
+
+    def list_volumes(state = false)
+      Volume.list(self, state)
+    end
+
     def pool(name : String)
       Pool.new(self, name)
     end

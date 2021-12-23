@@ -20,6 +20,10 @@ module Datastore
     "
   end
 
+  def self.nodes_query_order_by
+    " ORDER BY pools.created_on DESC, nodes.created_on DESC "
+  end
+
   private def self.grouped_nodes(nodes)
     nodes.map do |row|
       node = MoanaTypes::Node.new
@@ -34,8 +38,12 @@ module Datastore
     end
   end
 
+  def self.list_nodes
+    grouped_nodes(connection.query_all(nodes_query + nodes_query_order_by, as: NodeView))
+  end
+
   def self.list_nodes(pool_name)
-    grouped_nodes(connection.query_all(nodes_query, as: NodeView))
+    grouped_nodes(connection.query_all(nodes_query + " WHERE pools.name = ?" + nodes_query_order_by, pool_name, as: NodeView))
   end
 
   def self.get_nodes(pool_name, node_names)
