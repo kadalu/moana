@@ -151,10 +151,10 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
   end
 
   # Save Services details
-  services.each do |node, svcs|
+  services.each do |node_id, svcs|
     svcs.each do |svc|
       # Enable each Services
-      Datastore.enable_service(pool_name, node, svc)
+      Datastore.enable_service(pool.id, node_id, svc)
     end
   end
 

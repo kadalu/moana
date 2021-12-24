@@ -17,9 +17,16 @@ node_action ACTION_VOLUME_STOP do |data|
   handle_node_volume_start_stop(data, "stop")
 end
 
+# ameba:disable Metrics/CyclomaticComplexity
 def volume_start_stop(env, action)
   pool_name = env.params.url["pool_name"]
   volume_name = env.params.url["volume_name"]
+
+  pool = Datastore.get_pool(pool_name)
+  if pool.nil?
+    env.response.status_code = 400
+    return {"error": "The Pool(#{pool_name}) doesn't exists"}.to_json
+  end
 
   volume = Datastore.get_volume(pool_name, volume_name)
 
@@ -52,14 +59,14 @@ def volume_start_stop(env, action)
   end
 
   # Save Services details
-  services.each do |node, svcs|
+  services.each do |node_id, svcs|
     svcs.each do |svc|
       if action == "start"
         # Enable each Services
-        Datastore.enable_service(pool_name, node, svc)
+        Datastore.enable_service(pool.id, node_id, svc)
       else
         # Disable each Services
-        Datastore.disable_service(pool_name, node, svc)
+        Datastore.disable_service(pool.id, node_id, svc)
       end
     end
   end

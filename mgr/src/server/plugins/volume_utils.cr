@@ -89,18 +89,18 @@ end
 def handle_node_volume_start_stop(data, action)
   services, volfiles, _ = VolumeRequestToNode.from_json(data)
 
-  if action == "start" && !volfiles[GlobalConfig.local_node.name]?.nil?
+  if action == "start" && !volfiles[GlobalConfig.local_node.id]?.nil?
     Dir.mkdir_p(Path.new(GlobalConfig.workdir, "volfiles"))
-    volfiles[GlobalConfig.local_node.name].each do |volfile|
+    volfiles[GlobalConfig.local_node.id].each do |volfile|
       File.write(Path.new(GlobalConfig.workdir, "volfiles", "#{volfile.name}.vol"), volfile.content)
     end
   end
 
-  unless services[GlobalConfig.local_node.name]?.nil?
+  unless services[GlobalConfig.local_node.id]?.nil?
     # TODO: Hard coded path change?
     Dir.mkdir_p("/var/log/kadalu")
     Dir.mkdir_p("/var/run/kadalu")
-    services[GlobalConfig.local_node.name].each do |service|
+    services[GlobalConfig.local_node.id].each do |service|
       svc = Service.from_json(service.to_json)
       if action == "start"
         svc.start
@@ -162,18 +162,18 @@ def handle_volume_create(data, stopped = false)
     end
   end
 
-  unless volfiles[GlobalConfig.local_node.name]?.nil?
+  unless volfiles[GlobalConfig.local_node.id]?.nil?
     Dir.mkdir_p(Path.new(GlobalConfig.workdir, "volfiles"))
-    volfiles[GlobalConfig.local_node.name].each do |volfile|
+    volfiles[GlobalConfig.local_node.id].each do |volfile|
       File.write(Path.new(GlobalConfig.workdir, "volfiles", "#{volfile.name}.vol"), volfile.content)
     end
   end
 
-  unless services[GlobalConfig.local_node.name]?.nil?
+  unless services[GlobalConfig.local_node.id]?.nil?
     # TODO: Hard coded path change?
     Dir.mkdir_p("/var/log/kadalu")
     Dir.mkdir_p("/var/run/kadalu")
-    services[GlobalConfig.local_node.name].each do |service|
+    services[GlobalConfig.local_node.id].each do |service|
       svc = Service.from_json(service.to_json)
       svc.start
     end
@@ -233,16 +233,16 @@ def services_and_volfiles(req)
     dist_grp.storage_units.each do |storage_unit|
       # Generate Service Unit
       service = StorageUnitService.new(req.name, storage_unit)
-      services[storage_unit.node.name] = [] of MoanaTypes::ServiceUnit unless services[storage_unit.node.name]?
+      services[storage_unit.node.id] = [] of MoanaTypes::ServiceUnit unless services[storage_unit.node.id]?
 
-      services[storage_unit.node.name] << service.unit
+      services[storage_unit.node.id] << service.unit
 
       # Generate Storage Unit Volfile
       # TODO: Expose option as req.storage_unit_volfile_template
       tmpl = volfile_get("storage_unit")
       content = Volfile.storage_unit_level("storage_unit", tmpl, req, storage_unit.id)
-      volfiles[storage_unit.node.name] = [] of MoanaTypes::Volfile unless volfiles[storage_unit.node.name]?
-      volfiles[storage_unit.node.name] << MoanaTypes::Volfile.new(service.id, content)
+      volfiles[storage_unit.node.id] = [] of MoanaTypes::Volfile unless volfiles[storage_unit.node.id]?
+      volfiles[storage_unit.node.id] << MoanaTypes::Volfile.new(service.id, content)
 
       if req.replicate_family?
         # Generate Self-Heal service file

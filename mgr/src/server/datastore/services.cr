@@ -3,40 +3,27 @@ require "uuid"
 require "moana_types"
 
 module Datastore
-  def self.services_dir(pool_name, node_name)
-    Path.new(@@rootdir, "pools", pool_name, "services", node_name)
+  def self.enable_service(pool_id, node_id, service)
+    query = insert_query("services", %w[pool_id node_id name unit])
+    connection.exec(query, pool_id, node_id, service.id, service.to_json)
   end
 
-  def self.service_file(pool_name, node_name, service_id)
-    Path.new(services_dir(pool_name, node_name), service_id)
+  def self.disable_service(pool_id, node_id, service)
+    query = "DELETE FROM services WHERE pool_id = ? AND node_id = ? AND name = ?"
+    connection.exec(query, pool_id, node_id, service.id)
   end
 
-  def self.enable_service(pool_name, node_name, service)
-    Dir.mkdir_p(services_dir(pool_name, node_name))
-    File.write(service_file(pool_name, node_name, service.id), service.to_json)
-  end
-
-  def self.disable_service(pool_name, node_name, service)
-    File.delete(service_file(pool_name, node_name, service.id))
-  end
-
-  def self.list_services(pool_name, node_name)
-    services = [] of MoanaTypes::ServiceUnit
-
-    svc_dir = services_dir(pool_name, node_name)
-    return services unless File.exists?(svc_dir)
-
-    Dir.children(svc_dir).each do |svc_name|
-      services << get_service(pool_name, node_name, svc_name).not_nil!
+  def self.list_services(pool_id, node_id)
+    query = "select unit FROM services WHERE pool_id = ? AND node_id = ?"
+    units = connection.query_all(query, pool_id, node_id, as: String)
+    units.map do |unit|
+      MoanaTypes::ServiceUnit.from_json(unit)
     end
-
-    services
   end
 
-  def self.get_service(pool_name, node_name, svc_name)
-    service_file_path = service_file(pool_name, node_name, svc_name)
-    return nil unless File.exists?(service_file_path)
-
-    MoanaTypes::ServiceUnit.from_json(File.read(service_file_path).strip)
+  def self.get_service(pool_id, node_id, svc_name)
+    query = "select unit FROM services WHERE pool_id = ? AND node_id = ? AND name = ?"
+    unit = connection.query(query, pool_id, node_id, svc_name, as: String)
+    MoanaTypes::ServiceUnit.from_json(unit)
   end
 end
