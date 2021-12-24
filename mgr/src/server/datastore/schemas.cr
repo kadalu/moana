@@ -107,4 +107,13 @@ SCHEMAS = [
        updated_on TIMESTAMP,
        UNIQUE (pool_id, node_id, port)
     );",
+  "CREATE TABLE IF NOT EXISTS services (
+       pool_id    UUID,
+       node_id    UUID,
+       name       VARCHAR,
+       unit       TEXT,
+       created_on TIMESTAMP,
+       updated_on TIMESTAMP,
+       UNIQUE (pool_id, node_id, name)
+  )",
 ]
