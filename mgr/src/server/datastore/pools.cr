@@ -17,7 +17,7 @@ module Datastore
     property id = "", name = "", node_id = "", node_name = "", node_endpoint = ""
   end
 
-  def self.belongs_to_a_pool?
+  def belongs_to_a_pool?
     pool_name = ""
 
     # Check if the current node is part of
@@ -32,7 +32,7 @@ module Datastore
     pool_name != ""
   end
 
-  private def self.pool_query
+  private def pool_query
     # TODO: Add all node fields
     "SELECT pools.id AS id,
             pools.name AS name,
@@ -44,11 +44,11 @@ module Datastore
      "
   end
 
-  private def self.pool_query_order_by
+  private def pool_query_order_by
     " ORDER BY pools.created_on DESC, nodes.created_on DESC "
   end
 
-  private def self.group_pools(pools)
+  private def group_pools(pools)
     grouped_data = pools.group_by do |rec|
       [rec.id, rec.name]
     end
@@ -75,11 +75,11 @@ module Datastore
     end
   end
 
-  def self.list_pools
+  def list_pools
     group_pools(connection.query_all(pool_query + pool_query_order_by, as: PoolView))
   end
 
-  def self.list_pools(user_id)
+  def list_pools(user_id)
     pool_ids = viewable_pool_ids(user_id)
     return [] of MoanaTypes::Pool if pool_ids.size == 0
 
@@ -95,12 +95,12 @@ module Datastore
     pools
   end
 
-  def self.pools_exists?
+  def pools_exists?
     query = "SELECT COUNT(id) FROM pools"
     connection.scalar(query).as(Int64) > 0
   end
 
-  def self.get_pool(pool_name)
+  def get_pool(pool_name)
     pools = group_pools(connection.query_all(
       pool_query + " WHERE pools.name = ? " + pool_query_order_by,
       pool_name,
@@ -109,7 +109,7 @@ module Datastore
     pools.size > 0 ? pools[0] : nil
   end
 
-  def self.create_pool(pool_name)
+  def create_pool(pool_name)
     pool_id = UUID.random.to_s
     query = insert_query("pools", %w[id name])
     connection.exec(query, pool_id, pool_name)
