@@ -79,6 +79,22 @@ module Datastore
     group_pools(connection.query_all(pool_query + pool_query_order_by, as: PoolView))
   end
 
+  def self.list_pools(user_id)
+    pool_ids = viewable_pool_ids(user_id)
+    return [] of MoanaTypes::Pool if pool_ids.size == 0
+
+    query = pool_query + in_query + pool_query_order_by
+    pools = group_pools(connection.query_all(query, params: params, as: PoolView))
+
+    return pools if pool_ids.includes?("all")
+
+    pools.select! do |pool|
+      pool_ids.includes?(pool.id)
+    end
+
+    pools
+  end
+
   def self.pools_exists?
     query = "SELECT COUNT(id) FROM pools"
     connection.scalar(query).as(Int64) > 0

@@ -27,12 +27,13 @@ SCHEMAS = [
        UNIQUE (user_id, pool_id, volume_id, name)
    )",
   "CREATE TABLE IF NOT EXISTS api_keys (
-       user_id    UUID,
-       name       VARCHAR,
-       token      VARCHAR,
-       token_hash VARCHAR,
-       created_on TIMESTAMP,
-       updated_on TIMESTAMP,
+       user_id     UUID,
+       name        VARCHAR,
+       token       VARCHAR,
+       token_hash  VARCHAR,
+       created_on  TIMESTAMP,
+       updated_on  TIMESTAMP,
+       accessed_on TIMESTAMP,
        UNIQUE (user_id, name)
    )",
   "CREATE TABLE IF NOT EXISTS nodes (
