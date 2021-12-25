@@ -118,6 +118,45 @@ module Datastore
     )
   end
 
+  def self.list_volumes_by_user(user_id)
+    ids = viewable_volume_ids(user_id)
+    volumes = list_volumes
+
+    pool_ids = ids.keys
+
+    # If user is having permission to view all Pools
+    return volumes if pool_ids.includes?("all")
+
+    # Select the Volumes only if user is having atleast view permission
+    # to all Volumes or the selected volumes
+    volumes.select! do |volume|
+      flag = false
+      ids.each do |pool_id, volume_ids|
+        if pool_id == volume.pool.id && (volume_ids.includes?("all") || volume_ids.includes?(volume.id))
+          flag = true
+          break
+        end
+      end
+
+      flag
+    end
+
+    volumes
+  end
+
+  def self.list_volumes_by_user(user_id, pool_id)
+    volume_ids = viewable_volume_ids(user_id, pool_id)
+    volumes = list_volumes(pool_id)
+
+    # Select the Volumes only if user is having atleast view permission
+    # to all Volumes or the selected volumes
+    volumes.select! do |volume|
+      volume_ids.includes?("all") || volume_ids.includes?(volume.id)
+    end
+
+    volumes
+  end
+
   def self.list_volumes(pool_name)
     query = volumes_query + " WHERE pools.name = ?" + volumes_query_order_by
     group_volumes(
