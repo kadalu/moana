@@ -1,5 +1,5 @@
 module Datastore
-  def self.insert_query(table_name, fields)
+  def insert_query(table_name, fields)
     String.build do |stmt|
       stmt << "INSERT INTO #{table_name} ("
       stmt << fields.map { |name| "#{name}" }.join(", ")
@@ -9,7 +9,7 @@ module Datastore
     end
   end
 
-  def self.update_query(table_name, fields, where = "")
+  def update_query(table_name, fields, where = "")
     String.build do |stmt|
       stmt << "UPDATE #{table_name} SET "
       stmt << fields.map { |name| "#{name}=?" }.join(", ")

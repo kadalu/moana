@@ -6,6 +6,8 @@ require "sqlite3"
 require "./schemas"
 
 module Datastore
+  extend self
+
   class_property rootdir = ""
 
   class DatastoreError < Exception
@@ -13,11 +15,11 @@ module Datastore
 
   @@conn : DB::Database | Nil = nil
 
-  def self.connection
+  def connection
     @@conn.not_nil!
   end
 
-  def self.init(workdir : String)
+  def init(workdir : String)
     @@rootdir = workdir
     Dir.mkdir_p("#{@@rootdir}/meta")
     @@conn = DB.open("sqlite3://#{@@rootdir}/meta/kadalu.db")
@@ -35,30 +37,30 @@ module Datastore
     end
   end
 
-  def self.manager_file
+  def manager_file
     Path.new(@@rootdir, "mgr")
   end
 
-  def self.agent_file
+  def agent_file
     Path.new(@@rootdir, "agent")
   end
 
-  def self.agent?
+  def agent?
     File.exists?(agent_file)
   end
 
-  def self.manager?
+  def manager?
     File.exists?(manager_file)
   end
 
-  def self.set_manager
+  def set_manager
     # If this is already manager => No op
     return if manager?
 
     File.touch(manager_file)
   end
 
-  def self.set_agent
+  def set_agent
     # If this is already manager => No op
     return if agent?
 

@@ -16,7 +16,7 @@ module Datastore
       pool_name = "", pool_id = ""
   end
 
-  def self.group_volumes(data)
+  private def group_volumes(data)
     grouped_data = data.group_by do |rec|
       [rec.id]
     end
@@ -70,7 +70,7 @@ module Datastore
     end
   end
 
-  def self.volumes_query
+  private def volumes_query
     "SELECT volumes.id AS id,
             volumes.name AS name,
             volumes.state AS state,
@@ -107,18 +107,18 @@ module Datastore
     "
   end
 
-  def self.volumes_query_order_by
+  private def volumes_query_order_by
     " ORDER BY volumes.created_on DESC, distribute_groups.idx ASC, storage_units.idx ASC "
   end
 
-  def self.list_volumes
+  def list_volumes
     query = volumes_query + volumes_query_order_by
     group_volumes(
       connection.query_all(query, as: VolumeView)
     )
   end
 
-  def self.list_volumes_by_user(user_id)
+  def list_volumes_by_user(user_id)
     ids = viewable_volume_ids(user_id)
     volumes = list_volumes
 
@@ -144,7 +144,7 @@ module Datastore
     volumes
   end
 
-  def self.list_volumes_by_user(user_id, pool_id)
+  def list_volumes_by_user(user_id, pool_id)
     volume_ids = viewable_volume_ids(user_id, pool_id)
     volumes = list_volumes(pool_id)
 
@@ -157,14 +157,14 @@ module Datastore
     volumes
   end
 
-  def self.list_volumes(pool_name)
+  def list_volumes(pool_name)
     query = volumes_query + " WHERE pools.name = ?" + volumes_query_order_by
     group_volumes(
       connection.query_all(query, pool_name, as: VolumeView)
     )
   end
 
-  def self.get_volume(pool_name, volume_name)
+  def get_volume(pool_name, volume_name)
     query = volumes_query + " WHERE pools.name = ? AND volumes.name = ? " + volumes_query_order_by
     volumes = group_volumes(
       connection.query_all(query, pool_name, volume_name, as: VolumeView)
@@ -173,7 +173,7 @@ module Datastore
     volumes.size > 0 ? volumes[0] : nil
   end
 
-  def self.create_volume(pool_id, volume)
+  def create_volume(pool_id, volume)
     volume_query = insert_query(
       "volumes",
       %w[pool_id id name type state snapshot_plugin size_bytes inodes_count]
@@ -239,7 +239,7 @@ module Datastore
     end
   end
 
-  def self.update_volume_state(volume_id, state)
+  def update_volume_state(volume_id, state)
     query = update_query("volumes", ["state"], where: " id = ?")
     connection.exec(query, state, volume_id)
   end
