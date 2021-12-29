@@ -129,6 +129,7 @@ end
 post "/api/v1/api-keys" do |env|
   name = env.params.json["name"].as(String)
   token = hash_sha256(UUID.random.to_s)
+  env.response.status_code = 201
   Datastore.create_api_key(env.get("user_id").as(String), name, token).to_json
 end
 

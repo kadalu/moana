@@ -99,7 +99,7 @@ module MoanaClient
     end
 
     def create_api_key(name : String)
-      ApiKey.create(@client, @user_id, name)
+      ApiKey.create(@client, name)
     end
 
     def list_api_keys
@@ -107,7 +107,7 @@ module MoanaClient
     end
 
     def api_key(api_key_id : String)
-      ApiKey.new(@client, @user_id, api_key_id)
+      ApiKey.new(@client, api_key_id)
     end
 
     def add_role(pool_id : String, volume_id : String, role : String)

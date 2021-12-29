@@ -95,9 +95,9 @@ handler "logout" do |args|
   api_call(args, "Failed to Logout") do |client|
     next unless File.exists?(session_file)
 
-    client.logout
+    client.user(client.logged_in_user_id).logout
     File.delete(session_file)
-    puts
+    puts "Logged out successfully! Run `kadalu login <username>` to login again"
   end
 end
 
@@ -181,19 +181,47 @@ end
 # handler "role.list" do |args|
 # end
 
-# command "api-key.create", "Create a Kadalu Storage API key" do |parser, _|
-#   parser.banner = "Usage: kadalu api-key create NAME [arguments]"
-# end
+command "api-key.create", "Create a Kadalu Storage API key" do |parser, _|
+  parser.banner = "Usage: kadalu api-key create NAME [arguments]"
+end
 
-# handler "api-key.create" do |args|
-# end
+handler "api-key.create" do |args|
+  command_error "API Key Name is required" if args.pos_args.size == 0
 
-# command "api-key.delete", "Delete the Kadalu Storage API key" do |parser, _|
-#   parser.banner = "Usage: kadalu api-key delete NAME [arguments]"
-# end
+  api_call(args, "Failed to get the list of API Keys") do |client|
+    api_key = client.user(client.logged_in_user_id).create_api_key(
+      args.pos_args[0]
+    )
+    puts "API Key created successfully!"
+    puts "Use the user_id and token with all the requests."
+    puts
+    puts "User-ID: #{api_key.user_id}"
+    puts "Token: #{api_key.token}"
+    puts
+    puts "Note: The token is not saved in server, if the token"
+    puts "is lost then please regenerate using this command"
+    puts
+    puts "Example:"
+    puts "  curl -H \"Authorization: Bearer #{api_key.token}\" \\"
+    puts "       -H \"X-User-ID: #{api_key.user_id}\" \\"
+    puts "       http://localhost:3000/api/v1/pools"
+    puts
+    puts "View list of API keys by running `kadalu api-key list`"
+  end
+end
 
-# handler "api-key.delete" do |args|
-# end
+command "api-key.delete", "Delete the Kadalu Storage API key" do |parser, _|
+  parser.banner = "Usage: kadalu api-key delete NAME [arguments]"
+end
+
+handler "api-key.delete" do |args|
+  command_error "API Key ID is required" if args.pos_args.size == 0
+
+  api_call(args, "Failed to delete the API Key") do |client|
+    client.user(client.logged_in_user_id).api_key(args.pos_args[0]).delete
+    puts "API Key deleted successfully"
+  end
+end
 
 command "api-key.list", "List Kadalu Storage API keys" do |parser, _|
   parser.banner = "Usage: kadalu api-key list"
@@ -201,13 +229,13 @@ end
 
 handler "api-key.list" do |args|
   api_call(args, "Failed to get the list of API Keys") do |client|
-    api_keys = client.api_keys
+    api_keys = client.user(client.logged_in_user_id).list_api_keys
 
     table = CliTable.new(3)
     table.header("ID", "token", "Name")
 
     api_keys.each do |api_key|
-      table.record(api_key.id, api_key.token, api_key.name)
+      table.record(api_key.id, "#{api_key.token}..", api_key.name)
     end
 
     table.render

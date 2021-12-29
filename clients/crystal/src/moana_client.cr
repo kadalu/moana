@@ -53,18 +53,14 @@ module MoanaClient
       api_key
     end
 
-    def logout
-      User.new(self, @user_id).logout
-    end
-
     def set_api_key(key)
       @user_id = key.user_id
       @api_key_id = key.id
       @token = key.token
     end
 
-    def api_keys
-      User.new(self, @user_id).list_api_keys
+    def logged_in_user_id
+      @user_id
     end
   end
 end
