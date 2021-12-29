@@ -20,7 +20,6 @@ end
 # Delete a User
 delete "/api/v1/users/:username" do |env|
   username = env.params.url["username"]
-  name = env.params.json["name"].as(String)
 
   unless Datastore.user_exists?(username)
     halt(env, status_code: 400, response: ({"error": "User does not exists"}).to_json)
@@ -114,7 +113,7 @@ post "/api/v1/users/:username/api-keys" do |env|
     halt(env, status_code: 400, response: ({"error": "User doesn't exists"}).to_json)
   end
 
-  unless Datastore.valid_user?(username, password)
+  unless Datastore.valid_user?(user.id, password)
     halt(env, status_code: 403, response: ({"error": "Invalid username or password"}).to_json)
   end
 
@@ -124,7 +123,9 @@ post "/api/v1/users/:username/api-keys" do |env|
   Datastore.create_api_key(user.id, name, token).to_json
 end
 
-# Create a API Key
+# Create a API Key. Similar to the above API
+# but this works only when a user is logged in
+# or authorized using the API key.
 post "/api/v1/api-keys" do |env|
   name = env.params.json["name"].as(String)
   token = hash_sha256(UUID.random.to_s)
@@ -133,8 +134,8 @@ end
 
 # Delete a API Key
 delete "/api/v1/api-keys/:api_key_id" do |env|
-  name = env.params.url["api_key_id"]
-  Datastore.delete_api_key(env.get("user_id").as(String), name)
+  api_key_id = env.params.url["api_key_id"]
+  Datastore.delete_api_key(env.get("user_id").as(String), api_key_id)
   env.response.status_code = 204
 end
 

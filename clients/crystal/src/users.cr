@@ -81,17 +81,19 @@ module MoanaClient
     end
 
     def logout
-      url = "#{@client.url}/api/v1/users/#{@user_id}/api-keys/#{@client.api_key_id}"
+      url = "#{@client.url}/api/v1/api-keys/#{@client.api_key_id}"
 
       response = MoanaClient.http_delete(
         url,
-        headers: client.auth_header
+        headers: @client.auth_header
       )
       if response.status_code != 204
         MoanaClient.error_response(response)
       end
-      @client.api_key_name = ""
+      @client.api_key_id = ""
       @client.user_id = ""
+      @client.username = ""
+      @client.token = ""
     end
 
     def create_api_key(name : String)
@@ -110,7 +112,7 @@ module MoanaClient
       Role.add(@client, @user_id, pool_id, volume_id, role)
     end
 
-    def list_roles()
+    def list_roles
       Role.list(@client, @user_id)
     end
 

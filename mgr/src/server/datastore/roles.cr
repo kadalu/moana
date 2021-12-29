@@ -73,7 +73,7 @@ module Datastore
   def super_admin?(user_id)
     role?(user_id, "all", "all", ["admin"])
   end
-  
+
   def client?(user_id, pool_id, volume_id)
     role?(user_id, pool_id, volume_id, ["client", "maintainer", "admin"])
   end

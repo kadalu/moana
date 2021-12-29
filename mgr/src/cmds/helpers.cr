@@ -63,6 +63,10 @@ end
 def api_call(args, message, &block : MoanaClient::Client -> Nil)
   begin
     client = MoanaClient::Client.new(args.url)
+    # If Token file exists then load it to client
+    if File.exists?(session_file)
+      client.set_api_key(MoanaTypes::ApiKey.from_json(File.read(session_file)))
+    end
     block.call(client)
   rescue ex : MoanaClient::ClientException
     STDERR.puts message
@@ -81,4 +85,8 @@ end
 def command_error(message, exit_code = 1)
   STDERR.puts message
   exit exit_code
+end
+
+def session_file
+  Path.home.join(".kadalu", "session")
 end

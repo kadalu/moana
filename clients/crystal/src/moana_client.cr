@@ -30,19 +30,19 @@ module MoanaClient
     def pool(name : String)
       Pool.new(self, name)
     end
-    
+
     def create_user(username : String, name : String, password : String)
-       User.create(self, username, name, password)
+      User.create(self, username, name, password)
     end
 
     def list_users
       User.list(self)
     end
-    
+
     def user(user_id : String)
       User.new(self, user_id)
     end
-    
+
     def login(username : String, password : String)
       api_key = User.login(self, username, password)
       @user_id = api_key.user_id
@@ -51,6 +51,16 @@ module MoanaClient
       @token = api_key.token
 
       api_key
+    end
+
+    def logout
+      User.new(self, @user_id).logout
+    end
+
+    def set_api_key(key)
+      @user_id = key.user_id
+      @api_key_id = key.id
+      @token = key.token
     end
   end
 end
