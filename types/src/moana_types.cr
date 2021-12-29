@@ -168,4 +168,31 @@ module MoanaTypes
     def initialize(@error)
     end
   end
+
+  struct User
+    include JSON::Serializable
+
+    property id = "", username = "", name = "", password = "", roles = [] of Role
+
+    def initialize
+    end
+  end
+
+  struct Role
+    include JSON::Serializable
+
+    property user_id = "", pool_id = "", volume_id = "", role = ""
+
+    def initialize
+    end
+  end
+
+  struct ApiKey
+    include JSON::Serializable
+
+    property id = "", token = "", name = "", user_id = ""
+
+    def initialize
+    end
+  end
 end

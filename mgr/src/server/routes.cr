@@ -21,7 +21,7 @@ def unauthorized(env, message)
 end
 
 class AuthHandler < Kemal::Handler
-  exclude ["/api/v1/users", "/api/v1/api-keys"], "POST"
+  exclude ["/api/v1/users", "/api/v1/users/:username/api-keys"], "POST"
 
   def call(env)
     return call_next(env) if exclude_match?(env)

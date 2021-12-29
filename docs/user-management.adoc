@@ -1,0 +1,104 @@
+= User Management
+
+ First created user will become the Super Admin.
+
+ [source,console]
+ ----
+ $ kadalu user create admin
+ Password:
+ User created successfully. Now login to continue with other commands.
+ ----
+
+ Login using the following command,
+
+ [source,console]
+ ----
+ $ kadalu login admin
+ Password:
+ Logged in successfully. Details cached in `~/.kadalu/sessions/admin`. Delete this file or run `kadalu logout` command to delete the session.
+ ----
+
+ == Adding other users
+
+ Users with admin privileges can add more users. Pool Admin can add more users to that pool only and Volume Admins can add more users to that Volume only.
+
+ [source,console]
+ ----
+ $ kadalu user create demo
+ Password:
+ User created successfully. Now login to continue with other commands.
+ ----
+
+ To assign a default role while creating a user,
+
+ [source,console]
+ ----
+ $ kadalu user create demo --pool=PROD --volume=all --role=viewer
+ Password:
+ User created successfully. Now login to continue with other commands.
+ ----
+
+ Add a role after creating an user
+
+ [source,console]
+ ----
+ $ kadalu role add demo viewer --pool=PROD --volume=all
+ ----
+
+ To change the password of a user,
+
+ [source,console]
+ ----
+ $ kadalu user password
+ New Password:
+ Confirm New Password:
+ Password updated successfully.
+ ----
+
+ To delete a Role,
+
+ [source,console]
+ ----
+ $ kadalu role remove demo viewer --pool=PROD --volume=all
+ ----
+
+ Delete user
+
+ [source,console]
+ ----
+ $ kadalu user delete demo
+ ----
+
+ Each login generates a API key that also can be manually generated using the following command.
+
+ [source,console]
+ ----
+ $ kadalu api-key create "Dev"
+ API key generated. Use the below token and username while calling Kadalu Storage APIs.
+ Username: demo
+ Token: f475326def6ed74423cdecd61515f948a1a00bca673cad4695dd4210a185b2e4
+ Example:
+ ```
+ curl https://kadalu-mgr:3000/api/v1/pools \
+     -H "X-USERNAME: demo" \
+     -H "Authorization: Bearer f475326def6ed74423cdecd61515f948a1a00bca673cad4695dd4210a185b2e4"
+ ```
+ Note: This token is not Stored in server, Delete and regenerate if a Token is lost.
+ ----
+
+ To list the Sessions and API Keys,
+
+ [source,console]
+ ----
+ $ kadalu api-key list
+ Name    Token
+ Dev     f47532..
+ c8fb0f  c8fb0f..
+ ----
+
+ Use `api-key delete` to delete a Session/API key.
+
+ [source,console]
+ ----
+ $ kadalu api-key delete "Dev"
+ ----
