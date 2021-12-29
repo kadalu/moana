@@ -1,104 +1,110 @@
 = User Management
 
- First created user will become the Super Admin.
+First created user will become the Super Admin.
 
- [source,console]
- ----
- $ kadalu user create admin
- Password:
- User created successfully. Now login to continue with other commands.
- ----
+[source,console]
+----
+$ kadalu user create admin
+Password:
+User created successfully. Now login to continue with other commands.
+----
 
- Login using the following command,
+Login using the following command,
 
- [source,console]
- ----
- $ kadalu login admin
- Password:
- Logged in successfully. Details cached in `~/.kadalu/sessions/admin`. Delete this file or run `kadalu logout` command to delete the session.
- ----
+[source,console]
+----
+$ kadalu login admin
+Password:
+Logged in successfully. Details cached in `~/.kadalu/sessions/admin`. Delete this file or run `kadalu logout` command to delete the session.
+----
 
- == Adding other users
+== Adding other users
 
- Users with admin privileges can add more users. Pool Admin can add more users to that pool only and Volume Admins can add more users to that Volume only.
+Users with admin privileges can add more users. Pool Admin can add more users to that pool only and Volume Admins can add more users to that Volume only.
 
- [source,console]
- ----
- $ kadalu user create demo
- Password:
- User created successfully. Now login to continue with other commands.
- ----
+[source,console]
+----
+$ kadalu user create demo
+Password:
+User created successfully. Now login to continue with other commands.
+----
 
- To assign a default role while creating a user,
+To assign a default role while creating a user,
 
- [source,console]
- ----
- $ kadalu user create demo --pool=PROD --volume=all --role=viewer
- Password:
- User created successfully. Now login to continue with other commands.
- ----
+[source,console]
+----
+$ kadalu user create demo --pool=PROD --volume=all --role=viewer
+Password:
+User created successfully. Now login to continue with other commands.
+----
 
- Add a role after creating an user
+Add a role after creating an user
 
- [source,console]
- ----
- $ kadalu role add demo viewer --pool=PROD --volume=all
- ----
+[source,console]
+----
+$ kadalu role add demo viewer --pool=PROD --volume=all
+----
 
- To change the password of a user,
+To change the password of a user,
 
- [source,console]
- ----
- $ kadalu user password
- New Password:
- Confirm New Password:
- Password updated successfully.
- ----
+[source,console]
+----
+$ kadalu user password
+New Password:
+Confirm New Password:
+Password updated successfully.
+----
 
- To delete a Role,
+To delete a Role,
 
- [source,console]
- ----
- $ kadalu role remove demo viewer --pool=PROD --volume=all
- ----
+[source,console]
+----
+$ kadalu role remove demo viewer --pool=PROD --volume=all
+----
 
- Delete user
+Delete user
 
- [source,console]
- ----
- $ kadalu user delete demo
- ----
+[source,console]
+----
+$ kadalu user delete demo
+----
 
- Each login generates a API key that also can be manually generated using the following command.
+Each login generates a API key that also can be manually generated using the following command.
 
- [source,console]
- ----
- $ kadalu api-key create "Dev"
- API key generated. Use the below token and username while calling Kadalu Storage APIs.
- Username: demo
- Token: f475326def6ed74423cdecd61515f948a1a00bca673cad4695dd4210a185b2e4
- Example:
- ```
- curl https://kadalu-mgr:3000/api/v1/pools \
-     -H "X-USERNAME: demo" \
-     -H "Authorization: Bearer f475326def6ed74423cdecd61515f948a1a00bca673cad4695dd4210a185b2e4"
- ```
- Note: This token is not Stored in server, Delete and regenerate if a Token is lost.
- ----
+[source,console]
+----
+$ kadalu api-key create "Dev"
+API Key created successfully!
+Use the user_id and token with all the requests.
 
- To list the Sessions and API Keys,
+User-ID: e3f17db7-7b03-426f-a0a1-a8f048d92433
+Token: 2218c15b68f009d49fa8db1d827d1820beaddc7674a33371d39b68c06ee6d0a2
 
- [source,console]
- ----
- $ kadalu api-key list
- Name    Token
- Dev     f47532..
- c8fb0f  c8fb0f..
- ----
+Note: The token is not saved in server, if the token
+is lost then please regenerate using this command
 
- Use `api-key delete` to delete a Session/API key.
+Example:
+  curl -H "Authorization: Bearer 2218c15b68f009d49fa8db1d827d1820beaddc7674a33371d39b68c06ee6d0a2" \
+       -H "X-User-ID: e3f17db7-7b03-426f-a0a1-a8f048d92433" \
+       http://localhost:3000/api/v1/pools
 
- [source,console]
- ----
- $ kadalu api-key delete "Dev"
- ----
+View list of API keys by running `kadalu api-key list`
+----
+
+To list the Sessions and API Keys,
+
+[source,console]
+----
+$ kadalu api-key list
+ID                                    token      Name
+90f06a2f-8e9c-4bd6-a6f3-abb4092c8d0f  ab1598b..  Login
+8925afdb-22bf-4d83-a122-ae116191b1d4  2218c15..  Dev
+----
+
+Use `api-key delete` to delete a Session/API key.
+
+[source,console]
+----
+$ kadalu api-key delete "Dev"
+API Key deleted successfully
+----
