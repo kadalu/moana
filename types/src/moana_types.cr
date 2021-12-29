@@ -34,7 +34,14 @@ module MoanaTypes
   class Node
     include JSON::Serializable
 
-    property id = "", name = "", state = "", endpoint = "", addresses = [] of String, token = "", pool = Pool.new
+    property id = "",
+      name = "",
+      state = "",
+      endpoint = "",
+      addresses = [] of String,
+      token = "",
+      pool = Pool.new,
+      uptime = ""
 
     def initialize
     end
