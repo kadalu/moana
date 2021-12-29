@@ -83,7 +83,7 @@ module Datastore
     # Update the users table instead of SELECT!
     # Because it helps to record last accessed time for the User.
 
-    query = "UPDATE users SET accessed_on = datetime() WHERE user_id = ? AND password_hash = ?"
+    query = "UPDATE users SET accessed_on = datetime() WHERE id = ? AND password_hash = ?"
     res = connection.exec(query, user_id, password_hash)
     res.rows_affected > 0
   end

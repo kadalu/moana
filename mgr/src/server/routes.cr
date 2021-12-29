@@ -21,15 +21,19 @@ def unauthorized(env, message)
 end
 
 class AuthHandler < Kemal::Handler
-  exclude ["/api/v1/users", "/api/v1/users/:username/api-keys"], "POST"
+  # Exclude user create API, Login API and Node action internal API.
+  # User creation should be allowed even if unauthorized.
+  # Login is always done unauthorized.
+  # Node internal API handles authentication differently.
+  exclude ["/api/v1/users", "/api/v1/users/:username/api-keys", "/_api/v1/:action"], "POST"
 
   def call(env)
     return call_next(env) if exclude_match?(env)
 
-    user_id = env.request.headers["X-UserID"]?
+    user_id = env.request.headers["X-User-ID"]?
     auth = env.request.headers["Authorization"]?
 
-    return unauthorized(env, "X-User_id is not set") if !user_id.nil?
+    return unauthorized(env, "X-User-ID is not set") if user_id.nil?
     return unauthorized(env, "Authorization is not set") if auth.nil?
 
     bearer, _, token = auth.partition(" ")

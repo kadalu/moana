@@ -9,7 +9,8 @@ SCHEMAS = [
        name          VARCHAR,
        password_hash VARCHAR,
        created_on    TIMESTAMP,
-       updated_on    TIMESTAMP
+       updated_on    TIMESTAMP,
+       accessed_on   TIMESTAMP
    )",
   "CREATE TABLE IF NOT EXISTS pools (
        id          UUID PRIMARY KEY,
