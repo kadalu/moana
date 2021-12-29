@@ -62,5 +62,9 @@ module MoanaClient
       @api_key_id = key.id
       @token = key.token
     end
+
+    def api_keys
+      User.new(self, @user_id).list_api_keys
+    end
   end
 end
