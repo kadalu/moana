@@ -1,3 +1,5 @@
+require "./api_keys"
+
 module MoanaClient
   class User
     def initialize(@client : Client, @user_id : String)
@@ -104,8 +106,8 @@ module MoanaClient
       ApiKey.list(@client, @user_id)
     end
 
-    def api_key(name : String)
-      ApiKey.new(@client, @user_id, name)
+    def api_key(api_key_id : String)
+      ApiKey.new(@client, @user_id, api_key_id)
     end
 
     def add_role(pool_id : String, volume_id : String, role : String)

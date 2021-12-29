@@ -195,9 +195,21 @@ end
 # handler "api-key.delete" do |args|
 # end
 
-# command "api-key.list", "List Kadalu Storage API keys" do |parser, _|
-#   parser.banner = "Usage: kadalu api-key list"
-# end
+command "api-key.list", "List Kadalu Storage API keys" do |parser, _|
+  parser.banner = "Usage: kadalu api-key list"
+end
 
-# handler "api-key.list" do |args|
-# end
+handler "api-key.list" do |args|
+  api_call(args, "Failed to get the list of API Keys") do |client|
+    api_keys = client.api_keys
+
+    table = CliTable.new(3)
+    table.header("ID", "token", "Name")
+
+    api_keys.each do |api_key|
+      table.record(api_key.id, api_key.token, api_key.name)
+    end
+
+    table.render
+  end
+end
