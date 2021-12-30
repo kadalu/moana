@@ -58,7 +58,7 @@ handler "user.create" do |args|
 
   api_call(args, "Failed to create the User") do |client|
     user = client.create_user(args.user_args.username, args.user_args.name, args.user_args.password)
-    puts "User #{user.username} created successfully"
+    puts "User #{user.username} created successfully. Run `kadalu user login #{user.username}` to login"
   end
 end
 
@@ -83,7 +83,7 @@ handler "user.login" do |args|
     token_file = session_file
     Dir.mkdir_p(token_file.parent)
     File.write(token_file, api_key.to_json)
-    puts "Login successful. Details saved in `#{token_file}`. Delete this file or run `kadalu logout` command to delete the session."
+    puts "Login successful. Details saved in `#{token_file}`. Delete this file or run `kadalu user logout` command to delete the session."
   end
 end
 
@@ -97,7 +97,7 @@ handler "user.logout" do |args|
 
     client.user(client.logged_in_user_id).logout
     File.delete(session_file)
-    puts "Logged out successfully! Run `kadalu login <username>` to login again"
+    puts "Logged out successfully! Run `kadalu user login <username>` to login again"
   end
 end
 

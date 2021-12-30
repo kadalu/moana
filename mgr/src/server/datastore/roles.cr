@@ -7,7 +7,8 @@ module Datastore
   def viewable_volume_ids(user_id)
     query = "SELECT DISTINCT pool_id, volume_id FROM roles WHERE user_id = ?"
     data = connection.query_all(query, user_id, as: {String, String})
-    data.group_by &.pool_id
+    # Shortcut to data.group_by { |d| d[0] }
+    data.group_by &.[0]
   end
 
   def viewable_volume_ids(user_id, pool_id)

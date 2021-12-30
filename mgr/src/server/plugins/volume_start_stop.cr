@@ -22,6 +22,8 @@ def volume_start_stop(env, action)
   pool_name = env.params.url["pool_name"]
   volume_name = env.params.url["volume_name"]
 
+  return forbidden(env) unless Datastore.maintainer?(env.user_id, pool_name, volume_name)
+
   pool = Datastore.get_pool(pool_name)
   if pool.nil?
     env.response.status_code = 400

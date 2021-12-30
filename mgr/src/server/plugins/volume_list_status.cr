@@ -81,9 +81,9 @@ end
 
 def volume_list_detail_status(env, pool_name, volume_name, state)
   if pool_name == ""
-    volumes = Datastore.list_volumes
+    volumes = Datastore.list_volumes_by_user(env.user_id)
   elsif volume_name.nil?
-    volumes = Datastore.list_volumes(pool_name)
+    volumes = Datastore.list_volumes_by_user(env.user_id, pool_name)
   else
     vol = Datastore.get_volume(pool_name, volume_name)
     raise VolumeNotFound.new("Volume #{volume_name} not found") unless vol
@@ -144,6 +144,9 @@ end
 get "/api/v1/pools/:pool_name/volumes/:volume_name" do |env|
   pool_name = env.params.url["pool_name"]
   volume_name = env.params.url["volume_name"]
+
+  next forbidden(env) unless Datastore.viewer?(env.user_id, pool_name, volume_name)
+
   state = env.params.query["state"]
 
   volume_list_detail_status(env, pool_name, volume_name, state ? true : false)

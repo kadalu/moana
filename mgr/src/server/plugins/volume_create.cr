@@ -25,6 +25,9 @@ end
 
 post "/api/v1/pools/:pool_name/volumes" do |env|
   pool_name = env.params.url["pool_name"]
+
+  next forbidden(env) unless Datastore.maintainer?(env.user_id, pool_name)
+
   # TODO: Validate if env.request.body.nil?
   req = MoanaTypes::Volume.from_json(env.request.body.not_nil!)
   req.id = UUID.random.to_s if req.id == ""
