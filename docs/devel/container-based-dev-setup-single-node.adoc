@@ -33,6 +33,26 @@ root@kadalu-dev:/src# ./bin/kadalu mgr
 
 Open another terminal(or screen window) and run the commands.
 
+Create a Admin user
+
+[source,console]
+----
+root@kadalu-dev:/src# ./mgr/bin/kadalu user create admin
+Password:
+User admin created successfully
+----
+
+Login using,
+
+[source,console]
+----
+# kadalu user login admin
+Password:
+Login successful. Details saved in `/root/.kadalu/session`. Delete this file or run `kadalu logout` command to delete the session.
+----
+
+Now create a Pool
+
 [source,console]
 ----
 root@kadalu-dev:/src# /src/mgr/bin/kadalu pool create DEV
