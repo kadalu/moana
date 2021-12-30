@@ -232,10 +232,11 @@ handler "api-key.list" do |args|
     api_keys = client.user(client.logged_in_user_id).list_api_keys
 
     table = CliTable.new(3)
-    table.header("ID", "token", "Name")
+    table.header("  ID", "token", "Name")
 
     api_keys.each do |api_key|
-      table.record(api_key.id, "#{api_key.token}..", api_key.name)
+      key_id = client.logged_in_user_api_key_id == api_key.id ? "* #{api_key.id}" : "  #{api_key.id}"
+      table.record(key_id, "#{api_key.token}..", api_key.name)
     end
 
     table.render
