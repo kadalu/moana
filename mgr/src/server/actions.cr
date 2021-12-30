@@ -47,12 +47,12 @@ module Action
       begin
         node_resp = HTTP::Client.post(url, body: {"data": data}.to_json, headers: headers)
         resp.set_node_response(
-          node.name,
+          node.id == "" ? node.name : node.id,
           NodeResponse.from_json(node_resp.body)
         )
       rescue Socket::ConnectError
         resp.set_node_response(
-          node.name,
+          node.id == "" ? node.name : node.id,
           NodeResponse.new(false, {"error": "Node is not reachable"}.to_json)
         )
       end

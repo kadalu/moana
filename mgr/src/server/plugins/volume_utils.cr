@@ -210,10 +210,10 @@ end
 def node_errors(message, node_responses)
   errs = MoanaTypes::Error.new(message)
 
-  node_responses.each do |node_name, resp|
+  node_responses.each do |node_id, resp|
     unless resp.ok
       errs.node_errors << MoanaTypes::NodeError.new(
-        node_name,
+        node_id, # TODO: Add node name here
         resp.status_code,
         MoanaTypes::Error.from_json(resp.response).error
       )
