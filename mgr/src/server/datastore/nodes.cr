@@ -42,6 +42,14 @@ module Datastore
     grouped_nodes(connection.query_all(nodes_query + nodes_query_order_by, as: NodeView))
   end
 
+  def list_nodes_by_user(user_id)
+    pool_ids = viewable_pool_ids(user_id)
+    return list_nodes if pool_ids.includes?("all")
+
+    query = nodes_query + " WHERE pools.id IN (#{(pool_ids.map { |_| "?" }).join(",")}) " + nodes_query_order_by
+    grouped_nodes(connection.query_all(query, args: pool_ids, as: NodeView))
+  end
+
   def list_nodes(pool_name)
     grouped_nodes(connection.query_all(nodes_query + " WHERE pools.name = ?" + nodes_query_order_by, pool_name, as: NodeView))
   end

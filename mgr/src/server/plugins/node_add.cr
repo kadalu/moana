@@ -50,6 +50,8 @@ post "/api/v1/pools/:pool_name/nodes" do |env|
   pool_name = env.params.url["pool_name"]
   node_name = env.params.json["name"].as(String)
 
+  next forbidden(env) unless Datastore.maintainer?(env.user_id, pool_name)
+
   endpoint = env.params.json.fetch("endpoint", "").as(String)
   # TODO: Add detault http/https and port values from config
   endpoint = "http://#{node_name}:3000" if endpoint == ""

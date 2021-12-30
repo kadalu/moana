@@ -55,7 +55,7 @@ end
 
 # Users list
 get "/api/v1/users" do |env|
-  unless Datastore.super_admin?(env.user_id)
+  unless Datastore.admin?(env.user_id)
     halt(env, status_code: 403, response: ({"error": "Forbidden"}).to_json)
   end
 
@@ -65,7 +65,7 @@ end
 # Get User
 get "/api/v1/users/:username" do |env|
   username = env.params.url["username"]
-  if !Datastore.super_admin?(env.user_id) && env.user_id != username
+  if !Datastore.admin?(env.user_id) && env.user_id != username
     halt(env, status_code: 403, response: ({"error": "Forbidden"}).to_json)
   end
 
@@ -75,7 +75,7 @@ end
 # # Get User roles
 # post "/api/v1/users/:username/roles" do |env|
 #   username = env.params.url["username"]
-#   if !Datastore.super_admin?(env.user_id) && env.user_id != username
+#   if !Datastore.admin?(env.user_id) && env.user_id != username
 #     halt(env, status_code: 403, response: ({"error": "Forbidden"}).to_json)
 #   end
 

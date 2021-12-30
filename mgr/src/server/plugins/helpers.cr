@@ -54,3 +54,9 @@ class HTTP::Server::Context
     get("user_id").as(String)
   end
 end
+
+def forbidden(env)
+  env.response.status_code = 403
+  env.response.content_type = "application/json"
+  env.response.print ({"error": "Forbidden. Insufficient permissions"}).to_json
+end

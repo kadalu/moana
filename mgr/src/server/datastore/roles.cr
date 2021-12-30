@@ -40,46 +40,66 @@ module Datastore
     params << volume_name
 
     roles_list = (roles.map { |_| "?" }).join(",")
-    where += " AND name IN (#{roles_list})"
+    where += " AND roles.name IN (#{roles_list})"
     params += roles
 
     connection.scalar(query + where, args: params).as(Int64) > 0
   end
 
-  def viewer?(user_id, pool_id, volume_id)
-    role?(user_id, pool_id, volume_id, ["viewer", "maintainer", "admin"])
+  def viewer?(user_id, pool_name, volume_name)
+    viewer?(user_id, pool_name) ||
+      role?(user_id, pool_name, volume_name, ["viewer", "maintainer", "admin"])
   end
 
-  def viewer?(user_id, pool_id)
-    role?(user_id, pool_id, "all", ["viewer", "maintainer", "admin"])
+  def viewer?(user_id, pool_name)
+    viewer?(user_id) ||
+      role?(user_id, pool_name, "all", ["viewer", "maintainer", "admin"])
   end
 
-  def maintainer?(user_id, pool_id, volume_id)
-    role?(user_id, pool_id, volume_id, ["maintainer", "admin"])
+  def viewer?(user_id)
+    role?(user_id, "all", "all", ["viewer", "maintainer", "admin"])
   end
 
-  def maintainer?(user_id, pool_id)
-    role?(user_id, pool_id, "all", ["maintainer", "admin"])
+  def maintainer?(user_id, pool_name, volume_name)
+    maintainer?(user_id, pool_name) ||
+      role?(user_id, pool_name, volume_name, ["maintainer", "admin"])
   end
 
-  def admin?(user_id, pool_id, volume_id)
-    role?(user_id, pool_id, volume_id, ["admin"])
+  def maintainer?(user_id, pool_name)
+    maintainer?(user_id) ||
+      role?(user_id, pool_name, "all", ["maintainer", "admin"])
   end
 
-  def admin?(user_id, pool_id)
-    role?(user_id, pool_id, "all", ["admin"])
+  def maintainer?(user_id)
+    role?(user_id, "all", "all", ["maintainer", "admin"])
   end
 
-  def super_admin?(user_id)
+  def admin?(user_id, pool_name, volume_name)
+    admin?(user_id, pool_name) ||
+      role?(user_id, pool_name, volume_name, ["admin"])
+  end
+
+  def admin?(user_id, pool_name)
+    admin?(user_id) ||
+      role?(user_id, pool_name, "all", ["admin"])
+  end
+
+  def admin?(user_id)
     role?(user_id, "all", "all", ["admin"])
   end
 
-  def client?(user_id, pool_id, volume_id)
-    role?(user_id, pool_id, volume_id, ["client", "maintainer", "admin"])
+  def client?(user_id, pool_name, volume_name)
+    client?(user_id, pool_name) ||
+      role?(user_id, pool_name, volume_name, ["client", "maintainer", "admin"])
   end
 
-  def client?(user_id, pool_id)
-    role?(user_id, pool_id, "all", ["client", "maintainer", "admin"])
+  def client?(user_id, pool_name)
+    client?(user_id) ||
+      role?(user_id, pool_name, "all", ["client", "maintainer", "admin"])
+  end
+
+  def client?(user_id)
+    role?(user_id, "all", "all", ["client", "maintainer", "admin"])
   end
 
   def create_role(user_id, pool_id, volume_id, role)
