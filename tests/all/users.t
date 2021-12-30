@@ -15,7 +15,7 @@ USE_NODE nodes[0]
 puts TEST "kadalu user create admin --password=kadalu"
 puts TEST "kadalu user login admin --password=kadalu"
 puts TEST "kadalu user password --current-password=kadalu --new-password=uladak"
-puts TEST "kadalu user login --password=uladak"
+puts TEST "kadalu user login admin --password=uladak"
 puts TEST "kadalu api-key list"
 puts TEST "kadalu api-key create Dev"
 api_key = TEST "kadalu api-key list | grep Dev | awk '{print $1}'"
