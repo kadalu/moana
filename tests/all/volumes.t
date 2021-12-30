@@ -12,6 +12,8 @@ nodes.each do |node|
 end
 
 USE_NODE nodes[0]
+puts TEST "kadalu user create admin --password=kadalu"
+puts TEST "kadalu user login admin --password=kadalu"
 puts TEST "kadalu pool create DEV"
 RUN "umount /mnt/vol2"
 RUN "rm -rf /mnt/vol2"
@@ -69,3 +71,5 @@ nodes.each_with_index do |node, idx|
   content = TEST "cat /exports/vol2/s#{idx+1}/f1"
   EQUAL content.strip, "Hello World", "/exports/vol2/s#{idx+1}/f1 content is \"Hello World\""
 end
+
+puts TEST "kadalu user logout"
