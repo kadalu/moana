@@ -29,6 +29,24 @@ Run Storage manager in any one Storage node or a dedicated node.
 # systemctl start kadalu-mgr
 ----
 
+== Create a User and Login
+
+[source,console]
+----
+# kadalu user create admin
+Password:
+User admin created successfully
+----
+
+Login using,
+
+[source,console]
+----
+# kadalu user login admin
+Password:
+Login successful. Details saved in `/root/.kadalu/session`. Delete this file or run `kadalu logout` command to delete the session.
+----
+
 == Create Pool and add Storage nodes
 
 Create a Pool and add the Storage manager node to the Pool. Storage manager node is not part of any Pool since it supports multiple Pools.
