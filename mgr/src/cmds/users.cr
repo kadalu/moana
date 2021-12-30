@@ -62,14 +62,14 @@ handler "user.create" do |args|
   end
 end
 
-command "login", "Login to Kadalu Storage" do |parser, args|
+command "user.login", "Login to Kadalu Storage" do |parser, args|
   parser.banner = "Usage: kadalu login USERNAME [arguments]"
   parser.on("-p PASSWORD", "--password=PASSWORD", "User Password") do |password|
     args.user_args.password = password
   end
 end
 
-handler "login" do |args|
+handler "user.login" do |args|
   args.user_args.username = validated_username(args)
 
   if args.user_args.password.strip == ""
@@ -87,11 +87,11 @@ handler "login" do |args|
   end
 end
 
-command "logout", "Logout from Kadalu Storage" do |parser, _|
+command "user.logout", "Logout from Kadalu Storage" do |parser, _|
   parser.banner = "Usage: kadalu logout"
 end
 
-handler "logout" do |args|
+handler "user.logout" do |args|
   api_call(args, "Failed to Logout") do |client|
     next unless File.exists?(session_file)
 
@@ -108,24 +108,31 @@ end
 # handler "user.delete" do |args|
 # end
 
-# command "user.password", "Update Kadalu Storage User Password" do |parser, args|
-#   parser.banner = "Usage: kadalu user password USERNAME [arguments]"
-#   parser.on("-c PASSWORD", "--current-password=PASSWORD", "Current Password") do |password|
-#     args.user_args.current_password = password
-#   end
-#   parser.on("-p PASSWORD", "--new-password=PASSWORD", "New Password") do |password|
-#     args.user_args.new_password = password
-#   end
-# end
+command "user.password", "Update Kadalu Storage User Password" do |parser, args|
+  parser.banner = "Usage: kadalu user password [arguments]"
+  parser.on("-c PASSWORD", "--current-password=PASSWORD", "Current Password") do |password|
+    args.user_args.current_password = password
+  end
+  parser.on("-p PASSWORD", "--new-password=PASSWORD", "New Password") do |password|
+    args.user_args.new_password = password
+  end
+end
 
-# handler "user.password" do |args|
-#   if args.user_args.current_password.strip == ""
-#     args.user_args.current_password = prompt("Current Password")
-#   end
-#   if args.user_args.new_password.strip == ""
-#     args.user_args.new_password = prompt("New Password")
-#   end
-# end
+handler "user.password" do |args|
+  if args.user_args.current_password.strip == ""
+    args.user_args.current_password = prompt("Current Password")
+  end
+  if args.user_args.new_password.strip == ""
+    args.user_args.new_password = prompt("New Password")
+  end
+  api_call(args, "Failed to update Password") do |client|
+    client.user(client.logged_in_user_id).set_password(
+      args.user_args.current_password,
+      args.user_args.new_password
+    )
+    puts "Password updated successfully!"
+  end
+end
 
 # command "user.list", "List of Kadalu Storage Users" do |parser, args|
 #   parser.banner = "Usage: kadalu user list"

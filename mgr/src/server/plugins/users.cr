@@ -17,6 +17,29 @@ post "/api/v1/users" do |env|
   Datastore.create_user(username, name, password).to_json
 end
 
+post "/api/v1/users/:username/password" do |env|
+  username = env.params.url["username"]
+  old_password = env.params.json["password"].as(String)
+  new_password = env.params.json["new_password"].as(String)
+
+  user = Datastore.get_user(username)
+
+  if user.nil?
+    halt(env, status_code: 400, response: ({"error": "User doesn't exists"}).to_json)
+  end
+
+  if user.id != env.user_id
+    halt(env, status_code: 403, response: ({"error": "Updating password of other users not allowed."}).to_json)
+  end
+
+  unless Datastore.valid_user?(user.id, old_password)
+    halt(env, status_code: 403, response: ({"error": "Invalid username or password"}).to_json)
+  end
+
+  Datastore.set_user_password(user.id, new_password)
+  user.to_json
+end
+
 # Delete a User
 delete "/api/v1/users/:username" do |env|
   username = env.params.url["username"]

@@ -172,7 +172,7 @@ module MoanaTypes
   struct User
     include JSON::Serializable
 
-    property id = "", username = "", name = "", password = "", roles = [] of Role
+    property id = "", username = "", name = "", password = "", roles = [] of Role, new_password = ""
 
     def initialize
     end
@@ -190,7 +190,7 @@ module MoanaTypes
   struct ApiKey
     include JSON::Serializable
 
-    property id = "", token = "", name = "", user_id = ""
+    property id = "", token = "", name = "", user_id = "", username = ""
 
     def initialize
     end
