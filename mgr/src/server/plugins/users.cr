@@ -55,7 +55,7 @@ end
 
 # Users list
 get "/api/v1/users" do |env|
-  unless Datastore.super_admin?(env.get("user_id").as(String))
+  unless Datastore.super_admin?(env.user_id)
     halt(env, status_code: 403, response: ({"error": "Forbidden"}).to_json)
   end
 
@@ -65,7 +65,7 @@ end
 # Get User
 get "/api/v1/users/:username" do |env|
   username = env.params.url["username"]
-  if !Datastore.super_admin?(env.get("user_id").as(String)) && env.get("user_id").as(String) != username
+  if !Datastore.super_admin?(env.user_id) && env.user_id != username
     halt(env, status_code: 403, response: ({"error": "Forbidden"}).to_json)
   end
 
@@ -75,17 +75,17 @@ end
 # # Get User roles
 # post "/api/v1/users/:username/roles" do |env|
 #   username = env.params.url["username"]
-#   if !Datastore.super_admin?(env.get("user_id").as(String)) && env.get("user_id").as(String) != username
+#   if !Datastore.super_admin?(env.user_id) && env.user_id != username
 #     halt(env, status_code: 403, response: ({"error": "Forbidden"}).to_json)
 #   end
 
-#   Datastore.list_roles(env.get("user_id").as(String)).to_json
+#   Datastore.list_roles(env.user_id).to_json
 # end
 
 # Get Pool users
 get "/api/v1/pools/:pool_name/users" do |env|
   pool_name = env.params.url["pool_name"]
-  if !Datastore.admin?(env.get("user_id").as(String), pool_name)
+  if !Datastore.admin?(env.user_id, pool_name)
     halt(env, status_code: 403, response: ({"error": "Forbidden"}).to_json)
   end
 
@@ -96,7 +96,7 @@ end
 get "/api/v1/pools/:pool_name/volumes/:volume_name/users" do |env|
   pool_name = env.params.url["pool_name"]
   volume_name = env.params.url["volume_name"]
-  if !Datastore.admin?(env.get("user_id").as(String), pool_name, volume_name)
+  if !Datastore.admin?(env.user_id, pool_name, volume_name)
     halt(env, status_code: 403, response: ({"error": "Forbidden"}).to_json)
   end
 
@@ -130,17 +130,17 @@ post "/api/v1/api-keys" do |env|
   name = env.params.json["name"].as(String)
   token = hash_sha256(UUID.random.to_s)
   env.response.status_code = 201
-  Datastore.create_api_key(env.get("user_id").as(String), name, token).to_json
+  Datastore.create_api_key(env.user_id, name, token).to_json
 end
 
 # Delete a API Key
 delete "/api/v1/api-keys/:api_key_id" do |env|
   api_key_id = env.params.url["api_key_id"]
-  Datastore.delete_api_key(env.get("user_id").as(String), api_key_id)
+  Datastore.delete_api_key(env.user_id, api_key_id)
   env.response.status_code = 204
 end
 
 # List API Keys
 get "/api/v1/api-keys" do |env|
-  Datastore.list_api_keys(env.get("user_id").as(String)).to_json
+  Datastore.list_api_keys(env.user_id).to_json
 end

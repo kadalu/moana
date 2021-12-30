@@ -48,6 +48,8 @@ def execute(cmd, args)
 end
 
 class HTTP::Server::Context
+  # Reopen the Server Context and add a shortcut
+  # to access user_id set in Server Context
   def user_id
     get("user_id").as(String)
   end
