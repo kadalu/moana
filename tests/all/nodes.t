@@ -12,6 +12,8 @@ nodes.each do |node|
 end
 
 USE_NODE nodes[0]
+puts TEST "kadalu user create admin --password=kadalu"
+puts TEST "kadalu user login admin --password=kadalu"
 puts TEST "kadalu pool create DEV"
 
 nodes.each do |node|
@@ -22,3 +24,4 @@ end
 USE_NODE nodes[0]
 puts TEST "kadalu node list DEV"
 puts TEST "kadalu node list DEV --status"
+puts TEST "kadalu user logout"
