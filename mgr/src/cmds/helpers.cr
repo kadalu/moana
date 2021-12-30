@@ -89,4 +89,6 @@ end
 
 def session_file
   Path.home.join(".kadalu", "session")
+rescue KeyError
+  Path.new("/root/.kadalu/session")
 end
