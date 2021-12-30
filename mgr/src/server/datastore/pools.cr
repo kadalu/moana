@@ -83,8 +83,7 @@ module Datastore
     pool_ids = viewable_pool_ids(user_id)
     return [] of MoanaTypes::Pool if pool_ids.size == 0
 
-    query = pool_query + in_query + pool_query_order_by
-    pools = group_pools(connection.query_all(query, params: params, as: PoolView))
+    pools = group_pools(connection.query_all(pool_query + pool_query_order_by, as: PoolView))
 
     return pools if pool_ids.includes?("all")
 

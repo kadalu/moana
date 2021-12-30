@@ -1,17 +1,17 @@
 module Datastore
   def viewable_pool_ids(user_id)
-    query = "SELECT DISTINCT pool_id WHERE user_id = ?"
+    query = "SELECT DISTINCT pool_id FROM roles WHERE user_id = ?"
     connection.query_all(query, user_id, as: String)
   end
 
   def viewable_volume_ids(user_id)
-    query = "SELECT DISTINCT pool_id, volume_id WHERE user_id = ?"
+    query = "SELECT DISTINCT pool_id, volume_id FROM roles WHERE user_id = ?"
     data = connection.query_all(query, user_id, as: {String, String})
     data.group_by &.pool_id
   end
 
   def viewable_volume_ids(user_id, pool_id)
-    query = "SELECT DISTINCT volume_id WHERE user_id = ? AND pool_id = ?"
+    query = "SELECT DISTINCT volume_id FROM roles WHERE user_id = ? AND pool_id = ?"
     connection.query_all(query, user_id, as: String)
   end
 
@@ -40,7 +40,7 @@ module Datastore
     params << volume_name
 
     roles_list = (roles.map { |_| "?" }).join(",")
-    where += " AND role IN (#{roles_list})"
+    where += " AND name IN (#{roles_list})"
     params += roles
 
     connection.scalar(query + where, args: params).as(Int64) > 0
@@ -83,7 +83,7 @@ module Datastore
   end
 
   def create_role(user_id, pool_id, volume_id, role)
-    query = insert_query("roles", %w[user_id pool_id volume_id role])
+    query = insert_query("roles", %w[user_id pool_id volume_id name])
     connection.exec(query, user_id, pool_id, volume_id, role)
   end
 
@@ -93,7 +93,7 @@ module Datastore
   end
 
   def list_roles(user_id)
-    query = "SELECT pool_id, volume_id, role FROM roles WHERE user_id = ?"
+    query = "SELECT pool_id, volume_id, name FROM roles WHERE user_id = ?"
     roles = connection.query_all(query, user_id, as: {String, String, String})
     roles.map do |row|
       role = MoanaTypes::Role.new
