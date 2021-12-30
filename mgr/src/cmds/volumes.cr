@@ -130,7 +130,9 @@ handler "volume.list" do |args|
     else
       volumes = [client.pool(args.pool_name).volume(args.volume_args.name).get(state: args.volume_args.status)]
     end
-    puts "No Volumes available in the Pool. Run `kadalu volume create #{args.pool_name}/<volume-name> ...` to create a volume." if volumes.size == 0
+    if volumes.size == 0
+      puts "No Volumes available in the Pool. Run `kadalu volume create #{args.pool_name == "" ? "<pool>" : args.pool_name}/<volume-name> ...` to create a volume."
+    end
 
     if args.volume_args.detail
       volumes.each do |volume|
