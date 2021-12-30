@@ -13,7 +13,7 @@ Login using the following command,
 
 [source,console]
 ----
-$ kadalu login admin
+$ kadalu user login admin
 Password:
 Logged in successfully. Details cached in `~/.kadalu/sessions/admin`. Delete this file or run `kadalu logout` command to delete the session.
 ----
@@ -96,9 +96,9 @@ To list the Sessions and API Keys,
 [source,console]
 ----
 $ kadalu api-key list
-ID                                    token      Name
-90f06a2f-8e9c-4bd6-a6f3-abb4092c8d0f  ab1598b..  Login
-8925afdb-22bf-4d83-a122-ae116191b1d4  2218c15..  Dev
+  ID                                    token      Name
+* 90f06a2f-8e9c-4bd6-a6f3-abb4092c8d0f  ab1598b..  Login
+  8925afdb-22bf-4d83-a122-ae116191b1d4  2218c15..  Dev
 ----
 
 Use `api-key delete` to delete a Session/API key.

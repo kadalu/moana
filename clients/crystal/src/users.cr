@@ -98,6 +98,25 @@ module MoanaClient
       @client.token = ""
     end
 
+    def set_password(password : String, new_password : String)
+      url = "#{@client.url}/api/v1/users/#{@client.username}/password"
+
+      req = MoanaTypes::User.new
+      req.password = password
+      req.new_password = new_password
+
+      response = MoanaClient.http_post(
+        url,
+        req.to_json,
+        headers: @client.auth_header
+      )
+      if response.status_code == 200
+        MoanaTypes::User.from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
+
     def create_api_key(name : String)
       ApiKey.create(@client, name)
     end

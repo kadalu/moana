@@ -75,7 +75,8 @@ module Datastore
 
   def get_user_by_id(user_id)
     query = user_select_query + left_outer_join_roles + " WHERE users.id = ?"
-    group_users(connection.query_all(query, user_id, as: UserView))
+    users = group_users(connection.query_all(query, user_id, as: UserView))
+    users.size > 0 ? users[0] : nil
   end
 
   def valid_user?(user_id, password)
@@ -107,6 +108,12 @@ module Datastore
     end
 
     get_user(username)
+  end
+
+  def set_user_password(user_id, password)
+    password_hash = hash_sha256(password)
+    query = update_query("users", ["password_hash"], where: "id = ?")
+    connection.exec(query, password_hash, user_id)
   end
 
   def delete_user_by_username(username)

@@ -17,11 +17,16 @@ module Datastore
 
     name = token[0...7] if name == ""
     connection.exec(query, api_key_id, user_id, name, token[0...7], token_hash)
+
+    query = "SELECT username FROM users WHERE id = ?"
+    username = connection.query_one(query, user_id, as: String)
+
     api_key = MoanaTypes::ApiKey.new
     api_key.user_id = user_id
     api_key.id = api_key_id
     api_key.name = name
     api_key.token = token
+    api_key.username = username
 
     api_key
   end

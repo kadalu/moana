@@ -57,6 +57,7 @@ module MoanaClient
       @user_id = key.user_id
       @api_key_id = key.id
       @token = key.token
+      @username = key.username
     end
 
     def logged_in_user_id
