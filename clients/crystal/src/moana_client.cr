@@ -62,5 +62,9 @@ module MoanaClient
     def logged_in_user_id
       @user_id
     end
+
+    def logged_in_user_api_key_id
+      @api_key_id
+    end
   end
 end
