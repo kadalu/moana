@@ -92,7 +92,19 @@ module Datastore
     password_hash = hash_sha256(password)
     user_id = UUID.random.to_s
     query = insert_query("users", %w[id username name password_hash])
-    connection.exec(query, user_id, username, name, password_hash)
+
+    connection.transaction do |tx|
+      conn = tx.connection
+
+      first_user = zero_users?
+      conn.exec(query, user_id, username, name, password_hash)
+
+      # First user becomes super admin
+      if first_user
+        roles_query = insert_query("roles", %w[user_id pool_id volume_id name])
+        conn.exec(roles_query, user_id, "all", "all", "admin")
+      end
+    end
 
     get_user(username)
   end
@@ -100,5 +112,9 @@ module Datastore
   def delete_user_by_username(username)
     query = "DELETE FROM users WHERE username = ?"
     connection.exec(query, username)
+  end
+
+  def zero_users?
+    connection.scalar("SELECT COUNT(1) FROM users LIMIT 1").as(Int64) == 0
   end
 end

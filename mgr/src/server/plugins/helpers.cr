@@ -46,3 +46,9 @@ def execute(cmd, args)
     {status.exit_code, "", stderr.to_s}
   end
 end
+
+class HTTP::Server::Context
+  def user_id
+    get("user_id").as(String)
+  end
+end

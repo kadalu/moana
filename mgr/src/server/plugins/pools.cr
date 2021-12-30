@@ -9,6 +9,10 @@ post "/api/v1/pools" do |env|
     halt(env, status_code: 400, response: ({"error": "Agent doesn't handle requests"}.to_json))
   end
 
+  unless Datastore.maintainer?(env.user_id, "all")
+    halt(env, status_code: 403, response: ({"error": "Forbidden"}.to_json))
+  end
+
   # TODO: Pool name validations
   env.response.status_code = 201
 
@@ -25,6 +29,6 @@ post "/api/v1/pools" do |env|
   pool.to_json
 end
 
-get "/api/v1/pools" do
-  Datastore.list_pools.to_json
+get "/api/v1/pools" do |env|
+  Datastore.list_pools(env.user_id).to_json
 end
