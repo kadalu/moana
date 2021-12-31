@@ -72,4 +72,10 @@ nodes.each_with_index do |node, idx|
   EQUAL content.strip, "Hello World", "/exports/vol2/s#{idx+1}/f1 content is \"Hello World\""
 end
 
+USE_NODE nodes[0]
+["vol1", "vol2", "vol3", "vol4"].each do |vol|
+  TEST "kadalu volume stop DEV/#{vol} --mode=script"
+  TEST "kadalu volume delete DEV/#{vol} --mode=script"
+end
+
 puts TEST "kadalu user logout"
