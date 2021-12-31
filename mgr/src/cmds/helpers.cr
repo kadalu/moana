@@ -92,3 +92,15 @@ def session_file
 rescue KeyError
   Path.new("/root/.kadalu/session")
 end
+
+def prompt(label)
+  print "#{label}: "
+  value = (STDIN.noecho &.gets.try &.chomp).not_nil!
+  puts
+  value
+end
+
+def yes(label)
+  sure = prompt(label)
+  ["yes", "y", "ok", "sure", "on"].includes?(sure.strip.downcase)
+end

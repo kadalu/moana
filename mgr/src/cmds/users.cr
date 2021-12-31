@@ -9,13 +9,6 @@ class Args
   property user_args = UserArgs.new
 end
 
-def prompt(label)
-  print "#{label}: "
-  value = (STDIN.noecho &.gets.try &.chomp).not_nil!
-  puts
-  value
-end
-
 def validated_username(args)
   username = args.pos_args.size > 0 ? args.pos_args[0] : ""
   command_error "Username is required" if username == ""

@@ -243,4 +243,21 @@ module Datastore
     query = update_query("volumes", ["state"], where: " id = ?")
     connection.exec(query, state, volume_id)
   end
+
+  def delete_volume(pool_id, volume_id)
+    connection.transaction do |tx|
+      conn = tx.connection
+
+      # TODO: Delete the Services
+
+      query = "DELETE FROM storage_units WHERE pool_id = ? AND volume_id = ?"
+      conn.exec(query, pool_id, volume_id)
+
+      query = "DELETE FROM distribute_groups WHERE pool_id = ? AND volume_id = ?"
+      conn.exec(query, pool_id, volume_id)
+
+      query = "DELETE FROM volumes WHERE pool_id = ? AND id = ?"
+      conn.exec(query, pool_id, volume_id)
+    end
+  end
 end

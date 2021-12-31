@@ -176,3 +176,17 @@ handler "volume.list" do |args|
     table.render
   end
 end
+
+command "volume.delete", "Delete the Kadalu Storage Volume" do |parser, _|
+  parser.banner = "Usage: kadalu volume delete POOL/VOLNAME [arguments]"
+end
+
+handler "volume.delete" do |args|
+  args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
+  next unless yes("Are you sure you want to delete the Volume?")
+
+  api_call(args, "Failed to Delete the Volume") do |client|
+    client.pool(args.pool_name).volume(volume_name).delete
+    puts "Volume #{volume_name} deleted successfully"
+  end
+end
