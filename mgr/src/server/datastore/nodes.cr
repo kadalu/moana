@@ -80,4 +80,14 @@ module Datastore
     query = insert_query("nodes", %w[pool_id id name endpoint token])
     connection.exec(query, pool_id, node_id, node_name, endpoint, token)
   end
+
+  def storage_units_from_node?(pool_id, node_id)
+    query = "SELECT COUNT(1) FROM storage_units WHERE pool_id = ? AND node_id = ?"
+    connection.scalar(query, pool_id, node_id).as(Int64) > 0
+  end
+
+  def delete_node(pool_id, node_id)
+    query = "DELETE FROM nodes WHERE pool_id = ? AND id = ?"
+    connection.exec(query, pool_id, node_id)
+  end
 end

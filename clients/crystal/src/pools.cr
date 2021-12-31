@@ -37,6 +37,10 @@ module MoanaClient
       end
     end
 
+    def node(node_name)
+      Node.new(@client, @name, node_name)
+    end
+
     def add_node(name : String, endpoint : String)
       Node.add(@client, @name, name, endpoint)
     end
