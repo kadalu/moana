@@ -77,5 +77,18 @@ module MoanaClient
         MoanaClient.error_response(response)
       end
     end
+
+    def delete
+      url = "#{@client.url}/api/v1/pools/#{@name}"
+
+      response = MoanaClient.http_delete(
+        url,
+        headers: @client.auth_header
+      )
+
+      if response.status_code != 204
+        MoanaClient.error_response(response)
+      end
+    end
   end
 end

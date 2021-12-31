@@ -36,3 +36,19 @@ handler "pool.list" do |args|
     table.render
   end
 end
+
+command "pool.delete", "Delete the Kadalu Storage Pool" do |parser, _|
+  parser.banner = "Usage: kadalu pool delete POOL [arguments]"
+end
+
+handler "pool.delete" do |args|
+  command_error "Pool name is required" if args.pos_args.size < 1
+  args.pool_name = args.pos_args[0]
+
+  next unless (args.script_mode || yes("Are you sure you want to delete the Pool?"))
+
+  api_call(args, "Failed to Delete the Pool") do |client|
+    client.pool(args.pool_name).delete
+    puts "Pool #{args.pool_name} deleted"
+  end
+end

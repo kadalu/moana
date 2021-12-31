@@ -32,3 +32,22 @@ end
 get "/api/v1/pools" do |env|
   Datastore.list_pools(env.user_id).to_json
 end
+
+delete "/api/v1/pools/:pool_name" do |env|
+  pool_name = env.params.url["pool_name"]
+
+  next forbidden(env) unless Datastore.admin?(env.user_id, pool_name)
+
+  pool = Datastore.get_pool(pool_name)
+  if pool.nil?
+    halt(env, status_code: 400, response: ({"error": "Pool doesn't exists"}.to_json))
+  end
+
+  if Datastore.nodes_in_pool?(pool.id)
+    halt(env, status_code: 400, response: ({"error": "One or more nodes are part of this Pool"}.to_json))
+  end
+
+  Datastore.delete_pool(pool.id)
+
+  env.response.status_code = 204
+end
