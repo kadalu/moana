@@ -63,6 +63,8 @@ end
 handler "volume.stop" do |args|
   begin
     args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
+    next unless (args.script_mode || yes("Are you sure you want to stop the Volume?"))
+
     api_call(args, "Failed to Stop the Volume") do |client|
       volume = client.pool(args.pool_name).volume(volume_name).stop
       puts "Volume #{volume.name} stopped successfully"

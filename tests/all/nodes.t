@@ -24,4 +24,8 @@ end
 USE_NODE nodes[0]
 puts TEST "kadalu node list DEV"
 puts TEST "kadalu node list DEV --status"
+nodes.each do |node|
+  USE_NODE nodes[0]
+  puts TEST "kadalu node remove DEV/#{node} --mode=script"
+end
 puts TEST "kadalu user logout"
