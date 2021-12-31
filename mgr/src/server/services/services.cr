@@ -76,7 +76,7 @@ abstract class Service
       @proc.not_nil!.terminate
     end
 
-    File.delete(pid_file)
+    File.delete(pid_file) if File.exists?(pid_file)
   end
 
   def restart(force = false)

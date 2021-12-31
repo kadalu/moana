@@ -80,7 +80,7 @@ handler "node.list" do |args|
 end
 
 command "node.remove", "Delete the Kadalu Storage Node" do |parser, _|
-  parser.banner = "Usage: kadalu node delete POOL/NODENAME [arguments]"
+  parser.banner = "Usage: kadalu node remove POOL/NODENAME [arguments]"
 end
 
 handler "node.remove" do |args|

@@ -78,4 +78,15 @@ USE_NODE nodes[0]
   TEST "kadalu volume delete DEV/#{vol} --mode=script"
 end
 
+nodes.each do |node|
+  USE_NODE nodes[0]
+  puts TEST "kadalu node remove DEV/#{node} --mode=script"
+end
+
+puts TEST "kadalu pool delete DEV --mode=script"
 puts TEST "kadalu user logout"
+
+nodes.each do |node|
+  USE_NODE node
+  puts TEST "cat /var/log/kadalu/mgr.log"
+end

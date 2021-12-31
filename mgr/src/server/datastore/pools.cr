@@ -115,4 +115,14 @@ module Datastore
 
     get_pool(pool_name)
   end
+
+  def nodes_in_pool?(pool_id)
+    query = "SELECT COUNT(1) FROM nodes WHERE pool_id = ?"
+    connection.scalar(query, pool_id).as(Int64) > 0
+  end
+
+  def delete_pool(pool_id)
+    query = "DELETE FROM pools WHERE id = ?"
+    connection.exec(query, pool_id)
+  end
 end
