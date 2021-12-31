@@ -1,0 +1,238 @@
+= Add a new feature
+
+Let us implement a feature that shows Uptime of all the nodes of a Storage Pool.
+
+[source,console]
+----
+kadalu node uptime <POOL_NAME>
+----
+
+For example,
+
+[source,console]
+----
+$ kadalu node uptime DEV
+Name                     Uptime
+DEV/server1.example.com  up 1 day, 5 hours, 17 minutes
+DEV/server2.example.com  up 1 day, 4 hours, 24 minutes
+----
+
+First we will add ReST api handler (`$SRC/mgr/src/server/plugins/node_uptime.cr`)
+
+[source,crystal]
+----
+require "./helpers"
+require "../datastore/*"
+
+get "/api/v1/pools/:pool_name/uptime" do |env|
+  pool_name = env.params.url["pool_name"]
+
+  nodes = Datastore.list_nodes(pool_name)
+
+  nodes.to_json
+end
+----
+
+Now if we run below curl command, then it returns just the nodes list.
+
+[source,console]
+----
+$ curl http://localhost:3000/api/v1/pools/DEV/uptime
+[
+  {
+    "id":"341cd9ce-49a6-42ce-bdbf-de4cdbc4159a",
+    "name":"kadalu-dev",
+    "state":"",
+    "endpoint":"http://kadalu-dev:3000",
+    "addresses":[],
+    "token":"",
+    "pool":{
+      "id":"986e16f1-8865-481a-b1d7-40431656bf1b",
+      "name":"DEV",
+      "nodes":[]
+    }
+  }
+]
+----
+
+Now lets add a new field to Node struct(`$SRC/types/src/moana_types.cr`)
+so that it can have uptime details when exported.
+
+[source,crystal]
+----
+  class Node
+    include JSON::Serializable
+
+    property id = "",
+             name = "",
+             state = "",
+             endpoint = "",
+             addresses = [] of String,
+             token = "",
+             pool = Pool.new,
+             uptime = ""
+
+    def initialize
+    end
+  end
+----
+
+ReST API handler function runs only in the Server node,
+so it can't get the uptime details from other nodes of
+the Pool. Add a `node_action` to return the uptime from
+each node and call that by running `dispatch_action` helper.
+
+[source,crystal]
+----
+ACTION_NODE_UPTIME = "node_uptime"
+
+node_action ACTION_NODE_UPTIME do |_|
+  rc, out, err = execute("uptime", ["--pretty"])
+
+  if rc == 0
+    NodeResponse.new(true, {out.strip}.to_json)
+  else
+    NodeResponse.new(false, {"error": err}.to_json)
+  end
+end
+----
+
+Above node action runs `uptime --pretty` command and returns
+a tuple with uptime data. Every node action receives the input
+in JSON format. In the above example, no input is needed to
+find the node's uptime.
+
+Response from the node is sent back to server as `NodeResponse`
+struct. Responses from all the nodes are collected by the
+`dispatch_action` in the server.
+
+[source,crystal]
+----
+require "./helpers"
+require "../datastore/*"
+
+ACTION_NODE_UPTIME = "node_uptime"
+
+node_action ACTION_NODE_UPTIME do |_|
+  rc, out, err = execute("uptime", ["--pretty"])
+
+  if rc == 0
+    NodeResponse.new(true, {out.strip}.to_json)
+  else
+    NodeResponse.new(false, {"error": err}.to_json)
+  end
+end
+
+get "/api/v1/pools/:pool_name/uptime" do |env|
+  pool_name = env.params.url["pool_name"]
+
+  nodes = Datastore.list_nodes(pool_name)
+
+  resp = dispatch_action(
+    ACTION_NODE_UPTIME,
+    pool_name,
+    nodes
+  )
+
+  nodes.each do |node|
+     if resp.node_responses[node.id].ok
+      node.uptime = Tuple(String).from_json(
+           resp.node_responses[node.id].response
+      )[0]
+    end
+  end
+
+  nodes.to_json
+end
+----
+
+Now the same curl command returns the Uptime
+details for each node in the Pool
+
+[source,console]
+----
+$ curl http://localhost:3000/api/v1/pools/DEV/uptime
+[
+  {
+    "id":"341cd9ce-49a6-42ce-bdbf-de4cdbc4159a",
+    "name":"kadalu-dev",
+    "state":"",
+    "endpoint":"http://kadalu-dev:3000",
+    "addresses":[],
+    "token":"",
+    "pool":{
+      "id":"986e16f1-8865-481a-b1d7-40431656bf1b",
+      "name":"DEV",
+      "nodes":[]
+    },
+    "uptime":"up 1 day, 4 hours, 33 minutes"
+  }
+]
+----
+
+Now add the Client library (`$SRC/clients/crystal/src/pools.cr`)
+
+[source,crystal]
+----
+    def nodes_uptime
+      url = "#{@client.url}/api/v1/pools/#{@name}/uptime"
+      response = MoanaClient.http_get(
+        url,
+        headers: @client.auth_header
+      )
+      if response.status_code == 200
+        Array(MoanaTypes::Node).from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
+----
+
+Last but not the least, add CLI command handler (`$SRC/mgr/src/cmds/node_uptime.cr`)
+
+[source,crystal]
+----
+require "./helpers"
+
+command "node.uptime", "Nodes Uptime" do |parser, _|
+  parser.banner = "Usage: kadalu node uptime POOL"
+end
+
+handler "node.uptime" do |args|
+  args.pool_name, _ = pool_and_node_name(args.pos_args.size < 1 ? "" : args.pos_args[0])
+
+  command_error "Pool name is required" if args.pool_name == ""
+
+  api_call(args, "Failed to get list of nodes") do |client|
+    nodes = client.pool(args.pool_name).nodes_uptime
+
+    table = CliTable.new(2)
+    table.header("Name", "Uptime")
+
+    nodes.each do |node|
+      table.record("#{node.pool.name}/#{node.name}", node.uptime)
+    end
+
+    table.render
+  end
+end
+----
+
+Now compile again and restart the server.
+
+[source,console]
+----
+$ cd $SRC/mgr
+$ shards build
+$ ./bin/kadalu mgr
+----
+
+In other terminal, run the following command
+(After creating the Pool and adding nodes)
+
+[source,console]
+----
+root@kadalu-dev:/src/mgr# ./bin/kadalu node uptime DEV
+Name            Uptime
+DEV/kadalu-dev  up 1 day, 5 hours, 30 minutes
+----
