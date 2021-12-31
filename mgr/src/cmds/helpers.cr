@@ -3,7 +3,7 @@ require "option_parser"
 require "moana_client"
 
 class Args
-  property cmd = "", pos_args = [] of String, url = "", pool_name = ""
+  property cmd = "", pos_args = [] of String, url = "", pool_name = "", script_mode = false
 end
 
 struct Command
@@ -101,6 +101,7 @@ def prompt(label)
 end
 
 def yes(label)
-  sure = prompt(label)
-  ["yes", "y", "ok", "sure", "on"].includes?(sure.strip.downcase)
+  print "#{label}: "
+  value = STDIN.gets(chomp: true).not_nil!
+  ["yes", "y", "yy", "ok", "sure", "on"].includes?(value.strip.downcase)
 end

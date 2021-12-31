@@ -26,6 +26,10 @@ module CLI
         exit
       end
 
+      parser_1.on("--mode=MODE", "Script Mode") do |mode|
+        parsed.script_mode = true if mode.strip.downcase == "script"
+      end
+
       Commands.commands.each do |name, cmd|
         parser_1.on(name, cmd.help) do
           subcmds = Commands.sub_commands(name)

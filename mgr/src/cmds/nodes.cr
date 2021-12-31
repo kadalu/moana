@@ -78,3 +78,17 @@ handler "node.list" do |args|
     table.render
   end
 end
+
+command "node.remove", "Delete the Kadalu Storage Node" do |parser, _|
+  parser.banner = "Usage: kadalu node delete POOL/NODENAME [arguments]"
+end
+
+handler "node.remove" do |args|
+  args.pool_name, node_name = pool_and_node_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
+  next unless (args.script_mode || yes("Are you sure you want to remove the Node from the Pool?"))
+
+  api_call(args, "Failed to Remove the Node") do |client|
+    client.pool(args.pool_name).node(node_name).delete
+    puts "Node #{node_name} removed from the Pool"
+  end
+end
