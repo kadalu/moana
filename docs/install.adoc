@@ -1,17 +1,43 @@
 = Install
 
-Download and install Kadalu Storage Manager,
+== One step install
+
+Install the latest GlusterFS packages and then download and install Kadalu Storage Manager by running the following command
 
 [source,console]
 ----
-$ curl -L https://github.com/kadalu/moana/releases/latest/download/kadalu-`uname -m | sed 's|aarch64|arm64|' | sed 's|x86_64|amd64|'` -o kadalu
-$ sudo install ./kadalu /usr/sbin/kadalu
-$ kadalu --version # kadalu version
+$ curl -fsSL https://github.com/kadalu/moana/releases/latest/download/install.sh | sudo bash -x
 ----
 
-Download the systemd service files and install
+Test to ensure the version you installed is up-to-date
 
+[source,console]
 ----
-$ curl -L https://github.com/kadalu/moana/releases/latest/download/kadalu-mgr.service -o kadalu-mgr.service
-$ sudo cp kadalu-mgr.service /lib/systemd/system/
+$ kadalu --version
+----
+
+== Manual install (Step by Step)
+
+Download the Kadalu Storage Manager
+
+[source,console]
+----
+$ curl -fsSL https://github.com/kadalu/moana/releases/latest/download/kadalu-`uname -m | sed 's|aarch64|arm64|' | sed 's|x86_64|amd64|'` -o /tmp/kadalu
+$ sudo install /tmp/kadalu /usr/sbin/kadalu
+----
+
+Download the Systemd service file
+
+[source,console]
+----
+$ curl -fsSL https://github.com/kadalu/moana/releases/latest/download/kadalu-mgr.service -o /tmp/kadalu-mgr.service
+$ sudo install -m 700 /tmp/kadalu-mgr.service /lib/systemd/system/
+----
+
+Download the Mount script
+
+[source,console]
+----
+$ curl -fsSL https://github.com/kadalu/moana/releases/latest/download/mount.kadalu -o /tmp/mount.kadalu
+$ sudo install /tmp/mount.kadalu /sbin/mount.kadalu
 ----

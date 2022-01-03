@@ -26,7 +26,7 @@ Run `pool list` command to see the list of Pools.
 4e67989e-0c24-44ac-b0a7-81aa5cb4ec6b  DEV
 ----
 
-The pool data and the configurations stored in `/var/lib/kadalu`. Since the storage manager is running in single node, high availability is not available by default. Use `kadalu-lite` Volume for high availability or backup the Pool data in regular interval. Refer "High availability" chapter for more details.
+The pool data and the configurations stored in `/var/lib/kadalu`. Since the storage manager is running in single node, high availability is not available by default. Use `kadalu-lite` Volume for high availability or backup the Pool data in regular interval. Refer "High availability" chapter(Coming soon) for more details.
 
 Manager node is not part of any Pool by default since Kadalu Storage manager supports multiple Pools. Optionally invite the Storage manager node to join the Pool similar to inviting other Storage nodes.
 

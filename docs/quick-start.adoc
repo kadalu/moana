@@ -2,21 +2,18 @@
 
 == Install
 
-Download and install Kadalu Storage Manager,
+Install the latest GlusterFS packages and then download and install Kadalu Storage Manager by running the following command
 
 [source,console]
 ----
-$ curl -L https://github.com/kadalu/moana/releases/latest/download/kadalu-`uname -m | sed 's|aarch64|arm64|' | sed 's|x86_64|amd64|'` -o kadalu
-$ sudo install ./kadalu /usr/sbin/kadalu
-$ kadalu --version # kadalu version
+$ curl -fsSL https://github.com/kadalu/moana/releases/latest/download/install.sh | sudo bash -x
 ----
 
-Download the systemd service files and install
+Test to ensure the version you installed is up-to-date
 
 [source,console]
 ----
-$ curl -L https://github.com/kadalu/moana/releases/latest/download/kadalu-mgr.service -o kadalu-mgr.service
-$ sudo cp kadalu-mgr.service /lib/systemd/system/
+$ kadalu --version
 ----
 
 == Setup
@@ -77,4 +74,8 @@ ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
 
 == Mount a Volume
 
-Not yet implemented.
+[source,console]
+----
+# mkdir /mnt/vol1
+# mount -t kadalu server1.example.com:/DEV/vol1 /mnt/vol1
+----
