@@ -21,6 +21,8 @@ puts TEST "kadalu api-key create Dev"
 api_key = TEST "kadalu api-key list | grep Dev | awk '{print $1}'"
 puts TEST "kadalu api-key delete #{api_key}"
 puts TEST "kadalu user logout"
+puts TEST "kadalu user login admin --password=uladak"
+puts TEST "kadalu user delete admin --mode=script"
 
 nodes.each do |node|
   USE_NODE node

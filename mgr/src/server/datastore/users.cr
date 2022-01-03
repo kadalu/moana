@@ -116,9 +116,19 @@ module Datastore
     connection.exec(query, password_hash, user_id)
   end
 
-  def delete_user_by_username(username)
-    query = "DELETE FROM users WHERE username = ?"
-    connection.exec(query, username)
+  def delete_user(user_id)
+    connection.transaction do |tx|
+      conn = tx.connection
+
+      query = "DELETE FROM roles WHERE user_id = ?"
+      conn.exec(query, user_id)
+
+      query = "DELETE FROM api_keys WHERE user_id = ?"
+      conn.exec(query, user_id)
+
+      query = "DELETE FROM users WHERE id = ?"
+      conn.exec(query, user_id)
+    end
   end
 
   def zero_users?

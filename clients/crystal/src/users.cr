@@ -140,5 +140,28 @@ module MoanaClient
     def role(pool_id : String, volume_id : String, role : String)
       Role.new(@client, @user_id, pool_id, volume_id, role)
     end
+
+    def delete
+      User.delete(@client, @client.username)
+    end
+
+    def self.delete(client : Client, username : String)
+      url = "#{client.url}/api/v1/users/#{username}"
+
+      response = MoanaClient.http_delete(
+        url,
+        headers: client.auth_header
+      )
+      if response.status_code != 204
+        MoanaClient.error_response(response)
+      end
+
+      if username == client.username
+        client.api_key_id = ""
+        client.user_id = ""
+        client.username = ""
+        client.token = ""
+      end
+    end
   end
 end

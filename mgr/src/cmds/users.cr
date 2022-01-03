@@ -94,12 +94,19 @@ handler "user.logout" do |args|
   end
 end
 
-# command "user.delete", "Delete a Kadalu Storage User" do |parser, _|
-#   parser.banner = "Usage: kadalu user delete USERNAME"
-# end
+command "user.delete", "Delete a Kadalu Storage User" do |parser, _|
+  parser.banner = "Usage: kadalu delete USERNAME"
+end
 
-# handler "user.delete" do |args|
-# end
+handler "user.delete" do |args|
+  command_error "Username is required." if args.pos_args.size == 0
+  next unless (args.script_mode || yes("Are you sure you want to delete the user(#{args.pos_args[0]})?"))
+
+  api_call(args, "Failed to delete the User") do |client|
+    client.delete_user(args.pos_args[0])
+    puts "User deleted."
+  end
+end
 
 command "user.password", "Update Kadalu Storage User Password" do |parser, args|
   parser.banner = "Usage: kadalu user password [arguments]"
