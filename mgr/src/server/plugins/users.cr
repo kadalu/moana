@@ -44,11 +44,19 @@ end
 delete "/api/v1/users/:username" do |env|
   username = env.params.url["username"]
 
-  unless Datastore.user_exists?(username)
+  user = Datastore.get_user(username)
+  if user.nil?
     halt(env, status_code: 400, response: ({"error": "User does not exists"}).to_json)
   end
 
-  Datastore.delete_user_by_username(username)
+  # Allow delete only if the logged in user is super admin
+  # (Admin for all pools) or self user.
+  if user.id != env.user_id && !Datastore.admin?(env.user_id)
+    halt(env, status_code: 403, response: ({"error": "Forbidden to delete #{username}"}).to_json)
+  end
+
+  Datastore.delete_user(user.id)
+  env.response.status_code = 204
 end
 
 # # Create a User role

@@ -67,5 +67,9 @@ module MoanaClient
     def logged_in_user_api_key_id
       @api_key_id
     end
+
+    def delete_user(username : String)
+      User.delete(self, username)
+    end
   end
 end
