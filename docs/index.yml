@@ -1,6 +1,8 @@
 - section: User Guide
   chapters:
     - title: Quick Start
+    - title: Introduction
     - title: Install
-    - title: Clusters
+    - title: User Management
+    - title: Pools
     - title: Volumes
