@@ -1,4 +1,11 @@
 # Kadalu Storage Management - Moana
+# Introduction
+
+Moana is a frontend for the Kadalu Storage. Moana provides tools for setting up and managing the Kadalu cluster. Which includes:
+
+    * Creating storage pool and adding nodes to the pool
+    * Creating and managing storage volume
+among other things.
 
 This README is structured for quickly getting started with the project (from the released binaries). If you want to develop, and contribute to the project, check our [Developer Documentation](./docs/devel/README.adoc)
 
