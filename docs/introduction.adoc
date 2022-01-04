@@ -1,13 +1,13 @@
 = Introduction to Kadalu Storage
 
-Kadalu Storage is an modern opinionated distributed filesystem focused on ease of use, scale and stability.
+Kadalu Storage is a modern opinionated distributed filesystem focused on ease of use, scale, and stability.
 
 - **Storage Pool** is a logical entity that groups the Volumes and provides isolation from other Pools available.
-- **Storage Volume** exposes the storage from all nodes and provides single Unified namespace to the applications.
+- **Storage Volume** exposes the storage from all nodes and provides a single Unified namespace to the applications.
 - **Storage Nodes** are associated with the Kadalu Storage pool. One Storage node can't be part of two Storage pools.
-- **Storage Unit** is a directory or device in a node that will then be combined with other directories/devices from same of different nodes to provide single unified namespace.
+- **Storage Unit** is a directory or device in a node that will then be combined with other directories/devices from same or different nodes to provide single unified namespace.
 
-First create a Storage Pool and then start adding nodes to the Pool. Following example shows three nodes added to the Storage pool.
+First, create a Storage Pool and then start adding nodes to the Pool. The following example shows three nodes added to the Storage Pool.
 
 [source,console]
 ----
@@ -28,7 +28,7 @@ Node server3.example.com added to DEV successfully
 ID: 9abf4512-029a-4ae1-85d6-400bf7e8e30c
 ----
 
-Prepare the mounted directory to use as Storage unit while creating the Volume. Any filesystem that supports the xattrs can be used as Storage Unit of a Kadalu Volume. Following example demonstrates using a directory from each server and creating a Mirrored Kadalu Volume using them.
+Prepare the mounted directory to use as a Storage unit while creating the Volume. Any filesystem that supports xattrs can be used as a Storage Unit of a Kadalu Volume. The following example demonstrates using a directory from each server and creating a Mirrored Kadalu Volume using them.
 
 [source,console]
 ----
@@ -46,7 +46,7 @@ Prepare the mounted directory to use as Storage unit while creating the Volume. 
            server3.example.com:/exports/vol1/s3
 ----
 
-Mirrored or Replicate volume copies file in all the three storage units whenever a file is created from the Mount point. Mount Kadalu Volume in any node using the following command. Note that all the Storage servers should be accessible from the node where the Volume is mounted.
+Mirrored or Replicate volume copies a file to all three storage units whenever a file is created from the Mount point. Mount Kadalu Volume in any node using the following command. Note that all the Storage servers should be accessible from the node where the Volume is mounted.
 
 [source,console]
 ----

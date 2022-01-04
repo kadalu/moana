@@ -1,6 +1,6 @@
 = Kadalu Storage Pools
 
-Identify a node where Storage manager will be deployed. The node can be one of the storage nodes or it can be a spare node that is highly available.
+Identify a node where Storage manager will be deployed. This node can be one of the storage nodes, or it can be a spare node that is highly available.
 
 Enable and start the `kadalu-mgr`
 
@@ -17,7 +17,7 @@ Pool created successfully.
 ID: 4e67989e-0c24-44ac-b0a7-81aa5cb4ec6b
 ----
 
-Run `pool list` command to see the list of Pools.
+Run `pool list` command to see the list of Pools
 
 [source,console]
 ----
@@ -26,9 +26,9 @@ Run `pool list` command to see the list of Pools.
 4e67989e-0c24-44ac-b0a7-81aa5cb4ec6b  DEV
 ----
 
-The pool data and the configurations stored in `/var/lib/kadalu`. Since the storage manager is running in single node, high availability is not available by default. Use `kadalu-lite` Volume for high availability or backup the Pool data in regular interval. Refer "High availability" chapter(Coming soon) for more details.
+The pool data and the configurations are stored in `/var/lib/kadalu`. Since the storage manager is running in a single node, by default it is not highly available. Use `kadalu-lite` Volume for high availability, or backup the Pool data in regular intervals. Refer "High availability" chapter (Coming soon) for more details.
 
-Manager node is not part of any Pool by default since Kadalu Storage manager supports multiple Pools. Optionally invite the Storage manager node to join the Pool similar to inviting other Storage nodes.
+Since Kadalu Storage manager supports multiple Pools, the manager node is not part of any Pool by default. Optionally invite the Storage manager node to join the Pool, which is similar to inviting other Storage nodes.
 
 [source,console]
 ----
@@ -61,7 +61,7 @@ Node server2.example.com added to DEV successfully
 ID: 34aabcae-1052-4a78-91a5-d71c89458e8d
 ----
 
-Run `node list` to view the list of the nodes and the status.
+Run `node list` to view the list of the nodes and their status.
 
 [source,console]
 ----
@@ -71,7 +71,7 @@ Run `node list` to view the list of the nodes and the status.
 34aabcae-1052-4a78-91a5-d71c89458e8d  server2.example.com  http://server2.example.com:3000
 ----
 
-To include the Status information,
+Include the Status information
 
 [source,console]
 ----
