@@ -1,6 +1,6 @@
 = User Management
 
-First created user will become the Super Admin.
+The first created user will become the Super Admin.
 
 [source,console]
 ----
@@ -18,9 +18,11 @@ Password:
 Logged in successfully. Details cached in `~/.kadalu/sessions/admin`. Delete this file or run `kadalu logout` command to delete the session.
 ----
 
-== Adding other users
+== Adding more users
 
-Users with admin privileges can add more users. Pool Admin can add more users to that pool only and Volume Admins can add more users to that Volume only.
+* Users with admin privileges can add more users.
+* Pool Admin can add more users only to that pool.
+* Volume Admins can add more users only to that Volume.
 
 [source,console]
 ----
@@ -29,7 +31,7 @@ Password:
 User created successfully. Now login to continue with other commands.
 ----
 
-To assign a default role while creating a user,
+Assign a default role while creating a user
 
 [source,console]
 ----
@@ -38,14 +40,14 @@ Password:
 User created successfully. Now login to continue with other commands.
 ----
 
-Add a role after creating an user
+Add a role after creating a user
 
 [source,console]
 ----
 $ kadalu role add demo viewer --pool=PROD --volume=all
 ----
 
-To change the password of a user,
+Change the password of a user
 
 [source,console]
 ----
@@ -55,21 +57,21 @@ Confirm New Password:
 Password updated successfully.
 ----
 
-To delete a Role,
+Delete a Role
 
 [source,console]
 ----
 $ kadalu role remove demo viewer --pool=PROD --volume=all
 ----
 
-Delete user
+Delete a user
 
 [source,console]
 ----
 $ kadalu user delete demo
 ----
 
-Each login generates a API key that also can be manually generated using the following command.
+Each login generates an API key that can also be manually generated using the following command
 
 [source,console]
 ----
@@ -91,7 +93,7 @@ Example:
 View list of API keys by running `kadalu api-key list`
 ----
 
-To list the Sessions and API Keys,
+List the Sessions and API Keys
 
 [source,console]
 ----
@@ -101,7 +103,7 @@ $ kadalu api-key list
   8925afdb-22bf-4d83-a122-ae116191b1d4  2218c15..  Dev
 ----
 
-Use `api-key delete` to delete a Session/API key.
+Delete a Session/API key.
 
 [source,console]
 ----
