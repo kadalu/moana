@@ -1,6 +1,8 @@
 require "json"
 require "http/client"
 
+require "./datastore/*"
+
 struct NodeResponse
   include JSON::Serializable
 
@@ -36,13 +38,17 @@ module Action
   end
 
   def self.dispatch(name : String, pool_name : String, nodes : Array(MoanaTypes::Node), data : String)
-    # TODO Set token
     headers = HTTP::Headers.new
     headers["Content-Type"] = "application/json"
     resp = Response.new
     # TODO: Send requests concurrently and handle
     # the response
+
+    tokens = Datastore.node_tokens(nodes)
     nodes.each do |node|
+      headers["Authorization"] = "Bearer #{node.token}"
+      puts "name: #{node.name}, token:#{node.token}"
+      STDERR.puts "HELLO from dispatch action"
       url = "#{node.endpoint}/_api/v1/#{name}"
       begin
         node_resp = HTTP::Client.post(url, body: {"data": data}.to_json, headers: headers)

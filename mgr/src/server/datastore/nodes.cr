@@ -80,4 +80,28 @@ module Datastore
     query = insert_query("nodes", %w[pool_id id name endpoint token])
     connection.exec(query, pool_id, node_id, node_name, endpoint, token)
   end
+
+  def node_tokens(nodes : Array(MoanaTypes::Node))
+    node_ids = [] of String
+    nodes.each do |node|
+      node_ids << node.id unless node.id == ""
+    end
+
+    in_node_ids = (node_ids.map {|_| "?"}).join(",")
+    query = "SELECT id, token FROM nodes WHERE id IN (#{in_node_ids})"
+    tokens = connection.query_all(query, args: node_ids, as: {String, String})
+    tokens_hash = Hash(String, String).new
+    tokens.each do |token|
+      tokens_hash[token[0]] = token[1]
+    end
+
+    nodes.map do |node|
+      if tokens_hash[node.id]?
+        node.token = tokens_hash[node.id]
+      end
+
+      node
+    end
+  end
+
 end
