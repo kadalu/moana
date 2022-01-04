@@ -17,3 +17,4 @@ Please refer to link:../../CONTRIBUTING.md[Contributing Guidelines] before getti
 
 * link:./testing.adoc[Testing]
 * link:./container-based-dev-setup-single-node.adoc[Container based Development Environment Setup]
+* link:./emacs-setup.adoc[Emacs based Crystal Development Environment Setup]
