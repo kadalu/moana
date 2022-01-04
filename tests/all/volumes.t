@@ -30,6 +30,7 @@ nodes.each do |node|
   TEST "mkdir -p /exports/vol2"
   TEST "mkdir -p /exports/vol3"
   TEST "mkdir -p /exports/vol4"
+  TEST "mkdir -p /exports/vol5"
 end
 
 USE_NODE nodes[0]
@@ -84,6 +85,26 @@ nodes.each do |node|
 end
 
 puts TEST "kadalu pool delete DEV --mode=script"
+
+# Auto create the Pool and add nodes
+# Delete info file and restart kadalu-mgr
+# TODO: Fix this in node remove
+nodes.each do |node|
+  USE_NODE node
+  TEST "systemctl stop kadalu-mgr"
+  TEST "rm -rf /var/lib/kadalu/info"
+  TEST "systemctl start kadalu-mgr"
+end
+
+USE_NODE nodes[0]
+TEST "kadalu volume create DEV/vol5 server1:/exports/vol5/s1 server2:/exports/vol5/s2 server3:/exports/vol5/s3 --auto-create-pool --auto-add-nodes"
+TEST "kadalu volume stop DEV/vol5 --mode=script"
+TEST "kadalu volume delete DEV/vol5 --mode=script"
+nodes.each do |node|
+  USE_NODE nodes[0]
+  puts TEST "kadalu node remove DEV/#{node} --mode=script"
+end
+
 puts TEST "kadalu user logout"
 
 nodes.each do |node|

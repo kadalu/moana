@@ -40,7 +40,16 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
 
   pool = Datastore.get_pool(pool_name)
   if pool.nil?
-    halt(env, status_code: 400, response: ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
+    unless req.auto_create_pool
+      halt(env, status_code: 400, response: ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
+    end
+
+    # If the user is not global maintainer, can't create a Pool
+    unless Datastore.maintainer?(env.user_id)
+      halt(env, status_code: 403, response: ({"error": "Forbidden"}.to_json))
+    end
+
+    pool = create_pool(pool_name)
   end
 
   # TODO: Validate the request, dist count, storage_units count etc
@@ -51,18 +60,50 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
   # Also fetch the full node details
   invalid_node = false
   invalid_node_name = ""
+  invalid_reason = ""
   participating_nodes(pool_name, req).each do |n|
     node = Datastore.get_node(pool_name, n.name)
     if node.nil?
-      invalid_node = true
-      invalid_node_name = n.name
-      break
+      if req.auto_add_nodes
+        endpoint = node_endpoint(n.name)
+        invite = node_invite(pool_name, n.name, endpoint)
+
+        participating_node = MoanaTypes::Node.new
+        participating_node.endpoint = endpoint
+        participating_node.name = n.name
+
+        resp = dispatch_action(
+          ACTION_NODE_INVITE_ACCEPT,
+          pool_name,
+          [participating_node],
+          invite.to_json
+        )
+
+        if !resp.ok
+          invalid_reason = resp.node_responses[n.name].response
+          invalid_node = true
+          invalid_node_name = n.name
+          break
+        end
+
+        node = MoanaTypes::Node.from_json(resp.node_responses[n.name].response)
+        node.endpoint = endpoint
+        Datastore.create_node(pool.not_nil!.id, node.id, n.name, endpoint, node.token)
+      end
+
+      if node.nil?
+        invalid_node = true
+        invalid_node_name = n.name
+        break
+      end
     end
+
     nodes << node
   end
 
   if invalid_node
-    halt(env, status_code: 400, response: ({"error": "Node #{invalid_node_name} is not part of the Pool"}.to_json))
+    invalid_reason = invalid_reason == "" ? "Node #{invalid_node_name} is not part of the Pool" : invalid_reason
+    halt(env, status_code: 400, response: ({"error": invalid_reason}.to_json))
   end
 
   node_details_add_to_volume(req, nodes)
@@ -79,7 +120,7 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
     dist_grp.storage_units.each do |storage_unit|
       next if storage_unit.port == 0
 
-      unless Datastore.port_available?(pool.id, storage_unit.node.id, storage_unit.port)
+      unless Datastore.port_available?(pool.not_nil!.id, storage_unit.node.id, storage_unit.port)
         # TODO: Move this halt out of the loop
         halt(env, status_code: 400, response: ({"error": "Port is already used(#{storage_unit.node.name}:#{storage_unit.port})"}).to_json)
       end
@@ -108,7 +149,7 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
       storage_unit.id = UUID.random.to_s
       # Request doesn't contain the Port, find a free port
       if storage_unit.port == 0
-        free_port = Datastore.free_port(pool.id, storage_unit.node.id)
+        free_port = Datastore.free_port(pool.not_nil!.id, storage_unit.node.id)
         storage_unit.port = free_port unless free_port.nil?
       end
 
@@ -121,7 +162,7 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
         break
       end
 
-      Datastore.reserve_port(pool.id, storage_unit.node.id, storage_unit.port)
+      Datastore.reserve_port(pool.not_nil!.id, storage_unit.node.id, storage_unit.port)
     end
 
     break if no_port_available
@@ -157,7 +198,7 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
   services.each do |node_id, svcs|
     svcs.each do |svc|
       # Enable each Services
-      Datastore.enable_service(pool.id, node_id, svc)
+      Datastore.enable_service(pool.not_nil!.id, node_id, svc)
     end
   end
 
@@ -177,7 +218,7 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
   set_volume_metrics(req)
 
   # Save Volume info
-  Datastore.create_volume(pool.id, req)
+  Datastore.create_volume(pool.not_nil!.id, req)
 
   env.response.status_code = 201
   req.to_json

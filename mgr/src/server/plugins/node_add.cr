@@ -46,15 +46,29 @@ node_action ACTION_NODE_INVITE_ACCEPT do |data|
   NodeResponse.new(true, node.to_json)
 end
 
+def node_invite(pool_name : String, node_name : String, endpoint : String)
+  invite = MoanaTypes::NodeRequest.new
+  invite.endpoint = endpoint
+  invite.pool_name = pool_name
+  invite.name = node_name
+  invite.mgr_node_id = GlobalConfig.local_node.id
+
+  invite
+end
+
+def node_endpoint(node_name, endpoint = "")
+  # TODO: Add detault http/https and port values from config
+  # TODO: Add detault http/https and port values from config
+  endpoint == "" ? "http://#{node_name}:3000" : endpoint
+end
+
 post "/api/v1/pools/:pool_name/nodes" do |env|
   pool_name = env.params.url["pool_name"]
   node_name = env.params.json["name"].as(String)
 
   next forbidden(env) unless Datastore.maintainer?(env.user_id, pool_name)
 
-  endpoint = env.params.json.fetch("endpoint", "").as(String)
-  # TODO: Add detault http/https and port values from config
-  endpoint = "http://#{node_name}:3000" if endpoint == ""
+  endpoint = node_endpoint(node_name, env.params.json.fetch("endpoint", "").as(String))
 
   pool = Datastore.get_pool(pool_name)
   if pool.nil?
@@ -67,11 +81,7 @@ post "/api/v1/pools/:pool_name/nodes" do |env|
     halt(env, status_code: 400, response: ({"error": "Node is already part of the Pool"}.to_json))
   end
 
-  invite = MoanaTypes::NodeRequest.new
-  invite.endpoint = endpoint
-  invite.pool_name = pool_name
-  invite.name = node_name
-  invite.mgr_node_id = GlobalConfig.local_node.id
+  invite = node_invite(pool_name, node_name, endpoint)
 
   participating_node = MoanaTypes::Node.new
   participating_node.endpoint = endpoint
