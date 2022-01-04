@@ -1,8 +1,12 @@
+= Prerequisites
+
+Kadalu Storage requires GlusterFS binaries. Refer your local distribution guide on installing latest GlusterFS packages.
+
 = Install
 
 == One step install
 
-Install the latest GlusterFS packages and then download and install Kadalu Storage Manager by running the following command
+Download and install Kadalu Storage Manager by running the following command
 
 [source,console]
 ----
