@@ -16,6 +16,17 @@ Where
 - `server1.example.com` is the node from which the Storage unit will be exported.
 - `/exports/vol/s1` is the mounted path of Storage Unit.
 
+Automatically create the Pool and add nodes to Pool that are specified in the Volume create request by adding `--auto-create-pool` and `--auto-add-nodes`.
+
+[source,console]
+----
+[root@server1 ~]# kadalu volume create DEV/vol1 \
+    server1.example.com:/exports/vol1/s1 \
+    --auto-create-pool --auto-add-nodes
+Volume vol1 created successfully
+ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
+----
+
 Create a Replicated or Mirrored Volume
 
 [source,console]
