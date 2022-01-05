@@ -1,0 +1,48 @@
+= Emacs based Crystal Development Environment Setup
+
+- Install Crystal by following the instructions available in https://crystal-lang.org/install/
+- Install Ameba to get Lint suggestions to Crystal code
++
+----
+git clone https://github.com/crystal-ameba/ameba && cd ameba
+make install
+----
+
+Add Melpa packages repository details to `.emacs` file if not added already.
+
+[source,emacs-lisp]
+----
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+;; Comment/uncomment this line to enable MELPA Stable if desired.  See `package-archive-priorities`
+;; and `package-pinned-packages`. Most users will not need or want to do this.
+;;(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+(package-initialize)
+----
+
+Install the following packages by running `M-x list-packages`
+
+- crystal-mode - For syntax highlight
+- ameba - Linter
+- flycheck-crystal - On the fly check errors
+- exec-path-from-shell - To load env vars from shell
+
+Add below code to fetch env variables from the shell
+
+[source,emacs-lisp]
+----
+;; Set PATH and other env vars
+(setq exec-path-from-shell-check-startup-files nil)
+(exec-path-from-shell-initialize)
+----
+
+Now enable the flycheck and ameba mode by adding the following in `~/.emacs` file.
+
+[source,emacs-lisp]
+----
+(require 'flycheck-crystal)
+(add-hook 'crystal-mode-hook 'flycheck-mode)
+(add-hook 'crystal-mode-hook 'ameba-mode)
+----
+
+Thats all! now Emacs starts highlighting the syntax errors on the fly. Check ameba errors by running `M-x ameba-check-current-file` when required.
