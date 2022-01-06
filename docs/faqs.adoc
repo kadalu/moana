@@ -1,0 +1,45 @@
+= Kadalu Storage FAQs
+
+== Is Kadalu Storage the same as GlusterFS except for the management layer?
+
+Kadalu Storage is an opinionated Storage solution. It uses only the core filesystem from GlusterFS. Kadalu Storage brings good parts of GlusterFS with added enhancements like improved Quota, Management layer among others.
+
+Along with the additional features, the default configurations/values will differ. All the enhancements available with Kadalu Storage are also Open Source.
+
+Kadalu Storage provides a more intuitive Command line interface compared to Gluster CLI.
+
+== Can GlusterFS and Kadalu Storage Co-exist?
+
+Why not? Short answer is Yes. If the GlusterFS version available in the system is compatible with the Kadalu Storage supported version then it can co-exist. Else it is not possible since Kadalu Storage uses the core filesystem from GlusterFS.
+
+== Who is behind Kadalu Storage?
+
+The Kadalu Storage project is currently sponsored by Kadalu Software Pvt Ltd. The project was started by a few core team members of the GlusterFS project with the initial focus to provide a lightweight storage solution for the apps running on Kubernetes. With the release of the https://github.com/kadalu/moana[Kadalu Moana] project, GlusterFS management is simplified for non Kubernetes use cases as well.
+
+== How stable is Kadalu Storage?
+
+As explained previously, the major difference between Kadalu Storage and GlusterFS is the management layer. No worries for your data, Kadalu Storage uses time-tested File system bits from GlusterFS. Additionally we invest heavily in automated tests and use advanced testing methods to test both the Filesystem layer as well as the Management layer.
+
+Even though the filesystem layer is stable, Kadalu Storage is not yet 1.0. It is still under active development and we are working on making it production ready in 2022.
+
+== Why not contribute back to the GlusterFS project itself?
+
+We do. All filesystem-related enhancements done in Kadalu will be sent to GlusterFS. If any feature is not applicable to the GlusterFS community but useful for Kadalu users then it will be maintained in the Kadalu Storage open source repository. Release and support cycles of Kadalu Storage are not aligned with GlusterFS release cycles, so we will maintain separate releases.
+
+== Monitoring is one of the pain points with GlusterFS, how is this issue addressed?
+
+Kadalu Storage exports a rich set of metrics that can be readily used with the Prometheus server. Kadalu Storage also provides JSON metrics so that it can be easily integrated into other applications.
+
+Apart from that, we also maintain a couple of projects like Gdash, Gluster metrics exporter, Gstatus etc to improve GlusterFS monitoring without using Kadalu Storage.
+
+== Is Kadalu Storage a fork of GlusterFS?
+
+Short answer is No. All the filesystem enhancements will be sent as PR to the GlusterFS repo. But if some of the patches are not applicable to the GlusterFS community then it will be maintained in our repository.
+
+== Will Gluster CLI commands work for Kadalu Storage?
+
+Kadalu Storage provides the new CLI to manage the Kadalu Storage Volumes.
+
+== Where can I request for new features or report issues?
+
+Open a new https://github.com/kadalu/moana/issues/new[Github issue] with the details about the new feature or the issue.
