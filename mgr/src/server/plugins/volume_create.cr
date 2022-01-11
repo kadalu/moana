@@ -30,10 +30,8 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
 
   # TODO: Validate if env.request.body.nil?
   req = MoanaTypes::Volume.from_json(env.request.body.not_nil!)
-  req.id = UUID.random.to_s if req.id == ""
 
   volume = Datastore.get_volume(pool_name, req.name)
-
   unless volume.nil?
     halt(env, status_code: 400, response: ({"error": "Volume already exists"}.to_json))
   end
@@ -50,6 +48,12 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
     end
 
     pool = create_pool(pool_name)
+  end
+
+  req.id = req.volume_id == "" ? UUID.random.to_s : req.volume_id
+  # To avoid creating existing volume with volume-id option
+  if req.id != "" && Datastore.volume_exists_by_id?(pool_name, req.id)
+    halt(env, status_code: 400, response: ({"error": "Volume already exists with the given ID"}.to_json))
   end
 
   # TODO: Validate the request, dist count, storage_units count etc
