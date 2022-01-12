@@ -261,9 +261,8 @@ module Datastore
     end
   end
 
-  def volume_exists_by_id?(pool_name, volume_id)
-    query = "SELECT COUNT(volumes.id) FROM volumes INNER JOIN pools ON volumes.pool_id = pools.id WHERE pools.name = ? AND volumes.id = ?"
-    connection.scalar(query, pool_name, volume_id).as(Int64) > 0
+  def volume_exists_by_id?(pool_id, volume_id)
+    query = "SELECT COUNT(id) FROM volumes WHERE pool_id = ? AND id = ?"
+    connection.scalar(query, pool_id, volume_id).as(Int64) > 0
   end
-
 end

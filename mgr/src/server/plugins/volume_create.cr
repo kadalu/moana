@@ -52,7 +52,7 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
 
   req.id = req.volume_id == "" ? UUID.random.to_s : req.volume_id
   # To avoid creating existing volume with volume-id option
-  if req.id != "" && Datastore.volume_exists_by_id?(pool_name, req.id)
+  if req.volume_id != "" && Datastore.volume_exists_by_id?(pool.not_nil!.id, req.id)
     halt(env, status_code: 400, response: ({"error": "Volume already exists with the given ID"}.to_json))
   end
 

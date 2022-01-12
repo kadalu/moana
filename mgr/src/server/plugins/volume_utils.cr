@@ -58,13 +58,13 @@ def participating_nodes(pool_name, req)
 end
 
 def get_xattr(path, xattr_name)
-    xattr = XAttr.new(path)
-    xattr[xattr_name]
-  rescue ex : IO::Error
-    # TODO: BSD systems raises ENOATTR
-    return nil if ex.os_error == Errno::ENODATA
-    raise ex
-  end
+  xattr = XAttr.new(path)
+  xattr[xattr_name]
+rescue ex : IO::Error
+  # TODO: BSD systems raises ENOATTR
+  return nil if ex.os_error == Errno::ENODATA
+  raise ex
+end
 
 def validate_volume_create(req)
   # TODO: Validate Rootdir
@@ -78,19 +78,16 @@ def validate_volume_create(req)
 
       storage_unit_pre_exists = File.exists?(storage_unit.path)
 
-      puts "storage_units_pre_exists: #{storage_unit_pre_exists}"
-      puts "req id: #{req.id}"
-      puts "volume id; #{req.volume_id}"
-
-      # Validation related to presence of pre-existing xattrs are handled below
-      Dir.mkdir_p storage_unit.path
-
-      # 9c48cf5c-b903-4dc1-8b46-3da2e6d5e33c
-
+      begin
+        Dir.mkdir_p storage_unit.path
+      rescue ex : Exception
+        return NodeResponse.new(false, {"error": "Failed to create Storage unit path #{storage_unit.path} (Error: #{ex})"}.to_json)
+      end
 
       begin
         xattr = XAttr.new(storage_unit.path)
         xattr[TEST_XATTR_NAME] = TEST_XATTR_VALUE
+        xattr.remove(TEST_XATTR_NAME)
       rescue ex : IO::Error
         return NodeResponse.new(false, {"error": "Extended attributes are not supported for #{storage_unit.path} (Error: #{ex})"}.to_json)
       ensure
@@ -103,12 +100,11 @@ def validate_volume_create(req)
         # --volume-id is not set
         if req.volume_id == ""
           return NodeResponse.new(false, {"error": "Storage unit #{storage_unit.path} is part of some other Volume"}.to_json)
-        # Below req.id & req.volume_id are same
+          # Below req.id & req.volume_id are same
         elsif xattr_vol_id_string != req.id
           return NodeResponse.new(false, {"error": "Volume-id do not match to reuse #{storage_unit.path} (Error: #{ex})"}.to_json)
         end
       end
-
     end
   end
 
