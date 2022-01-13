@@ -16,5 +16,6 @@ Please refer to link:../../CONTRIBUTING.md[Contributing Guidelines] before getti
 == Topics
 
 * link:./testing.adoc[Testing]
-* link:./container-based-dev-setup-single-node.adoc[Container based Development Environment Setup]
+* link:./container-based-dev-setup-single-node.adoc[Container based Development Environment Setup for Kadalu Storage]
 * link:./emacs-setup.adoc[Emacs based Crystal Development Environment Setup]
+* link:./container-based-dev-setup-for-glusterfs.adoc[Container based Development Environment setup for GlusterFS]

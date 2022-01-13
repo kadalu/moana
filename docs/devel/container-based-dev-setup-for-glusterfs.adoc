@@ -1,0 +1,60 @@
+= Container-based development environment for GlusterFS
+
+It is not easy to set up an environment for GlusterFS development. Installing all the build dependencies in the main OS makes it cluttered. And clean removal of the dependencies becomes hard once the development is work is over.
+
+Setting up using a Virtual machine for GlusterFS development is a better option compared to setting up in the host machine. But cleaning the Setup and re-setup is a tedious job. One has to make sure to clean all the previously installed files and set them up again for new enhancement.
+
+Clone the GlusterFS repo using the following command after creating the fork of GlusterFS from Github UI.
+
+[source,console]
+----
+$ gh_username=<your-user-name>
+$ git clone git@github.com:${gh_username}/glusterfs.git
+----
+
+Run the following docker command to Start the GlusterFS dev container.
+
+[source,console]
+----
+$ cd $GLUSTERFS_SRC
+$ sudo docker run -d \
+      -v /sys/fs/cgroup/:/sys/fs/cgroup:ro \
+      --privileged \
+      --name server1 \
+      -v $PWD:/usr/src/glusterfs \
+      -w /usr/src/glusterfs \
+      --hostname server1 \
+      kadalu/gluster-build-env:latest
+----
+
+That's it!. Now check out a branch and start making changes. To test the changes, log in to the container and build the GlusterFS using the following commands.
+
+[source,console]
+----
+$ sudo docker exec -it server1 /bin/bash
+# ./autogen.sh
+# ./configure --disable-linux-io_uring
+# make
+# make install
+# ldconfig
+----
+
+Once installed, start the Glusterd by running it in debug mode.
+
+[source,console]
+----
+# glusterd -LDEBUG
+----
+
+Check out a new branch and then make the changes locally. Test it quickly in the container, then submit a PR. After every change to the Gluster code in the host machine, run `make install` and `ldconfig` in the container.
+
+To destroy the Setup, stop and delete the container. A restart of the container will not keep any state.
+
+**Note**: Restarting the container will not retain the installed state(Intentional). Run `make install` and `ldconfig` again if other steps are completed in the previous runs.
+
+We hope you all like this. Let us know if anything we can do to improve the Gluster development process.
+
+**Known issue**: On Mac, the Docker Volume mount is very slow(https://forums.docker.com/t/file-access-in-mounted-volumes-extremely-slow-cpu-bound/8076/243[Refer]), building may take more time than doing it in the Virtual or host machine.
+
+If any additional debug tools are required or a similar environment is required for Fedora/CentOS, send PRs to update Dockerfiles https://github.com/kadalu/moana/tree/main/extra/gluster/[here].
+
