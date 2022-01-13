@@ -10,7 +10,7 @@ shards:
 
   exception_page:
     git: https://github.com/crystal-loot/exception_page.git
-    version: 0.2.0
+    version: 0.2.1
 
   kemal:
     git: https://github.com/kemalcr/kemal.git
@@ -41,6 +41,6 @@ shards:
     version: 0.18.0
 
   xattr:
-    git: https://github.com/ettomatic/xattr.git
-    version: 0.7.0+git.commit.4acdcb3be0c6f1f7ed620587fbb62e852ed38c60
+    git: https://github.com/aravindavk/xattr-crystal.git
+    version: 0.1.0+git.commit.40adf6b7f0dd4f0a36c5a35d38e9a3924426fb95
 
