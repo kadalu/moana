@@ -260,4 +260,9 @@ module Datastore
       conn.exec(query, pool_id, volume_id)
     end
   end
+
+  def volume_exists_by_id?(pool_id, volume_id)
+    query = "SELECT COUNT(id) FROM volumes WHERE pool_id = ? AND id = ?"
+    connection.scalar(query, pool_id, volume_id).as(Int64) > 0
+  end
 end

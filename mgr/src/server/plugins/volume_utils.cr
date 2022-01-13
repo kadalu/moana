@@ -8,7 +8,11 @@ require "../services"
 require "../datastore/*"
 require "../default_volfiles"
 
+TEST_XATTR_NAME  = "user.testattr"
+TEST_XATTR_VALUE = "testvalue"
+
 VOLUME_ID_XATTR_NAME = "trusted.glusterfs.volume-id"
+
 alias VolumeRequestToNode = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, Array(MoanaTypes::Volfile)), MoanaTypes::Volume)
 
 def volfile_get(name)
@@ -53,8 +57,14 @@ def participating_nodes(pool_name, req)
   end
 end
 
-TEST_XATTR_NAME  = "user.testattr"
-TEST_XATTR_VALUE = "testvalue"
+def get_xattr(path, xattr_name)
+  xattr = XAttr.new(path)
+  xattr[xattr_name]
+rescue ex : IO::Error
+  # TODO: BSD systems raises ENOATTR
+  return nil if ex.os_error == Errno::ENODATA
+  raise ex
+end
 
 def validate_volume_create(req)
   # TODO: Validate Rootdir
@@ -66,8 +76,10 @@ def validate_volume_create(req)
         return NodeResponse.new(false, {"error": "Storage unit parent directory(#{Path[storage_unit.path].parent}) not exists"}.to_json)
       end
 
+      storage_unit_pre_exists = File.exists?(storage_unit.path)
+
       begin
-        Dir.mkdir storage_unit.path
+        Dir.mkdir_p storage_unit.path
       rescue ex : Exception
         return NodeResponse.new(false, {"error": "Failed to create Storage unit path #{storage_unit.path} (Error: #{ex})"}.to_json)
       end
@@ -75,10 +87,23 @@ def validate_volume_create(req)
       begin
         xattr = XAttr.new(storage_unit.path)
         xattr[TEST_XATTR_NAME] = TEST_XATTR_VALUE
+        xattr.remove(TEST_XATTR_NAME)
       rescue ex : IO::Error
         return NodeResponse.new(false, {"error": "Extended attributes are not supported for #{storage_unit.path} (Error: #{ex})"}.to_json)
       ensure
-        FileUtils.rmdir storage_unit.path
+        FileUtils.rmdir storage_unit.path unless storage_unit_pre_exists
+      end
+
+      xattr_vol_id = get_xattr(storage_unit.path, VOLUME_ID_XATTR_NAME) if storage_unit_pre_exists
+      if storage_unit_pre_exists && !xattr_vol_id.nil?
+        xattr_vol_id_string = UUID.new(xattr_vol_id.not_nil!.to_slice).to_s
+        # --volume-id is not set
+        if req.volume_id == ""
+          return NodeResponse.new(false, {"error": "Storage unit #{storage_unit.path} is part of some other Volume"}.to_json)
+          # Below req.id & req.volume_id are same
+        elsif xattr_vol_id_string != req.id
+          return NodeResponse.new(false, {"error": "Volume-id do not match to reuse #{storage_unit.path} (Error: #{ex})"}.to_json)
+        end
       end
     end
   end
@@ -122,7 +147,7 @@ def handle_volume_create(data, stopped = false)
       next unless storage_unit.node.name == GlobalConfig.local_node.name
 
       # Create the Storage Unit
-      Dir.mkdir storage_unit.path
+      Dir.mkdir_p storage_unit.path
 
       # Set volume-id xattr, ignore if same Volume ID exists
       volume_id = UUID.new(req.id)
@@ -130,9 +155,7 @@ def handle_volume_create(data, stopped = false)
         xattr = XAttr.new(storage_unit.path, only_create: true)
         xattr[VOLUME_ID_XATTR_NAME] = volume_id.bytes.to_slice
       rescue ex : IO::Error
-        if ex.os_error == Errno::EEXIST && xattr.not_nil![VOLUME_ID_XATTR_NAME] != volume_id.bytes.to_slice
-          return NodeResponse.new(false, {"error": "Storage Unit #{storage_unit.node.name}:#{storage_unit.path} is already used with another Volume"}.to_json)
-        else
+        if ex.os_error != Errno::EEXIST
           return NodeResponse.new(false, {"error": "Failed to set Volume ID Xattr. Error=#{ex}"}.to_json)
         end
       end

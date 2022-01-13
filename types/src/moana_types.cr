@@ -109,6 +109,7 @@ module MoanaTypes
       pool = Pool.new,
       distribute_groups = [] of DistributeGroup,
       no_start = false,
+      volume_id = "",
       auto_create_pool = false,
       auto_add_nodes = false,
       options = Hash(String, String).new,

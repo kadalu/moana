@@ -31,6 +31,13 @@ nodes.each do |node|
   TEST "mkdir -p /exports/vol3"
   TEST "mkdir -p /exports/vol4"
   TEST "mkdir -p /exports/vol5"
+  TEST "mkdir -p /exports/vol6"
+  TEST "mkdir -p /exports/vol7"
+  TEST "mkdir -p /exports/vol8"
+  TEST "mkdir -p /exports/vol9"
+  TEST "mkdir -p /exports/vol10/s1"
+  TEST "mkdir -p /exports/vol11"
+  TEST "mkdir -p /exports/vol12"
 end
 
 USE_NODE nodes[0]
@@ -100,6 +107,42 @@ USE_NODE nodes[0]
 TEST "kadalu volume create DEV/vol5 server1:/exports/vol5/s1 server2:/exports/vol5/s2 server3:/exports/vol5/s3 --auto-create-pool --auto-add-nodes"
 TEST "kadalu volume stop DEV/vol5 --mode=script"
 TEST "kadalu volume delete DEV/vol5 --mode=script"
+
+# Tests for volume re-use usecase
+def create_volume_and_get_id(cmd)
+    out = TEST cmd
+    last_line = out.strip.split("\n")[-1]
+    vol_id = last_line.nil? ? "" : last_line.split(":")[-1].strip
+    vol_id
+end
+
+# Can ignore --auto-create-pools & --auto-add-nodes since it already created & not deleted.
+# Case 1
+# Create vol6 & delete it. Reuse the same path with --volume-id for vol7.
+USE_NODE nodes[0]
+vol_id = create_volume_and_get_id("kadalu volume create DEV/vol6 server1:/exports/vol6/s1 server2:/exports/vol6/s2 server3:/exports/vol6/s3 --no-start")
+TEST "kadalu volume delete DEV/vol6 --mode=script"
+new_vol_id = create_volume_and_get_id("kadalu volume create DEV/vol7 server1:/exports/vol6/s1 server2:/exports/vol6/s2 server3:/exports/vol6/s3 --no-start --volume-id=#{vol_id}")
+EQUAL vol_id, new_vol_id, "Checking if volume-id are equal after vol6 is reused with --volume-id in vol7"
+TEST "kadalu volume delete DEV/vol7 --mode=script"
+
+# Case 2
+# Create vol8. Create vol9 with --volume-id of active vol8.
+vol_id = create_volume_and_get_id("kadalu volume create DEV/vol8 server1:/exports/vol8/s1 server2:/exports/vol8/s2 server3:/exports/vol8/s3 --no-start")
+TEST 1, "kadalu volume create DEV/vol9 server1:/exports/vol9/s1 server2:/exports/vol9/s2 server3:/exports/vol9/s3 --no-start --volume-id=#{vol_id}"
+TEST "kadalu volume delete DEV/vol8 --mode=script"
+
+# Case 3
+# Create vol10 with full storage-unit directory
+TEST "kadalu volume create DEV/vol10 server1:/exports/vol10/s1 --no-start"
+TEST "kadalu volume delete DEV/vol10 --mode=script"
+
+# Case 4 [Negation of Case1]
+# Create vol11 & delete it. Create vol12 with same path of unactive vol11 without --volume-id.
+TEST "kadalu volume create DEV/vol11 server1:/exports/vol11/s1 server2:/exports/vol11/s2 server3:/exports/vol11/s3 --no-start"
+TEST "kadalu volume delete DEV/vol11 --mode=script"
+TEST 1, "kadalu volume create DEV/vol12 server1:/exports/vol11/s1 server2:/exports/vol11/s2 server3:/exports/vol11/s3 --no-start"
+
 nodes.each do |node|
   USE_NODE nodes[0]
   puts TEST "kadalu node remove DEV/#{node} --mode=script"
