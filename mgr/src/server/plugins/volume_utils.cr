@@ -58,8 +58,7 @@ def participating_nodes(pool_name, req)
 end
 
 def get_xattr(path, xattr_name)
-  xattr = XAttr.new(path)
-  xattr[xattr_name]
+  XAttr.get(path, xattr_name)
 rescue ex : IO::Error
   # TODO: BSD systems raises ENOATTR
   return nil if ex.os_error == Errno::ENODATA
@@ -85,9 +84,8 @@ def validate_volume_create(req)
       end
 
       begin
-        xattr = XAttr.new(storage_unit.path)
-        xattr[TEST_XATTR_NAME] = TEST_XATTR_VALUE
-        xattr.remove(TEST_XATTR_NAME)
+        XAttr.set(storage_unit.path, TEST_XATTR_NAME, TEST_XATTR_VALUE)
+        XAttr.remove(storage_unit.path, TEST_XATTR_NAME)
       rescue ex : IO::Error
         return NodeResponse.new(false, {"error": "Extended attributes are not supported for #{storage_unit.path} (Error: #{ex})"}.to_json)
       ensure
@@ -152,8 +150,8 @@ def handle_volume_create(data, stopped = false)
       # Set volume-id xattr, ignore if same Volume ID exists
       volume_id = UUID.new(req.id)
       begin
-        xattr = XAttr.new(storage_unit.path, only_create: true)
-        xattr[VOLUME_ID_XATTR_NAME] = volume_id.bytes.to_slice
+        XAttr.set(storage_unit.path, VOLUME_ID_XATTR_NAME,
+          volume_id.bytes.to_slice, only_create: true)
       rescue ex : IO::Error
         if ex.os_error != Errno::EEXIST
           return NodeResponse.new(false, {"error": "Failed to set Volume ID Xattr. Error=#{ex}"}.to_json)

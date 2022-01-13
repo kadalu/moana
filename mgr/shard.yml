@@ -30,5 +30,4 @@ dependencies:
     path: ../volgen
 
   xattr:
-    github: ettomatic/xattr
-    branch: master
+    github: aravindavk/xattr-crystal
