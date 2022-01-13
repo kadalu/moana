@@ -1,8 +1,10 @@
 require "./helpers"
 require "./volume_create_parser"
+require "./gluster_volume_parser"
 
 struct VolumeArgs
-  property status = false, detail = false, name = "", volume_id = "", no_start = false, auto_create_pool = false, auto_add_nodes = false
+  property status = false, detail = false, name = "", volume_id = "", no_start = false, auto_create_pool = false, auto_add_nodes = false,
+    node_maps = Hash(String, String).new
 end
 
 class Args
@@ -28,12 +30,30 @@ command "volume.create", "Kadalu Storage Volume Create" do |parser, args|
   parser.on("--auto-add-nodes", "Automatically add nodes to the Pool") do
     args.volume_args.auto_add_nodes = true
   end
+  parser.on("--node-map=NODEMAP", "Provide Node mapping while importing. Example: --node-map=\"server1.example.com=node1.example.com\"") do |node|
+    old_name, new_name = node.split("=")
+    args.volume_args.node_maps[old_name] = new_name
+  end
 end
 
 handler "volume.create" do |args|
   begin
-    req = VolumeRequestParser.parse(args.pos_args)
-    req.volume_id = args.volume_args.volume_id
+    # Handle Gluster Volume import
+    command_error "Pool name is required" if args.pos_args.size == 0
+
+    pool_name, volume_name = pool_and_volume_name(args.pos_args[0])
+    if volume_name == "-"
+      import_data = from_gluster_volumes_xml(pool_name, STDIN.gets_to_end, args)
+      # TODO: Handle if the input contains more than one Volume
+      # TODO: Handle if no Volumes provided
+      req = VolumeRequestParser.parse(import_data[0].cli_args)
+      req.volume_id = import_data[0].volume_id
+      # TODO: How to use import_data[0].options
+    else
+      req = VolumeRequestParser.parse(args.pos_args)
+      req.volume_id = args.volume_args.volume_id
+    end
+
     req.no_start = args.volume_args.no_start
     req.auto_create_pool = args.volume_args.auto_create_pool
     req.auto_add_nodes = args.volume_args.auto_add_nodes
