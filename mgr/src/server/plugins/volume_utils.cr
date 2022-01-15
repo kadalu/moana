@@ -92,17 +92,33 @@ def validate_volume_create(req)
         FileUtils.rmdir storage_unit.path unless storage_unit_pre_exists
       end
 
+      # Avoid scenario of user creating the volume with user's --volume-id instead of
+      # random value set by 'moana' when path is created by agent.
+      if !storage_unit_pre_exists && req.volume_id
+        return NodeResponse.new(false,{
+          "error": "Cannot use --volume-id option with non pre-existing path #{storage_unit.path}"}.to_json
+        )
+      end
+
       xattr_vol_id = get_xattr(storage_unit.path, VOLUME_ID_XATTR_NAME) if storage_unit_pre_exists
+
+      # Storage unit already exists with volume-id xattr
       if storage_unit_pre_exists && !xattr_vol_id.nil?
         xattr_vol_id_string = UUID.new(xattr_vol_id.not_nil!.to_slice).to_s
         # --volume-id is not set
         if req.volume_id == ""
-          return NodeResponse.new(false, {"error": "Storage unit #{storage_unit.path} is part of some other Volume"}.to_json)
+          return NodeResponse.new(false, {"error": "Storage unit #{storage_unit.path} is part of some other Volume or Stale"}.to_json)
           # Below req.id & req.volume_id are same
         elsif xattr_vol_id_string != req.id
-          return NodeResponse.new(false, {"error": "Volume-id do not match to reuse #{storage_unit.path} (Error: #{ex})"}.to_json)
+          return NodeResponse.new(false, {"error": "Volume-id do not match to reuse storage-unit #{storage_unit.path}"}.to_json)
         end
+
+      # Storage unit already exists with no volume-id xattr and user sets the --volume-id instead of random ID set by `moana`.
+      # This may lead to traceback of "Invalid String Length". Hanlde appropriately.
+      elsif storage_unit_pre_exists && xattr_vol_id.nil? && req.volume_id
+        return NodeResponse.new(false, {"error": "Cannot use --volume-id option for a fresh storage-unit #{storage_unit.path}"}.to_json)
       end
+
     end
   end
 
