@@ -4,38 +4,46 @@ require "kemal"
 
 require "../actions"
 
-post "/_api/v1/:action" do |env|
+def handle_node_action(env)
   action = env.params.url["action"]
-  begin
-    req = env.params.json["data"].as(String)
-    resp = Action.run(action, req)
-    env.response.status_code = 400 if !resp.ok
+  req = env.params.json["data"].as(String)
 
-    # Skip authorization for new node additions
-    if action != ACTION_NODE_INVITE_ACCEPT
-      auth = env.request.headers["Authorization"]?
+  # Skip authorization for new node additions
+  if action != ACTION_NODE_INVITE_ACCEPT
+    auth = env.request.headers["Authorization"]?
 
-      if auth.nil?
-        halt(env, status_code: 401, response: ({"error": "Authorization header is not set"}).to_json)
-      end
-
-      bearer, _, token = auth.partition(" ")
-      if bearer.downcase != "bearer" || token == ""
-        halt(env, status_code: 401, response: ({"error": "Invalid Authoriation header"}).to_json)
-      end
-
-      token_hash = hash_sha256(token)
-      if token_hash != GlobalConfig.local_node.token_hash
-        halt(env, status_code: 403, response: ({"error": "Invalid node token"}).to_json)
-      end
+    if auth.nil?
+      return NodeResponse.new(false, {"error": "Authorization header is not set"}.to_json, 401)
     end
-  rescue ex : Exception
-    Log.error &.emit("#{action} Failed", error: "#{ex}")
-    env.response.status_code = 500
-    resp = NodeResponse.new(false, ({"error": "#{action} Failed"}).to_json)
+
+    bearer, _, token = auth.partition(" ")
+    if bearer.downcase != "bearer" || token == ""
+      return NodeResponse.new(false, {"error": "Invalid Authoriation header"}.to_json, 401)
+    end
+
+    token_hash = hash_sha256(token)
+    if token_hash != GlobalConfig.local_node.token_hash
+      return NodeResponse.new(false, {"error": "Invalid node token"}.to_json, 401)
+    end
   end
 
-  resp.status_code = env.response.status_code
+  resp = Action.run(action, req)
+  resp.status_code = 400 unless resp.ok
+
+  resp
+rescue ex : Exception
+  Log.error exception: ex, &.emit("#{action} Failed", error: "#{ex}")
+  NodeResponse.new(false, {"error": "#{action} Failed"}.to_json, 500)
+end
+
+post "/_api/v1/:action" do |env|
+  resp = handle_node_action(env)
+  # Do not change the response status code
+  # Kemal framework will raise exception or adds new error
+  # response if the status code is not 200.
+  # Response status is decided by the caller based
+  # on resp.status_code and resp.ok
+  env.response.status_code = 200
   resp.to_json
 end
 

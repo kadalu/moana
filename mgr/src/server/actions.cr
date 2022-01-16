@@ -10,6 +10,9 @@ struct NodeResponse
 
   def initialize(@ok, @response)
   end
+
+  def initialize(@ok, @response, @status_code)
+  end
 end
 
 struct Response
