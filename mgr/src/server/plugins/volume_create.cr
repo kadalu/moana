@@ -51,6 +51,11 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
   end
 
   req.id = req.volume_id == "" ? UUID.random.to_s : req.volume_id
+
+  if req.volume_id != "" && !valid_uuid?(req.volume_id)
+    halt(env, status_code: 400, response: ({"error": "Volume ID does not match UUID format"}.to_json))
+  end
+
   # To avoid creating existing volume with volume-id option
   if req.volume_id != "" && Datastore.volume_exists_by_id?(pool.not_nil!.id, req.id)
     halt(env, status_code: 400, response: ({"error": "Volume already exists with the given ID"}.to_json))
