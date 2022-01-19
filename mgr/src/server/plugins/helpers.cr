@@ -87,3 +87,10 @@ def forbidden(env)
   env.response.content_type = "application/json"
   env.response.print ({"error": "Forbidden. Insufficient permissions"}).to_json
 end
+
+def valid_uuid?(val)
+  UUID.new(val)
+  true
+rescue ArgumentError
+  false
+end
