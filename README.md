@@ -14,8 +14,7 @@ This README is structured for quickly getting started with the project (from the
 Download and install the latest release with the command
 
 ```
-curl -L https://github.com/kadalu/moana/releases/latest/download/kadalu-`uname -m | sed 's|aarch64|arm64|' | sed 's|x86_64|amd64|'` -o kadalu
-install kadalu /usr/sbin/
+curl -fsSL https://github.com/kadalu/moana/releases/latest/download/install.sh | sudo bash -x
 ```
 
 ## Usage:
