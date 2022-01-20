@@ -4,7 +4,7 @@ USE_REMOTE_PLUGIN "docker"
 nodes = ["server1", "server2", "server3"]
 
 # Static build Kadalu Storage Manager
-TEST "docker run --rm -i -v $PWD:/workspace -w /workspace crystallang/crystal:1.2.0-alpine /bin/sh -c \"apk add --update --no-cache --force-overwrite sqlite-dev sqlite-static && cd mgr && shards install && shards build --static\""
+TEST "docker run --rm -i -v $PWD:/workspace -w /workspace crystallang/crystal:1.2.0-alpine /bin/sh -c \"apk add --update --no-cache --force-overwrite sqlite-dev sqlite-static && cd mgr && shards install && VERSION=#{ENV.fetch("VERSION", "")} shards build --static\""
 
 # Install the Static binary to all containers/nodes
 # and copy the service files
