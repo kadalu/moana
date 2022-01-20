@@ -2,7 +2,8 @@ require "option_parser"
 
 require "./cmds/*"
 
-VERSION = {{ `shards version #{__DIR__}`.chomp.stringify }}
+# Set VERSION during build time
+VERSION = {{ env("VERSION") && env("VERSION") != "" ? env("VERSION") : `git describe --always --tags --match "[0-9]*" --dirty`.chomp.stringify }}
 
 module CLI
   def self.run(args)
@@ -17,12 +18,12 @@ module CLI
       end
 
       parser_1.on("--version", "Show Version information") do
-        puts "kadalu #{VERSION}"
+        puts "Kadalu Storage #{VERSION}"
         exit
       end
 
       parser_1.on("version", "Show Version information") do
-        puts "kadalu #{VERSION}"
+        puts "Kadalu Storage #{VERSION}"
         exit
       end
 

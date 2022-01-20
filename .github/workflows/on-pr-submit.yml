@@ -36,6 +36,6 @@ jobs:
       - name: Setup Test environment
         run: binnacle -v tests/setup.t
       - name: Build and Install Storage manager to nodes/containers
-        run: binnacle -v tests/install.t
+        run: VERSION="${{ github.ref_name }}" binnacle -v tests/install.t
       - name: Run all Tests
         run: binnacle -v tests/all
