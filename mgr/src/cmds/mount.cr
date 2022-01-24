@@ -40,7 +40,7 @@ handler "mount" do |args|
     api_call(args, "Failed to generate the Volfile") do |client|
       volfile = client.pool(pool_name).volume(volume_name).get_volfile("client")
 
-      volfile_dir = Path.new(GlobalConfig.workdir, "volfiles")
+      volfile_dir = "/var/lib/kadalu/volfiles"
       volfile_path = Path.new(volfile_dir, "client-#{pool_name}-#{volume_name}.vol").to_s
       Dir.mkdir_p(volfile_dir)
       File.write(volfile_path, volfile.content)
