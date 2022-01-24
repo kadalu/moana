@@ -4,7 +4,7 @@ require "../datastore/*"
 
 ACTION_NODE_INVITE_ACCEPT = "node_invite_accept"
 
-node_action ACTION_NODE_INVITE_ACCEPT do |data, _env|
+node_action ACTION_NODE_INVITE_ACCEPT do |data, env|
   req = MoanaTypes::NodeRequest.from_json(data)
 
   data_file = Path.new(GlobalConfig.workdir, "info")
@@ -31,7 +31,13 @@ node_action ACTION_NODE_INVITE_ACCEPT do |data, _env|
   local_node_data.pool_name = req.pool_name
   local_node_data.name = req.name
   local_node_data.token_hash = hash_sha256(node.token)
-  # TODO: Add Storage Manager URL
+  if env.request.remote_address
+    local_node_data.mgr_url, _sep, _port = env.request.remote_address.to_s.rpartition(":")
+  else
+    Log.warn { "Storage manager address is not set" }
+  end
+  local_node_data.mgr_port = req.mgr_port
+  local_node_data.mgr_https = req.mgr_https
 
   # TODO: Handle error while writing node data
   File.write(data_file, local_node_data.to_json)
@@ -52,6 +58,9 @@ def node_invite(pool_name : String, node_name : String, endpoint : String)
   invite.pool_name = pool_name
   invite.name = node_name
   invite.mgr_node_id = GlobalConfig.local_node.id
+  invite.mgr_port = Kemal.config.port
+  # TODO: Set https based on config or Kemal config
+  invite.mgr_https = false
 
   invite
 end
