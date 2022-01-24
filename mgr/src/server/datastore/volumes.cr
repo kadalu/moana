@@ -101,7 +101,7 @@ module Datastore
             pools.name AS pool_name
      FROM volumes
      INNER JOIN distribute_groups ON volumes.id = distribute_groups.volume_id
-     INNER JOIN storage_units ON storage_units.volume_id = volumes.id
+     INNER JOIN storage_units ON storage_units.volume_id = volumes.id AND storage_units.distribute_group_id = distribute_groups.id
      INNER JOIN nodes ON nodes.id = storage_units.node_id
      INNER JOIN pools ON pools.id = volumes.pool_id
     "
