@@ -20,6 +20,41 @@ def unauthorized(env, message)
   env.response.print ({"error": "Unauthorized. #{message}"}).to_json
 end
 
+class MgrRequestsProxyHandler < Kemal::Handler
+  def call(env)
+    # No proxy required if
+    # - the current process is a Manager or
+    # - it is a internal request or
+    # - mgr_url is not set in Local node
+    if GlobalConfig.local_node.mgr_url == "" ||
+       env.request.path.starts_with?("/_api") ||
+       Datastore.manager?
+      return call_next(env)
+    end
+
+    mgr_url = URI.new(
+      scheme: GlobalConfig.local_node.mgr_https ? "https" : "http",
+      host: GlobalConfig.local_node.mgr_url,
+      port: GlobalConfig.local_node.mgr_port,
+      path: env.request.path,
+      query: env.request.query_params
+    )
+    resp = case env.request.method
+           when "GET"    then HTTP::Client.get(mgr_url, headers: env.request.headers)
+           when "POST"   then HTTP::Client.post(mgr_url, headers: env.request.headers, body: env.request.body)
+           when "PUT"    then HTTP::Client.put(mgr_url, headers: env.request.headers, body: env.request.body)
+           when "DELETE" then HTTP::Client.delete(mgr_url, headers: env.request.headers)
+           end
+    if resp
+      env.response.status_code = resp.status_code
+      env.response.content_type = "application/json"
+      env.response.print resp.body
+    else
+      call_next(env)
+    end
+  end
+end
+
 class AuthHandler < Kemal::Handler
   # Exclude user create API, Login API and Node action internal API.
   # User creation should be allowed even if unauthorized.

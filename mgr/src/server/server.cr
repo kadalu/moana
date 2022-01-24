@@ -138,6 +138,7 @@ module StorageMgr
 
     Log.info &.emit("Starting the Storage manager ReST API server", port: "#{Kemal.config.port}")
 
+    add_handler MgrRequestsProxyHandler.new
     add_handler AuthHandler.new
 
     # Start the API server
