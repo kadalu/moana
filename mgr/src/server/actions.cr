@@ -30,14 +30,14 @@ struct Response
 end
 
 module Action
-  @@actions = Hash(String, (String -> NodeResponse)).new
+  @@actions = Hash(String, (String, HTTP::Server::Context -> NodeResponse)).new
 
-  def self.add(name, &block : String -> NodeResponse)
+  def self.add(name, &block : String, HTTP::Server::Context -> NodeResponse)
     @@actions[name] = block
   end
 
-  def self.run(name, data)
-    @@actions[name].call(data)
+  def self.run(name, data, env)
+    @@actions[name].call(data, env)
   end
 
   def self.dispatch(name : String, pool_name : String, nodes : Array(MoanaTypes::Node), data : String)

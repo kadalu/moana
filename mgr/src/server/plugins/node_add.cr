@@ -4,7 +4,7 @@ require "../datastore/*"
 
 ACTION_NODE_INVITE_ACCEPT = "node_invite_accept"
 
-node_action ACTION_NODE_INVITE_ACCEPT do |data|
+node_action ACTION_NODE_INVITE_ACCEPT do |data, _env|
   req = MoanaTypes::NodeRequest.from_json(data)
 
   data_file = Path.new(GlobalConfig.workdir, "info")

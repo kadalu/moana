@@ -27,7 +27,7 @@ def handle_node_action(env)
     end
   end
 
-  resp = Action.run(action, req)
+  resp = Action.run(action, req, env)
   resp.status_code = 400 unless resp.ok
 
   resp
@@ -47,7 +47,7 @@ post "/_api/v1/:action" do |env|
   resp.to_json
 end
 
-def node_action(name, &block : String -> NodeResponse)
+def node_action(name, &block : String, HTTP::Server::Context -> NodeResponse)
   Action.add(name, &block)
 end
 

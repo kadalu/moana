@@ -16,7 +16,7 @@ struct VolumeStatusRequestToNode
   end
 end
 
-node_action ACTION_VOLUME_STATUS do |data|
+node_action ACTION_VOLUME_STATUS do |data, _env|
   Log.debug &.emit("Node Action", action: ACTION_VOLUME_STATUS, data: data)
 
   req = Hash(String, VolumeStatusRequestToNode).from_json(data)

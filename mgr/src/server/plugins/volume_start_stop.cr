@@ -9,11 +9,11 @@ require "./volume_utils.cr"
 ACTION_VOLUME_START = "volume_start"
 ACTION_VOLUME_STOP  = "volume_stop"
 
-node_action ACTION_VOLUME_START do |data|
+node_action ACTION_VOLUME_START do |data, _env|
   handle_node_volume_start_stop(data, "start")
 end
 
-node_action ACTION_VOLUME_STOP do |data|
+node_action ACTION_VOLUME_STOP do |data, _env|
   handle_node_volume_start_stop(data, "stop")
 end
 
