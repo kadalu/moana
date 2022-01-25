@@ -28,6 +28,19 @@ nodes.each do |node|
   USE_NODE nodes[0]
   puts TEST "kadalu node remove DEV/#{node} --mode=script"
 end
+
+nodes.each do |node|
+  USE_NODE node
+  puts TEST "cat /var/lib/kadalu/info"
+end
+
+# Add and remove again to see node cleanup happens after remove
+nodes.each do |node|
+  USE_NODE nodes[0]
+  TEST "kadalu node add DEV/#{node}"
+  TEST "kadalu node remove DEV/#{node} --mode=script"
+end
+
 puts TEST "kadalu pool delete DEV --mode=script"
 puts TEST "kadalu user logout"
 
