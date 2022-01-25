@@ -81,8 +81,9 @@ node_action ACTION_NODE_REMOVE do |data, _env|
   # TODO: Handle error while writing node data
   File.write(data_file, local_node_data.to_json)
 
-  # Remove Agent/Manager identifier
-  Datastore.remove_manager_agent
+  # Remove Agent identifier
+  # Leave it as it is if it is Manager
+  Datastore.remove_agent
 
   GlobalConfig.local_node = local_node_data
   NodeResponse.new(true, "")
