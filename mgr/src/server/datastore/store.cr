@@ -53,8 +53,7 @@ module Datastore
     File.exists?(manager_file)
   end
 
-  def remove_manager_agent
-    File.delete(manager_file) if manager?
+  def remove_agent
     File.delete(agent_file) if agent?
   end
 
