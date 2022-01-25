@@ -2,13 +2,16 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+RUN apt-get update -yq && apt install -y software-properties-common
+RUN add-apt-repository -y ppa:gluster/glusterfs-10
 RUN apt-get update -yq &&                                                 \
     apt-get install -y --no-install-recommends python3 libtirpc3 init     \
     vim python3-pip ssh rsync lvm2 less emacs software-properties-common  \
     sudo curl wget git build-essential automake autoconf automake libtool \
     flex bison libssl-dev pkg-config uuid-dev acl-dev zlib1g-dev          \
     libxml2-dev libxml2-utils liburcu-dev xfsprogs gdb attr               \
-    libgoogle-perftools-dev zfsutils-linux screen libsqlite3-dev sqlite3
+    libgoogle-perftools-dev zfsutils-linux screen libsqlite3-dev sqlite3  \
+    glusterfs-server
 
 RUN echo "root:kadalu" | chpasswd
 
@@ -23,10 +26,5 @@ RUN sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/' /etc/ssh/sshd_config \
   systemctl mask getty.target
 
 RUN curl -fsSL https://crystal-lang.org/install.sh | sudo bash
-
-RUN git clone https://github.com/kadalu/glusterfs && \
-    cd glusterfs && \
-    git checkout series_1 && \
-    ./autogen.sh && ./configure --disable-linux-io_uring && make && make install && ldconfig
 
 cmd ["/usr/sbin/init"]
