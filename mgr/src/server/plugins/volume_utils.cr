@@ -252,6 +252,8 @@ def services_and_volfiles(req)
 
   return {services, volfiles} if req.no_start
 
+  shd_services = Hash(String, Bool).new
+
   req.distribute_groups.each do |dist_grp|
     dist_grp.storage_units.each do |storage_unit|
       # Generate Service Unit
@@ -267,9 +269,15 @@ def services_and_volfiles(req)
       volfiles[storage_unit.node.id] = [] of MoanaTypes::Volfile unless volfiles[storage_unit.node.id]?
       volfiles[storage_unit.node.id] << MoanaTypes::Volfile.new(service.id, content)
 
-      if req.replicate_family?
-        # Generate Self-Heal service file
-        # Generate Self-Heal Volfile
+      # Generate and add shd Volfiles and services only if it is
+      # not added for that node.
+      if req.replicate_family? && shd_services[storage_unit.node.id]?.nil?
+        shd_services[storage_unit.node.id] = true
+        service = ShdService.new(req.name, storage_unit.node.id)
+        services[storage_unit.node.id] << service.unit
+        tmpl = volfile_get("shd")
+        content = Volfile.pool_level("shd", tmpl, [req])
+        volfiles[storage_unit.node.id] << MoanaTypes::Volfile.new(service.id, content)
       end
     end
   end
