@@ -24,7 +24,7 @@ class StorageUnitService < Service
       "--brick-name", storage_unit.path,
       "-l", "/var/log/kadalu/storage_units/#{@id}.log",
       "--xlator-option",
-      "*-posix.glusterd-uuid=#{GlobalConfig.local_node.id}",
+      "*-posix.glusterd-uuid=#{storage_unit.node.id}",
       "--process-name", "storage-unit",
       "--brick-port", "#{storage_unit.port}",
       "--xlator-option",
