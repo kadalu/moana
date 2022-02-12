@@ -105,3 +105,18 @@ def yes(label)
   value = STDIN.gets(chomp: true).not_nil!
   ["yes", "y", "yy", "ok", "sure", "on"].includes?(value.strip.downcase)
 end
+
+def cli_to_json(headers, rows)
+  i = 0
+  arr = Array(Hash(String, String)).new
+  rows.each do |row|
+    i = 0
+    val = Hash(String, String).new
+    headers.each do |header|
+      val[header.downcase] = row[i]
+      i = i + 1
+    end
+    arr << val
+  end
+  arr.to_pretty_json
+end

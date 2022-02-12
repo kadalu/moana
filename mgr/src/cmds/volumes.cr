@@ -3,7 +3,8 @@ require "./volume_create_parser"
 require "./gluster_volume_parser"
 
 struct VolumeArgs
-  property status = false, detail = false, name = "", volume_id = "", no_start = false, auto_create_pool = false, auto_add_nodes = false,
+  property status = false, detail = false, name = "", volume_id = "", no_start = false,
+    auto_create_pool = false, auto_add_nodes = false, json = false,
     node_maps = Hash(String, String).new
 end
 
@@ -116,6 +117,9 @@ command "volume.list", "Volumes list of a Kadalu Storage Pool" do |parser, args|
   parser.on("--detail", "Show detailed Volumes info") do
     args.volume_args.detail = true
   end
+  parser.on("--json", "Pretty print in JSON") do
+    args.volume_args.json = true
+  end
 end
 
 def volume_detail(volume, status = false)
@@ -207,7 +211,11 @@ handler "volume.list" do |args|
       end
     end
 
-    table.render
+    if args.volume_args.json
+      puts cli_to_json(table.render_header, table.render_rows)
+    else
+      table.render
+    end
   end
 end
 

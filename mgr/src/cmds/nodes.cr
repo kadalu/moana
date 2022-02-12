@@ -1,7 +1,8 @@
 require "./helpers"
+require "json"
 
 struct NodeArgs
-  property status = false, endpoint = ""
+  property status = false, endpoint = "", json = false
 end
 
 class Args
@@ -46,6 +47,9 @@ command "node.list", "Nodes list of a Kadalu Storage Pool" do |parser, args|
   parser.on("--status", "Show nodes states") do
     args.node_args.status = true
   end
+  parser.on("--json", "Pretty print in JSON") do
+    args.node_args.json = true
+  end
 end
 
 handler "node.list" do |args|
@@ -75,7 +79,11 @@ handler "node.list" do |args|
       end
     end
 
-    table.render
+    if args.node_args.json
+      puts cli_to_json(table.render_header, table.render_rows)
+    else
+      table.render
+    end
   end
 end
 

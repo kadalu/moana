@@ -54,6 +54,14 @@ class CliTable
     printf("#{fmt.join("  ")}\n", values)
   end
 
+  def render_header
+    @headers
+  end
+
+  def render_rows
+    @rows
+  end
+
   def render
     if @rows.size > 0
       print_row(@headers)

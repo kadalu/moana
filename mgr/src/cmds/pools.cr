@@ -1,5 +1,13 @@
 require "./helpers"
 
+struct PoolArgs
+  property json = false
+end
+
+class Args
+  property pool_args = PoolArgs.new
+end
+
 command "pool.create", "Create the Kadalu Storage Pool" do |parser, _|
   parser.banner = "Usage: kadalu pool create NAME [arguments]"
 end
@@ -18,8 +26,11 @@ handler "pool.create" do |args|
   end
 end
 
-command "pool.list", "Kadalu Storage Pools List" do |parser, _|
+command "pool.list", "Kadalu Storage Pools List" do |parser, args|
   parser.banner = "Usage: kadalu pool list [arguments]"
+  parser.on("--json", "Pretty print in JSON") do
+    args.pool_args.json = true
+  end
 end
 
 handler "pool.list" do |args|
@@ -33,7 +44,12 @@ handler "pool.list" do |args|
     pools.each do |pool|
       table.record(pool.name, pool.id)
     end
-    table.render
+
+    if args.pool_args.json
+      puts cli_to_json(table.render_header, table.render_rows)
+    else
+      table.render
+    end
   end
 end
 

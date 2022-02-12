@@ -2,7 +2,7 @@ require "./helpers"
 
 struct UserArgs
   property username = "", password = "", name = "", pool_name = "", volume_name = "", role_name = "",
-    current_password = "", new_password = ""
+    current_password = "", new_password = "", json = false
 end
 
 class Args
@@ -230,8 +230,11 @@ handler "api-key.delete" do |args|
   end
 end
 
-command "api-key.list", "List Kadalu Storage API keys" do |parser, _|
+command "api-key.list", "List Kadalu Storage API keys" do |parser, args|
   parser.banner = "Usage: kadalu api-key list"
+  parser.on("--json", "Pretty print in JSON") do
+    args.user_args.json = true
+  end
 end
 
 handler "api-key.list" do |args|
@@ -246,6 +249,11 @@ handler "api-key.list" do |args|
       table.record(key_id, "#{api_key.token}..", api_key.name)
     end
 
-    table.render
+    if args.user_args.json
+      # print(table.render_rows)
+      puts cli_to_json(table.render_header, table.render_rows)
+    else
+      table.render
+    end
   end
 end
