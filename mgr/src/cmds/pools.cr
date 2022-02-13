@@ -1,13 +1,5 @@
 require "./helpers"
 
-struct PoolArgs
-  property json = false
-end
-
-class Args
-  property pool_args = PoolArgs.new
-end
-
 command "pool.create", "Create the Kadalu Storage Pool" do |parser, _|
   parser.banner = "Usage: kadalu pool create NAME [arguments]"
 end
@@ -21,16 +13,16 @@ handler "pool.create" do |args|
   name = args.pos_args[0]
   api_call(args, "Failed to create the Pool") do |client|
     pool = client.create_pool(name)
+
+    handle_json_output(pool, args)
+
     puts "Pool #{name} created successfully"
     puts "ID: #{pool.id}"
   end
 end
 
-command "pool.list", "Kadalu Storage Pools List" do |parser, args|
+command "pool.list", "Kadalu Storage Pools List" do |parser|
   parser.banner = "Usage: kadalu pool list [arguments]"
-  parser.on("--json", "Pretty print in JSON") do
-    args.pool_args.json = true
-  end
 end
 
 handler "pool.list" do |args|
@@ -39,17 +31,15 @@ handler "pool.list" do |args|
 
     puts "No pools. Run `kadalu pool create <name>` to create a Pool." if pools.size == 0
 
+    handle_json_output(pools, args)
+
     table = CliTable.new(2)
     table.header("Name", "ID")
     pools.each do |pool|
       table.record(pool.name, pool.id)
     end
 
-    if args.pool_args.json
-      puts cli_to_json(table.render_header, table.render_rows)
-    else
-      table.render
-    end
+    table.render
   end
 end
 

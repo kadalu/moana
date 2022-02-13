@@ -4,7 +4,7 @@ require "./gluster_volume_parser"
 
 struct VolumeArgs
   property status = false, detail = false, name = "", volume_id = "", no_start = false,
-    auto_create_pool = false, auto_add_nodes = false, json = false,
+    auto_create_pool = false, auto_add_nodes = false,
     node_maps = Hash(String, String).new
 end
 
@@ -61,6 +61,9 @@ handler "volume.create" do |args|
     args.pool_name = req.pool.name
     api_call(args, "Failed to Create Volume") do |client|
       volume = client.pool(args.pool_name).create_volume(req)
+
+      handle_json_output(volume, args)
+
       puts "Volume #{req.name} created successfully"
       puts "ID: #{volume.id}"
     end
@@ -80,6 +83,9 @@ handler "volume.start" do |args|
     args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
     api_call(args, "Failed to Start the Volume") do |client|
       volume = client.pool(args.pool_name).volume(volume_name).start
+
+      handle_json_output(volume, args)
+
       puts "Volume #{volume.name} started successfully"
     end
   rescue ex : InvalidVolumeRequest
@@ -116,9 +122,6 @@ command "volume.list", "Volumes list of a Kadalu Storage Pool" do |parser, args|
   end
   parser.on("--detail", "Show detailed Volumes info") do
     args.volume_args.detail = true
-  end
-  parser.on("--json", "Pretty print in JSON") do
-    args.volume_args.json = true
   end
 end
 
@@ -172,6 +175,8 @@ handler "volume.list" do |args|
       puts "No Volumes available in the Pool. Run `kadalu volume create #{args.pool_name == "" ? "<pool>" : args.pool_name}/<volume-name> ...` to create a volume."
     end
 
+    handle_json_output(volumes, args)
+
     if args.volume_args.detail
       volumes.each do |volume|
         volume_detail(volume, args.volume_args.status)
@@ -211,11 +216,7 @@ handler "volume.list" do |args|
       end
     end
 
-    if args.volume_args.json
-      puts cli_to_json(table.render_header, table.render_rows)
-    else
-      table.render
-    end
+    table.render
   end
 end
 

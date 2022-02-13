@@ -3,7 +3,7 @@ require "option_parser"
 require "moana_client"
 
 class Args
-  property cmd = "", pos_args = [] of String, url = "", pool_name = "", script_mode = false
+  property cmd = "", pos_args = [] of String, url = "", pool_name = "", script_mode = false, json = false
 end
 
 struct Command
@@ -106,17 +106,9 @@ def yes(label)
   ["yes", "y", "yy", "ok", "sure", "on"].includes?(value.strip.downcase)
 end
 
-def cli_to_json(headers, rows)
-  i = 0
-  arr = Array(Hash(String, String)).new
-  rows.each do |row|
-    i = 0
-    val = Hash(String, String).new
-    headers.each do |header|
-      val[header.downcase] = row[i]
-      i = i + 1
-    end
-    arr << val
+def handle_json_output(data, args)
+  if args.json
+    puts data.to_pretty_json
+    exit 0
   end
-  arr.to_pretty_json
 end

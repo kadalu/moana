@@ -1,8 +1,7 @@
 require "./helpers"
-require "json"
 
 struct NodeArgs
-  property status = false, endpoint = "", json = false
+  property status = false, endpoint = ""
 end
 
 class Args
@@ -37,6 +36,9 @@ handler "node.add" do |args|
 
   api_call(args, "Failed to add the Node") do |client|
     node = client.pool(args.pool_name).add_node(name, args.node_args.endpoint)
+
+    handle_json_output(node, args)
+
     puts "Node #{name} added to #{args.pool_name} successfully"
     puts "ID: #{node.id}"
   end
@@ -46,9 +48,6 @@ command "node.list", "Nodes list of a Kadalu Storage Pool" do |parser, args|
   parser.banner = "Usage: kadalu node list POOL [arguments]"
   parser.on("--status", "Show nodes states") do
     args.node_args.status = true
-  end
-  parser.on("--json", "Pretty print in JSON") do
-    args.node_args.json = true
   end
 end
 
@@ -62,6 +61,8 @@ handler "node.list" do |args|
       nodes = client.pool(args.pool_name).list_nodes(state: args.node_args.status)
     end
     puts "No nodes added to the Pool. Run `kadalu node add #{args.pool_name}/<node-name>` to add a node." if nodes.size == 0
+
+    handle_json_output(nodes, args)
 
     if args.node_args.status
       table = CliTable.new(4)
@@ -79,11 +80,7 @@ handler "node.list" do |args|
       end
     end
 
-    if args.node_args.json
-      puts cli_to_json(table.render_header, table.render_rows)
-    else
-      table.render
-    end
+    table.render
   end
 end
 

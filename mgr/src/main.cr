@@ -31,6 +31,10 @@ module CLI
         parsed.script_mode = true if mode.strip.downcase == "script"
       end
 
+      parser_1.on("--json", "Pretty print in JSON") do |_|
+        parsed.json = true
+      end
+
       Commands.commands.each do |name, cmd|
         parser_1.on(name, cmd.help) do
           subcmds = Commands.sub_commands(name)
