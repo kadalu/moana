@@ -234,6 +234,9 @@ handler "volume.delete" do |args|
 
   api_call(args, "Failed to Delete the Volume") do |client|
     volume = client.pool(args.pool_name).volume(volume_name).delete
+
+    puts "volume", volume
+
     handle_json_output(volume, args)
     puts "Volume #{volume_name} deleted successfully"
   end

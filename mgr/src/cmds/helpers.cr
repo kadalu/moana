@@ -69,7 +69,7 @@ def api_call(args, message, &block : MoanaClient::Client -> Nil)
     end
     block.call(client)
   rescue ex : MoanaClient::ClientException
-    handle_json_error(message, args)
+    handle_json_error(ex.message.not_nil!, args)
     STDERR.puts message
     STDERR.puts ex.message
     ex.node_errors.each do |node_err|
@@ -123,7 +123,7 @@ end
 def handle_json_error(message, args)
   if args.json
     err_msg = Hash(String, String).new
-    err_msg["Error"] = message
+    err_msg["error"] = message
     puts err_msg.to_json
     exit 1
   end

@@ -39,7 +39,7 @@ end
 nodes.each do |node|
   USE_NODE nodes[0]
   TEST "kadalu node add DEV/#{node}"
-  TEST "kadalu node remove DEV/#{node} --mode=script --json"
+  TEST "kadalu node remove DEV/#{node} --mode=script"
 end
 
 puts TEST "kadalu pool delete DEV --mode=script"
