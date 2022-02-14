@@ -106,6 +106,9 @@ handler "volume.stop" do |args|
 
     api_call(args, "Failed to Stop the Volume") do |client|
       volume = client.pool(args.pool_name).volume(volume_name).stop
+
+      handle_json_output(volume, args)
+
       puts "Volume #{volume.name} stopped successfully"
     end
   rescue ex : InvalidVolumeRequest
@@ -229,7 +232,8 @@ handler "volume.delete" do |args|
   next unless (args.script_mode || yes("Are you sure you want to delete the Volume?"))
 
   api_call(args, "Failed to Delete the Volume") do |client|
-    client.pool(args.pool_name).volume(volume_name).delete
+    volume = client.pool(args.pool_name).volume(volume_name).delete
+    handle_json_output(volume, args)
     puts "Volume #{volume_name} deleted successfully"
   end
 end

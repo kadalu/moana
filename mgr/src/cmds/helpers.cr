@@ -108,7 +108,12 @@ end
 
 def handle_json_output(data, args)
   if args.json
-    puts data.to_pretty_json
-    exit 0
+    if data && data != ""
+      puts data.to_pretty_json
+      exit 0
+    else
+      puts "{}".to_json
+      exit 0
+    end
   end
 end
