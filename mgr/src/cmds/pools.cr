@@ -29,9 +29,9 @@ handler "pool.list" do |args|
   api_call(args, "Failed to get the list of Pools") do |client|
     pools = client.list_pools
 
-    puts "No pools. Run `kadalu pool create <name>` to create a Pool." if pools.size == 0
-
     handle_json_output(pools, args)
+
+    puts "No pools. Run `kadalu pool create <name>` to create a Pool." if pools.size == 0
 
     table = CliTable.new(2)
     table.header("Name", "ID")

@@ -60,9 +60,10 @@ handler "node.list" do |args|
     else
       nodes = client.pool(args.pool_name).list_nodes(state: args.node_args.status)
     end
-    puts "No nodes added to the Pool. Run `kadalu node add #{args.pool_name}/<node-name>` to add a node." if nodes.size == 0
 
     handle_json_output(nodes, args)
+
+    puts "No nodes added to the Pool. Run `kadalu node add #{args.pool_name}/<node-name>` to add a node." if nodes.size == 0
 
     if args.node_args.status
       table = CliTable.new(4)

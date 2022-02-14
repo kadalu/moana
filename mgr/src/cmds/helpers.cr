@@ -69,6 +69,7 @@ def api_call(args, message, &block : MoanaClient::Client -> Nil)
     end
     block.call(client)
   rescue ex : MoanaClient::ClientException
+    handle_json_error(message, args)
     STDERR.puts message
     STDERR.puts ex.message
     ex.node_errors.each do |node_err|
@@ -76,6 +77,7 @@ def api_call(args, message, &block : MoanaClient::Client -> Nil)
     end
     exit 1
   rescue ex : Socket::ConnectError
+    handle_json_error(message, args)
     STDERR.puts message
     STDERR.puts ex.message
     exit 1
@@ -115,5 +117,14 @@ def handle_json_output(data, args)
       puts "{}".to_json
       exit 0
     end
+  end
+end
+
+def handle_json_error(message, args)
+  if args.json
+    err_msg = Hash(String, String).new
+    err_msg["Error"] = message
+    puts err_msg.to_json
+    exit 1
   end
 end

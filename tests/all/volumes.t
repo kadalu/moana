@@ -139,6 +139,8 @@ TEST 1, "kadalu volume create DEV/vol12 server1:/exports/vol11/s1 server2:/expor
 # Create vol13 with fresh path & no xattrs using --volume-id with wrong format. [Check for matching format of vol-id with uuid]
 TEST 1, "kadalu volume create DEV/vol13 server1:/exports/vol12/s1 server2:/exports/vol12/s2 server3:/exports/vol12/s3 --no-start --volume-id=123-456-789"
 
+puts TEST "kadalu volume list --json"
+
 nodes.each do |node|
   USE_NODE nodes[0]
   puts TEST "kadalu node remove DEV/#{node} --mode=script"
