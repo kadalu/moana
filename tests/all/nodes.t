@@ -24,6 +24,7 @@ end
 USE_NODE nodes[0]
 puts TEST "kadalu node list DEV"
 puts TEST "kadalu node list DEV --status"
+puts TEST "kadalu node list DEV --status --json"
 nodes.each do |node|
   USE_NODE nodes[0]
   puts TEST "kadalu node remove DEV/#{node} --mode=script"
@@ -38,7 +39,7 @@ end
 nodes.each do |node|
   USE_NODE nodes[0]
   TEST "kadalu node add DEV/#{node}"
-  TEST "kadalu node remove DEV/#{node} --mode=script"
+  TEST "kadalu node remove DEV/#{node} --mode=script --json"
 end
 
 puts TEST "kadalu pool delete DEV --mode=script"

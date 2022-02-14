@@ -53,6 +53,8 @@ TEST "kadalu volume create DEV/vol3 data server1:/exports/vol3/s1 server2:/expor
 # Distributed Replicate
 TEST "kadalu volume create DEV/vol4 replica server1:/exports/vol4/s1 server2:/exports/vol4/s2 server3:/exports/vol4/s3 replica server1:/exports/vol4/s4 server2:/exports/vol4/s5 server3:/exports/vol4/s6"
 
+puts TEST "kadalu volume list --json"
+
 nodes.each do |node|
   USE_NODE node
 
