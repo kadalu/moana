@@ -122,9 +122,8 @@ end
 
 def handle_json_error(message, args)
   if args.json
-    err_msg = Hash(String, String).new
-    err_msg["error"] = message
-    puts err_msg.to_json
+    err = {"error": message}.to_json
+    puts err
     exit 1
   end
 end

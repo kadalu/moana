@@ -31,7 +31,7 @@ module CLI
         parsed.script_mode = true if mode.strip.downcase == "script"
       end
 
-      parser_1.on("--json", "Pretty print in JSON") do |_|
+      parser_1.on("--json", "Pretty print in JSON") do
         parsed.json = true
       end
 
