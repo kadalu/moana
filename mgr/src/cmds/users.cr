@@ -94,9 +94,9 @@ handler "user.logout" do |args|
   api_call(args, "Failed to Logout") do |client|
     next unless File.exists?(session_file)
 
-    user = client.user(client.logged_in_user_id).logout
+    client.user(client.logged_in_user_id).logout
     File.delete(session_file)
-    handle_json_output(user, args)
+    handle_json_output(nil, args)
     puts "Logged out successfully! Run `kadalu user login <username>` to login again"
   end
 end
@@ -110,8 +110,8 @@ handler "user.delete" do |args|
   next unless (args.script_mode || yes("Are you sure you want to delete the user(#{args.pos_args[0]})?"))
 
   api_call(args, "Failed to delete the User") do |client|
-    user = client.delete_user(args.pos_args[0])
-    handle_json_output(user, args)
+    client.delete_user(args.pos_args[0])
+    handle_json_output(nil, args)
     puts "User deleted."
   end
 end
@@ -236,8 +236,8 @@ handler "api-key.delete" do |args|
   command_error "API Key ID is required" if args.pos_args.size == 0
 
   api_call(args, "Failed to delete the API Key") do |client|
-    user = client.user(client.logged_in_user_id).api_key(args.pos_args[0]).delete
-    handle_json_output(user, args)
+    client.user(client.logged_in_user_id).api_key(args.pos_args[0]).delete
+    handle_json_output(nil, args)
     puts "API Key deleted successfully"
   end
 end

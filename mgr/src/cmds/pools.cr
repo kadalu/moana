@@ -54,8 +54,8 @@ handler "pool.delete" do |args|
   next unless (args.script_mode || yes("Are you sure you want to delete the Pool?"))
 
   api_call(args, "Failed to Delete the Pool") do |client|
-    pool = client.pool(args.pool_name).delete
-    handle_json_output(pool, args)
+    client.pool(args.pool_name).delete
+    handle_json_output(nil, args)
     puts "Pool #{args.pool_name} deleted"
   end
 end

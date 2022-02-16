@@ -94,8 +94,8 @@ handler "node.remove" do |args|
   next unless (args.script_mode || yes("Are you sure you want to remove the Node from the Pool?"))
 
   api_call(args, "Failed to Remove the Node") do |client|
-    node = client.pool(args.pool_name).node(node_name).delete
-    handle_json_output(node, args)
+    client.pool(args.pool_name).node(node_name).delete
+    handle_json_output(nil, args)
     puts "Node #{node_name} removed from the Pool"
   end
 end

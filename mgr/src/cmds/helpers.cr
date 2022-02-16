@@ -109,21 +109,19 @@ def yes(label)
 end
 
 def handle_json_output(data, args)
-  if args.json
-    if data && data != ""
-      puts data.to_pretty_json
-      exit 0
-    else
-      puts "{}".to_json
-      exit 0
-    end
+  return unless args.json
+
+  if data.nil?
+    puts "{}"
+  else
+    puts data.to_pretty_json
   end
+  exit 0
 end
 
 def handle_json_error(message, args)
   if args.json
-    err = {"error": message}.to_json
-    puts err
+    puts ({"error": message}.to_json)
     exit 1
   end
 end
