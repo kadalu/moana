@@ -113,6 +113,7 @@ module StorageMgr
 
     # Fetch all the Services that belong to this node
     services = [] of MoanaTypes::ServiceUnit
+
     if GlobalConfig.agent
       loop do
         begin
@@ -127,6 +128,7 @@ module StorageMgr
             path: "api/v1/pools/#{GlobalConfig.local_node.pool_name}/nodes/#{GlobalConfig.local_node.name}/services"
           )
           resp = HTTP::Client.get(url)
+
           # # TODO: Exit on error
           if resp.status_code == 200
             services = Array(MoanaTypes::ServiceUnit).from_json(resp.body)
@@ -140,9 +142,11 @@ module StorageMgr
         end
       end
     else
-      services = Datastore.list_services(
-        GlobalConfig.local_node.pool_name,
-        GlobalConfig.local_node.name)
+      node = Datastore.get_node(GlobalConfig.local_node.pool_name, GlobalConfig.local_node.name)
+      if !node.nil?
+        services = Datastore.list_services(node.pool.id, node.id)
+      end
+
       puts "2", services
     end
 

@@ -50,5 +50,12 @@ get "/api/v1/pools/:pool_name/nodes/:node_name/services" do |env|
   node_name = env.params.url["node_name"]
 
   # TODO: Handle Node authentication
-  Datastore.list_services(pool_name, node_name).to_json
+
+  node = Datastore.get_node(pool_name, node_name)
+
+  if node.nil?
+    halt(env, status_code: 400, response: ({"error": "Node doesn't exists"}.to_json))
+  end
+
+  Datastore.list_services(node.pool.id, node.id)
 end
