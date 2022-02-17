@@ -3,7 +3,7 @@ require "option_parser"
 require "moana_client"
 
 class Args
-  property cmd = "", pos_args = [] of String, url = "", pool_name = "", script_mode = false
+  property cmd = "", pos_args = [] of String, url = "", pool_name = "", script_mode = false, json = false
 end
 
 struct Command
@@ -69,6 +69,7 @@ def api_call(args, message, &block : MoanaClient::Client -> Nil)
     end
     block.call(client)
   rescue ex : MoanaClient::ClientException
+    handle_json_error(ex.message.not_nil!, args)
     STDERR.puts message
     STDERR.puts ex.message
     ex.node_errors.each do |node_err|
@@ -76,6 +77,7 @@ def api_call(args, message, &block : MoanaClient::Client -> Nil)
     end
     exit 1
   rescue ex : Socket::ConnectError
+    handle_json_error(message, args)
     STDERR.puts message
     STDERR.puts ex.message
     exit 1
@@ -104,4 +106,22 @@ def yes(label)
   print "#{label}: "
   value = STDIN.gets(chomp: true).not_nil!
   ["yes", "y", "yy", "ok", "sure", "on"].includes?(value.strip.downcase)
+end
+
+def handle_json_output(data, args)
+  return unless args.json
+
+  if data.nil?
+    puts "{}"
+  else
+    puts data.to_pretty_json
+  end
+  exit 0
+end
+
+def handle_json_error(message, args)
+  if args.json
+    puts({"error": message}.to_json)
+    exit 1
+  end
 end
