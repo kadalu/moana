@@ -121,7 +121,7 @@ end
 
 def handle_json_error(message, args)
   if args.json
-    puts ({"error": message}.to_json)
+    puts({"error": message}.to_json)
     exit 1
   end
 end

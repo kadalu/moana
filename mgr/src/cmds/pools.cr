@@ -21,7 +21,7 @@ handler "pool.create" do |args|
   end
 end
 
-command "pool.list", "Kadalu Storage Pools List" do |parser|
+command "pool.list", "Kadalu Storage Pools List" do |parser, _args|
   parser.banner = "Usage: kadalu pool list [arguments]"
 end
 
