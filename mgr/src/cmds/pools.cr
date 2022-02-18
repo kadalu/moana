@@ -13,18 +13,23 @@ handler "pool.create" do |args|
   name = args.pos_args[0]
   api_call(args, "Failed to create the Pool") do |client|
     pool = client.create_pool(name)
+
+    handle_json_output(pool, args)
+
     puts "Pool #{name} created successfully"
     puts "ID: #{pool.id}"
   end
 end
 
-command "pool.list", "Kadalu Storage Pools List" do |parser, _|
+command "pool.list", "Kadalu Storage Pools List" do |parser, _args|
   parser.banner = "Usage: kadalu pool list [arguments]"
 end
 
 handler "pool.list" do |args|
   api_call(args, "Failed to get the list of Pools") do |client|
     pools = client.list_pools
+
+    handle_json_output(pools, args)
 
     puts "No pools. Run `kadalu pool create <name>` to create a Pool." if pools.size == 0
 
@@ -33,6 +38,7 @@ handler "pool.list" do |args|
     pools.each do |pool|
       table.record(pool.name, pool.id)
     end
+
     table.render
   end
 end
@@ -49,6 +55,7 @@ handler "pool.delete" do |args|
 
   api_call(args, "Failed to Delete the Pool") do |client|
     client.pool(args.pool_name).delete
+    handle_json_output(nil, args)
     puts "Pool #{args.pool_name} deleted"
   end
 end

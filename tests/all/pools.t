@@ -16,7 +16,9 @@ puts TEST "kadalu user create admin --password=kadalu"
 puts TEST "kadalu user login admin --password=kadalu"
 puts TEST "kadalu pool create DEV"
 puts TEST "kadalu pool list"
+puts TEST "kadalu pool list --json"
 puts TEST "kadalu pool delete DEV --mode=script"
+puts TEST "kadalu pool list --json"
 puts TEST "kadalu user logout"
 
 nodes.each do |node|

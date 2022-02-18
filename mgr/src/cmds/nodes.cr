@@ -36,6 +36,9 @@ handler "node.add" do |args|
 
   api_call(args, "Failed to add the Node") do |client|
     node = client.pool(args.pool_name).add_node(name, args.node_args.endpoint)
+
+    handle_json_output(node, args)
+
     puts "Node #{name} added to #{args.pool_name} successfully"
     puts "ID: #{node.id}"
   end
@@ -57,6 +60,9 @@ handler "node.list" do |args|
     else
       nodes = client.pool(args.pool_name).list_nodes(state: args.node_args.status)
     end
+
+    handle_json_output(nodes, args)
+
     puts "No nodes added to the Pool. Run `kadalu node add #{args.pool_name}/<node-name>` to add a node." if nodes.size == 0
 
     if args.node_args.status
@@ -89,6 +95,7 @@ handler "node.remove" do |args|
 
   api_call(args, "Failed to Remove the Node") do |client|
     client.pool(args.pool_name).node(node_name).delete
+    handle_json_output(nil, args)
     puts "Node #{node_name} removed from the Pool"
   end
 end

@@ -9,7 +9,14 @@ distribute_group:
   - type: "cluster/{{ distribute_group.type }}"
     name: "{{ volume.name }}-{{ distribute_group.type }}-{{ distribute_group.index }}"
     options:
-      iam-self-heal-daemon: "yes"
+      data-self-heal: on
+      iam-self-heal-daemon: true
+      metadata-self-heal: on
+      self-heal-daemon: on
+      choose-local: true
+      ensure-durability: on
+      data-change-log: on
+      entry-self-heal: on
       afr-pending-xattr: "{{ distribute_group.afr-pending-xattr }}"
 storage_unit:
   - type: "protocol/client"

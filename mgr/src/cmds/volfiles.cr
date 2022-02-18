@@ -52,6 +52,8 @@ handler "volfile.get" do |args|
         volume).get_volfile(tmpl)
     end
 
+    handle_json_output(volfile, args)
+
     if args.volfile_args.output_file == ""
       puts volfile.content
     else

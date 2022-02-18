@@ -3,7 +3,8 @@ require "./volume_create_parser"
 require "./gluster_volume_parser"
 
 struct VolumeArgs
-  property status = false, detail = false, name = "", volume_id = "", no_start = false, auto_create_pool = false, auto_add_nodes = false,
+  property status = false, detail = false, name = "", volume_id = "", no_start = false,
+    auto_create_pool = false, auto_add_nodes = false,
     node_maps = Hash(String, String).new
 end
 
@@ -60,6 +61,9 @@ handler "volume.create" do |args|
     args.pool_name = req.pool.name
     api_call(args, "Failed to Create Volume") do |client|
       volume = client.pool(args.pool_name).create_volume(req)
+
+      handle_json_output(volume, args)
+
       puts "Volume #{req.name} created successfully"
       puts "ID: #{volume.id}"
     end
@@ -79,6 +83,9 @@ handler "volume.start" do |args|
     args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
     api_call(args, "Failed to Start the Volume") do |client|
       volume = client.pool(args.pool_name).volume(volume_name).start
+
+      handle_json_output(volume, args)
+
       puts "Volume #{volume.name} started successfully"
     end
   rescue ex : InvalidVolumeRequest
@@ -99,6 +106,9 @@ handler "volume.stop" do |args|
 
     api_call(args, "Failed to Stop the Volume") do |client|
       volume = client.pool(args.pool_name).volume(volume_name).stop
+
+      handle_json_output(volume, args)
+
       puts "Volume #{volume.name} stopped successfully"
     end
   rescue ex : InvalidVolumeRequest
@@ -164,6 +174,9 @@ handler "volume.list" do |args|
     else
       volumes = [client.pool(args.pool_name).volume(args.volume_args.name).get(state: args.volume_args.status)]
     end
+
+    handle_json_output(volumes, args)
+
     if volumes.size == 0
       puts "No Volumes available in the Pool. Run `kadalu volume create #{args.pool_name == "" ? "<pool>" : args.pool_name}/<volume-name> ...` to create a volume."
     end
@@ -221,6 +234,8 @@ handler "volume.delete" do |args|
 
   api_call(args, "Failed to Delete the Volume") do |client|
     client.pool(args.pool_name).volume(volume_name).delete
+
+    handle_json_output(nil, args)
     puts "Volume #{volume_name} deleted successfully"
   end
 end

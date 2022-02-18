@@ -71,6 +71,8 @@ abstract class Service
         Process.signal(Signal::TERM, pid) if !force
         Process.signal(Signal::KILL, pid) if force
       rescue File::NotFoundError
+      rescue RuntimeError
+        # TODO: Handle specific error "No such process"
       end
     else
       @proc.not_nil!.terminate

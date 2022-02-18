@@ -51,6 +51,9 @@ handler "user.create" do |args|
 
   api_call(args, "Failed to create the User") do |client|
     user = client.create_user(args.user_args.username, args.user_args.name, args.user_args.password)
+
+    handle_json_output(user, args)
+
     puts "User #{user.username} created successfully. Run `kadalu user login #{user.username}` to login"
   end
 end
@@ -76,6 +79,9 @@ handler "user.login" do |args|
     token_file = session_file
     Dir.mkdir_p(token_file.parent)
     File.write(token_file, api_key.to_json)
+
+    handle_json_output(api_key, args)
+
     puts "Login successful. Details saved in `#{token_file}`. Delete this file or run `kadalu user logout` command to delete the session."
   end
 end
@@ -90,6 +96,7 @@ handler "user.logout" do |args|
 
     client.user(client.logged_in_user_id).logout
     File.delete(session_file)
+    handle_json_output(nil, args)
     puts "Logged out successfully! Run `kadalu user login <username>` to login again"
   end
 end
@@ -104,6 +111,7 @@ handler "user.delete" do |args|
 
   api_call(args, "Failed to delete the User") do |client|
     client.delete_user(args.pos_args[0])
+    handle_json_output(nil, args)
     puts "User deleted."
   end
 end
@@ -199,6 +207,9 @@ handler "api-key.create" do |args|
     api_key = client.user(client.logged_in_user_id).create_api_key(
       args.pos_args[0]
     )
+
+    handle_json_output(api_key, args)
+
     puts "API Key created successfully!"
     puts "Use the user_id and token with all the requests."
     puts
@@ -226,17 +237,20 @@ handler "api-key.delete" do |args|
 
   api_call(args, "Failed to delete the API Key") do |client|
     client.user(client.logged_in_user_id).api_key(args.pos_args[0]).delete
+    handle_json_output(nil, args)
     puts "API Key deleted successfully"
   end
 end
 
-command "api-key.list", "List Kadalu Storage API keys" do |parser, _|
+command "api-key.list", "List Kadalu Storage API keys" do |parser|
   parser.banner = "Usage: kadalu api-key list"
 end
 
 handler "api-key.list" do |args|
   api_call(args, "Failed to get the list of API Keys") do |client|
     api_keys = client.user(client.logged_in_user_id).list_api_keys
+
+    handle_json_output(api_keys, args)
 
     table = CliTable.new(3)
     table.header("  ID", "token", "Name")

@@ -64,9 +64,10 @@ module StorageMgr
           )
           resp = HTTP::Client.get(url)
 
+          Log.info &.emit("response from services API", resp: "#{resp.body}")
           # # TODO: Exit on error
           if resp.status_code == 200
-            services = Array(MoanaTypes::ServiceUnit).from_json(resp.body)
+            services = resp.body
             puts "1", services
             break
           end
@@ -81,6 +82,7 @@ module StorageMgr
       if !node.nil?
         services = Datastore.list_services(node.pool.id, node.id)
       end
+      Log.info &.emit("response from list services[else]", svc: "#{services}")
 
       puts "2", services
     end

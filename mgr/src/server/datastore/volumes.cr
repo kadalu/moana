@@ -13,7 +13,8 @@ module Datastore
       distribute_group_inodes_count : Int64 = 0, storage_unit_index = 0, node_id = "", node_name = "",
       node_endpoint = "", storage_unit_path = "", storage_unit_port = 0, storage_unit_fs = "",
       storage_unit_type = "", storage_unit_size_bytes : Int64 = 0, storage_unit_inodes_count : Int64 = 0,
-      pool_name = "", pool_id = ""
+      pool_name = "", pool_id = "",
+      storage_unit_id = ""
   end
 
   private def group_volumes(data)
@@ -51,6 +52,7 @@ module Datastore
 
         dist_grp.storage_units = units_data.map do |_, rows3|
           storage_unit = MoanaTypes::StorageUnit.new
+          storage_unit.id = rows3[0].storage_unit_id
           storage_unit.path = rows3[0].storage_unit_path
           storage_unit.port = rows3[0].storage_unit_port
           storage_unit.metrics.size_bytes = rows3[0].storage_unit_size_bytes
@@ -91,6 +93,7 @@ module Datastore
             nodes.id AS node_id,
             nodes.name AS node_name,
             nodes.endpoint AS node_endpoint,
+            storage_units.id AS storage_unit_id,
             storage_units.path AS storage_unit_path,
             storage_units.port AS storage_unit_port,
             storage_units.fs AS storage_unit_fs,
@@ -185,7 +188,7 @@ module Datastore
     )
     storage_unit_query = insert_query(
       "storage_units",
-      %w[pool_id volume_id distribute_group_id idx node_id port path type fs size_bytes inodes_count]
+      %w[id pool_id volume_id distribute_group_id idx node_id port path type fs size_bytes inodes_count]
     )
     connection.transaction do |tx|
       conn = tx.connection
@@ -222,6 +225,7 @@ module Datastore
         dist_grp.storage_units.each_with_index do |storage_unit, unit_idx|
           conn.exec(
             storage_unit_query,
+            storage_unit.id,
             pool_id,
             volume.id,
             grp_id,
