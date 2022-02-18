@@ -45,6 +45,53 @@ module StorageMgr
     end
   end
 
+  def self.start_services
+    # Fetch all the Services that belong to this node
+    services = [] of MoanaTypes::ServiceUnit
+
+    if GlobalConfig.agent
+      loop do
+        begin
+          # TODO: Handle Authentication
+          # TODO: Get Server URL from GlobalConfig.local_node
+          # url = "http://localhost:#{Kemal.config.port}/api/v1/pools/#{GlobalConfig.local_node.pool_name}/nodes/#{GlobalConfig.local_node.name}/services"
+
+          url = URI.new(
+            scheme: GlobalConfig.local_node.mgr_https ? "https" : "http",
+            host: GlobalConfig.local_node.mgr_url,
+            port: GlobalConfig.local_node.mgr_port,
+            path: "api/v1/pools/#{GlobalConfig.local_node.pool_name}/nodes/#{GlobalConfig.local_node.name}/services"
+          )
+          resp = HTTP::Client.get(url)
+
+          # # TODO: Exit on error
+          if resp.status_code == 200
+            services = Array(MoanaTypes::ServiceUnit).from_json(resp.body)
+            puts "1", services
+            break
+          end
+          Log.debug &.emit("Fetch services of this node", status_code: resp.status_code)
+        rescue Socket::ConnectError
+          sleep 5.seconds
+          next
+        end
+      end
+    else
+      node = Datastore.get_node(GlobalConfig.local_node.pool_name, GlobalConfig.local_node.name)
+      if !node.nil?
+        services = Datastore.list_services(node.pool.id, node.id)
+      end
+
+      puts "2", services
+    end
+
+    # Start all the services that were started previously
+    services.each do |service|
+      svc = Service.from_json(service.to_json)
+      svc.start
+    end
+  end
+
   def self.info_file
     "#{GlobalConfig.workdir}/info"
   end
@@ -111,50 +158,7 @@ module StorageMgr
 
     # TODO: Fetch all the Volfiles from the Storage Manager
 
-    # Fetch all the Services that belong to this node
-    services = [] of MoanaTypes::ServiceUnit
-
-    if GlobalConfig.agent
-      loop do
-        begin
-          # TODO: Handle Authentication
-          # TODO: Get Server URL from GlobalConfig.local_node
-          # url = "http://localhost:#{Kemal.config.port}/api/v1/pools/#{GlobalConfig.local_node.pool_name}/nodes/#{GlobalConfig.local_node.name}/services"
-
-          url = URI.new(
-            scheme: GlobalConfig.local_node.mgr_https ? "https" : "http",
-            host: GlobalConfig.local_node.mgr_url,
-            port: GlobalConfig.local_node.mgr_port,
-            path: "api/v1/pools/#{GlobalConfig.local_node.pool_name}/nodes/#{GlobalConfig.local_node.name}/services"
-          )
-          resp = HTTP::Client.get(url)
-
-          # # TODO: Exit on error
-          if resp.status_code == 200
-            services = Array(MoanaTypes::ServiceUnit).from_json(resp.body)
-            puts "1", services
-            break
-          end
-          Log.debug &.emit("Fetch services of this node", status_code: resp.status_code)
-        rescue Socket::ConnectError
-          sleep 5.seconds
-          next
-        end
-      end
-    else
-      node = Datastore.get_node(GlobalConfig.local_node.pool_name, GlobalConfig.local_node.name)
-      if !node.nil?
-        services = Datastore.list_services(node.pool.id, node.id)
-      end
-
-      puts "2", services
-    end
-
-    # Start all the services that were started previously
-    services.each do |service|
-      svc = Service.from_json(service.to_json)
-      svc.start
-    end
+    start_services
 
     Log.info &.emit("Starting the Storage manager ReST API server", port: "#{Kemal.config.port}")
 
