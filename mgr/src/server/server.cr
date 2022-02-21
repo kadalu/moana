@@ -56,13 +56,13 @@ module StorageMgr
           # TODO: Get Server URL from GlobalConfig.local_node
           # url = "http://localhost:#{Kemal.config.port}/api/v1/pools/#{GlobalConfig.local_node.pool_name}/nodes/#{GlobalConfig.local_node.name}/services"
 
-          url = URI.new(
+          mgr_url = URI.new(
             scheme: GlobalConfig.local_node.mgr_https ? "https" : "http",
             host: GlobalConfig.local_node.mgr_url,
             port: GlobalConfig.local_node.mgr_port,
             path: "api/v1/pools/#{GlobalConfig.local_node.pool_name}/nodes/#{GlobalConfig.local_node.name}/services"
           )
-          resp = HTTP::Client.get(url)
+          resp = HTTP::Client.get(mgr_url, headers: env.request.headers)
 
           Log.info &.emit("response from services API", resp: "#{resp.body}")
           # # TODO: Exit on error
