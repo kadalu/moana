@@ -148,11 +148,11 @@ nodes.each do |node|
   puts "node: #{node}"
   RUN "cd /exports/vol14/"
   puts TEST "ps aux | grep 'glusterfsd'"
-  EQUAL "1", (TEST "ps aux | grep '[g]lusterfsd'| wc -l"), "Check for equal number of services[brick-processes]"
+  EQUAL "1", (TEST "ps aux | grep '[g]lusterfsd'| wc -l").strip, "Check for equal number of services[brick-processes]"
   puts TEST "kill $(pidof 'glusterfsd')"
   TEST "systemctl restart kadalu-mgr"
   puts TEST "ps aux | grep 'glusterfsd'"
-  EQUAL "1", (TEST "ps aux | grep '[g]lusterfsd'| wc -l"), "Check for equal number of services[brick-processes]"
+  EQUAL "1", (TEST "ps aux | grep '[g]lusterfsd'| wc -l").strip, "Check for equal number of services[brick-processes]"
   puts TEST "cat /var/log/kadalu/storage_units/*;"
 end
 
