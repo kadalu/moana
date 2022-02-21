@@ -50,41 +50,36 @@ module StorageMgr
     services = [] of MoanaTypes::ServiceUnit
 
     if GlobalConfig.agent
-      loop do
-        begin
-          # TODO: Handle Authentication
-          # TODO: Get Server URL from GlobalConfig.local_node
-          # url = "http://localhost:#{Kemal.config.port}/api/v1/pools/#{GlobalConfig.local_node.pool_name}/nodes/#{GlobalConfig.local_node.name}/services"
-
-          mgr_url = URI.new(
-            scheme: GlobalConfig.local_node.mgr_https ? "https" : "http",
-            host: GlobalConfig.local_node.mgr_url,
-            port: GlobalConfig.local_node.mgr_port,
-            path: "api/v1/pools/#{GlobalConfig.local_node.pool_name}/nodes/#{GlobalConfig.local_node.name}/services"
-          )
-          resp = HTTP::Client.get(mgr_url, headers: env.request.headers)
-
-          Log.info &.emit("response from services API", resp: "#{resp.body}")
-          # # TODO: Exit on error
-          if resp.status_code == 200
-            services = resp.body
-            puts "1", services
-            break
-          end
-          Log.debug &.emit("Fetch services of this node", status_code: resp.status_code)
-        rescue Socket::ConnectError
-          sleep 5.seconds
-          next
-        end
-      end
+      # TODO: Handle way to fetch headers [User-ID & Authorization]
+      Log.info &.emit("Starting of services on Agent node is not yet implemented")
+      # loop do
+      #   begin
+      #     # TODO: Handle Authentication
+      #     # TODO: Get Server URL from GlobalConfig.local_node
+      #     # url = "http://localhost:#{Kemal.config.port}/api/v1/pools/#{GlobalConfig.local_node.pool_name}/nodes/#{GlobalConfig.local_node.name}/services"
+      #     mgr_url = URI.new(
+      #       scheme: GlobalConfig.local_node.mgr_https ? "https" : "http",
+      #       host: GlobalConfig.local_node.mgr_url,
+      #       port: GlobalConfig.local_node.mgr_port,
+      #       path: "api/v1/pools/#{GlobalConfig.local_node.pool_name}/nodes/#{GlobalConfig.local_node.name}/services"
+      #     )
+      #     resp = HTTP::Client.get(mgr_url, headers: env.request.headers)
+      #     # # TODO: Exit on error
+      #     if resp.status_code == 200
+      #       services = resp.body
+      #       break
+      #     end
+      #     Log.debug &.emit("Fetch services of this node", status_code: resp.status_code)
+      #   rescue Socket::ConnectError
+      #     sleep 5.seconds
+      #     next
+      #   end
+      # end
     else
       node = Datastore.get_node(GlobalConfig.local_node.pool_name, GlobalConfig.local_node.name)
       if !node.nil?
         services = Datastore.list_services(node.pool.id, node.id)
       end
-      Log.info &.emit("response from list services[else]", svc: "#{services}")
-
-      puts "2", services
     end
 
     # Start all the services that were started previously
