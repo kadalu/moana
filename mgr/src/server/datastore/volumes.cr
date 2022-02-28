@@ -250,6 +250,76 @@ module Datastore
     connection.exec(query, options.to_json, volume_id)
   end
 
+  # For expansion of volume
+  def update_volume(pool_id, volume, prev_grp_idx)
+    volume_query = update_query(
+      "volumes",
+      %w[pool_id id name type state snapshot_plugin size_bytes inodes_count],
+      where: "id = ?"
+    )
+
+    dist_grp_query = insert_query(
+      "distribute_groups",
+      %w[pool_id volume_id id idx replica_count arbiter_count disperse_count redundancy_count replica_keyword type size_bytes inodes_count]
+    )
+    storage_unit_query = insert_query(
+      "storage_units",
+      %w[id pool_id volume_id distribute_group_id idx node_id port path type fs size_bytes inodes_count]
+    )
+    connection.transaction do |tx|
+      conn = tx.connection
+
+      conn.exec(
+        volume_query,
+        pool_id,
+        volume.id,
+        volume.name,
+        volume.type,
+        volume.state,
+        volume.snapshot_plugin,
+        volume.metrics.size_bytes,
+        volume.metrics.inodes_count,
+        volume.id
+      )
+
+      volume.distribute_groups.each_with_index(prev_grp_idx) do |dist_grp, grp_idx|
+        grp_id = UUID.random.to_s
+        conn.exec(
+          dist_grp_query,
+          pool_id,
+          volume.id,
+          grp_id,
+          grp_idx,
+          dist_grp.replica_count,
+          dist_grp.arbiter_count,
+          dist_grp.disperse_count,
+          dist_grp.redundancy_count,
+          dist_grp.replica_keyword,
+          dist_grp.type,
+          dist_grp.metrics.size_bytes,
+          dist_grp.metrics.inodes_count
+        )
+        dist_grp.storage_units.each_with_index do |storage_unit, unit_idx|
+          conn.exec(
+            storage_unit_query,
+            storage_unit.id,
+            pool_id,
+            volume.id,
+            grp_id,
+            unit_idx,
+            storage_unit.node.id,
+            storage_unit.port,
+            storage_unit.path,
+            storage_unit.type,
+            storage_unit.fs,
+            storage_unit.metrics.size_bytes,
+            storage_unit.metrics.inodes_count,
+          )
+        end
+      end
+    end
+  end
+
   def update_volume_state(volume_id, state)
     query = update_query("volumes", ["state"], where: " id = ?")
     connection.exec(query, state, volume_id)
