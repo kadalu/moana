@@ -6,7 +6,6 @@ require "../datastore/*"
 require "./ping"
 require "./volume_utils.cr"
 
-
 node_action ACTION_VALIDATE_VOLUME_CREATE do |data, _env|
   req = MoanaTypes::Volume.from_json(data)
   puts data, req
@@ -102,7 +101,6 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
     puts n.name
     if node.nil?
       if req.auto_add_nodes
-
         endpoint = node_endpoint(n.name)
         invite = node_invite(pool_name, n.name, endpoint)
 

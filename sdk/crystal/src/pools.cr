@@ -57,10 +57,6 @@ module StorageManager
       Volume.create(@client, @name, req)
     end
 
-    def expand_volume(req : MoanaTypes::Volume)
-      Volume.expand(@client, @name, req)
-    end
-
     def create_volume(name : String, dist_grps : Array(MoanaTypes::VolumeDistributeGroup), no_start = false)
       Volume.create(@client, @name, name, dist_grps, no_start)
     end

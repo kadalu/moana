@@ -18,23 +18,6 @@ module StorageManager
       end
     end
 
-    def self.expand(client : Client, pool_name : String, volume : MoanaTypes::Volume)
-      url = "#{client.url}/api/v1/pools/#{pool_name}/volumes"
-
-      puts volume.to_json
-
-      response = MoanaClient.http_put(
-        url,
-        volume.to_json,
-        headers: client.auth_header
-      )
-      if response.status_code == 201
-        MoanaTypes::Volume.from_json(response.body)
-      else
-        MoanaClient.error_response(response)
-      end
-    end
-
     def self.create(client : Client, pool_name : String, name : String, dist_grps : Array(MoanaTypes::VolumeDistributeGroup), no_start = false)
       req = MoanaTypes::Volume.new
       req.name = name
@@ -202,6 +185,23 @@ module StorageManager
         MoanaTypes::Volume.from_json(response.body)
       else
         StorageManager.error_response(response)
+      end
+    end
+
+    def expand(volume : MoanaTypes::Volume)
+      url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes"
+
+      puts volume.to_json
+
+      response = MoanaClient.http_put(
+        url,
+        volume.to_json,
+        headers: @client.auth_header
+      )
+      if response.status_code == 201
+        MoanaTypes::Volume.from_json(response.body)
+      else
+        MoanaClient.error_response(response)
       end
     end
   end

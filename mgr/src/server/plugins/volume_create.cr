@@ -32,15 +32,15 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
   req = MoanaTypes::Volume.from_json(env.request.body.not_nil!)
 
   volume = Datastore.get_volume(pool_name, req.name)
-  # unless volume.nil?
-  #   halt(env, status_code: 400, response: ({"error": "Volume already exists"}.to_json))
-  # end
+  unless volume.nil?
+    halt(env, status_code: 400, response: ({"error": "Volume already exists"}.to_json))
+  end
 
   pool = Datastore.get_pool(pool_name)
   if pool.nil?
-    #   unless req.auto_create_pool
-    #     halt(env, status_code: 400, response: ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
-    #   end
+    unless req.auto_create_pool
+      halt(env, status_code: 400, response: ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
+    end
 
     # If the user is not global maintainer, can't create a Pool
     unless Datastore.maintainer?(env.user_id)
@@ -88,10 +88,7 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
           invite.to_json
         )
 
-        if !resp.ok # volume_query = insert_query(
-          #   "volumes",
-          #   %w[pool_id id name type state snapshot_plugin size_bytes inodes_count]
-          # )
+        if !resp.ok
           invalid_reason = resp.node_responses[n.name].response
           invalid_node = true
           invalid_node_name = n.name
@@ -228,8 +225,6 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
   end
 
   set_volume_metrics(req)
-
-  puts "TYPE", req.type
 
   # Save Volume info
   Datastore.create_volume(pool.not_nil!.id, req)
