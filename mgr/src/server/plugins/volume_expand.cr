@@ -62,8 +62,28 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
 
   # Checks for types, replica counts etc
   puts "type", volume.not_nil!.type, req.type
-  puts "grp_size", volume.not_nil!.distribute_groups.size
+  puts "grp_size", volume.not_nil!.distribute_groups.size, req.distribute_groups.size
   # puts "replica count", volume.not_nil!.replica_count, req.replica_count
+
+  if volume.not_nil!.type != req.type
+    halt(env, status_code: 403, response: ({"error": "Volume type mismatch"}.to_json))
+  end
+
+  if (volume.not_nil!.distribute_groups.size % req.distribute_groups.size) != 0
+    halt(env, status_code: 403, response: ({"error": "Distribute group mismatch"}.to_json))
+  end
+
+  req.distribute_groups.each do |dist_grp_req|
+    volume.not_nil!.distribute_groups.each do |dist_grp_vol|
+      if dist_grp_req.replica_count != dist_grp_vol.replica_count
+        halt(env, status_code: 403, response: ({"error": "Replica count mismatch"}.to_json))
+      elsif dist_grp_req.disperse_count != dist_grp_vol.disperse_count
+        halt(env, status_code: 403, response: ({"error": "Disperse count mismatch"}.to_json))
+      elsif dist_grp_req.redundancy_count != dist_grp_vol.redundancy_count
+        halt(env, status_code: 403, response: ({"error": "Redundancy count mismatch"}.to_json))
+      end
+    end
+  end
 
   # TODO: Add --volume-id for expand
   # if req.volume_id != "" && !valid_uuid?(req.volume_id)
