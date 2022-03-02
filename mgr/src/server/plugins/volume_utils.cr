@@ -293,6 +293,7 @@ def services_and_volfiles(req)
       # not added for that node.
       if req.replicate_family? && shd_services[storage_unit.node.id]?.nil?
         shd_services[storage_unit.node.id] = true
+        puts "in shd"
         service = ShdService.new(req.name, storage_unit.node.id)
         services[storage_unit.node.id] << service.unit
         volfiles[storage_unit.node.id] << MoanaTypes::Volfile.new(service.id, shd_volfile_content)

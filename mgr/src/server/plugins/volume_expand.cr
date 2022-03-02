@@ -237,12 +237,17 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
   end
 
   # Save Services details... Causing exception of unique constraint failed
-  # services.each do |node_id, svcs|
-  #   svcs.each do |svc|
-  #     # Enable each Services
-  #     Datastore.enable_service(pool.not_nil!.id, node_id, svc)
-  #   end
-  # end
+  services.each do |node_id, svcs|
+    svcs.each do |svc|
+      # Enable each Services
+      begin
+        Datastore.enable_service(pool.not_nil!.id, node_id, svc)
+      rescue ex : Exception
+        # Avoid adding same service into DB
+        next
+      end
+    end
+  end
 
   storage_units = Hash(String, Hash(String, MoanaTypes::StorageUnit)).new
   resp.node_responses.each do |node, node_resp|
