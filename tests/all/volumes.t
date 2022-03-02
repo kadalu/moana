@@ -39,9 +39,14 @@ nodes.each do |node|
   TEST "mkdir -p /exports/vol11"
   TEST "mkdir -p /exports/vol12"
   TEST "mkdir -p /exports/vol14"
+  TEST "mkdir -p /exports/vol15"
+  TEST "mkdir -p /exports/vol16"
+  TEST "mkdir -p /exports/vol17"
+  TEST "mkdir -p /exports/vol18"
   TEST "mkdir -p /exports/vol19"
   TEST "mkdir -p /exports/vol20a"
   TEST "mkdir -p /exports/vol20b"
+
 end
 
 USE_NODE nodes[0]
@@ -232,6 +237,31 @@ TEST "systemctl start kadalu-mgr"
 
 TEST "kadalu volume stop DEV/vol19 --mode=script"
 TEST "kadalu volume delete DEV/vol19 --mode=script"
+
+# Tests for volume expansion
+# Distribute
+TEST "kadalu volume create DEV/vol15 server1:/exports/vol15/s1 server2:/exports/vol15/s2 server3:/exports/vol15/s3"
+TEST "kadalu volume expand DEV/vol15 server1:/exports/vol15/s1_e server2:/exports/vol15/s2_e server3:/exports/vol15/s3_e"
+TEST "kadalu volume stop DEV/vol15 --mode=script"
+TEST "kadalu volume delete DEV/vol15 --mode=script"
+
+# Replicate
+TEST "kadalu volume create DEV/vol16 replica server1:/exports/vol16/s1 server2:/exports/vol16/s2 server3:/exports/vol16/s3"
+TEST "kadalu volume expand DEV/vol16 replica server1:/exports/vol16/s1_e server2:/exports/vol16/s2_e server3:/exports/vol16/s3_e"
+TEST "kadalu volume stop DEV/vol16 --mode=script"
+TEST "kadalu volume delete DEV/vol16 --mode=script"
+
+# Distributed Replicate
+TEST "kadalu volume create DEV/vol17 replica server1:/exports/vol17/s1 server2:/exports/vol17/s2 server3:/exports/vol17/s3 replica server1:/exports/vol17/s4 server2:/exports/vol17/s5 server3:/exports/vol17/s6"
+TEST "kadalu volume expand DEV/vol17 replica server1:/exports/vol17/s1_e server2:/exports/vol17/s2_e server3:/exports/vol17/s3_e replica server1:/exports/vol17/s4_e server2:/exports/vol17/s5_e server3:/exports/vol17/s6_e"
+TEST "kadalu volume stop DEV/vol17 --mode=script"
+TEST "kadalu volume delete DEV/vol17 --mode=script"
+
+# Disperse
+TEST "kadalu volume create DEV/vol18 data server1:/exports/vol18/s1 server2:/exports/vol18/s2 redundancy server3:/exports/vol18/s3"
+TEST "kadalu volume expand DEV/vol18 data server1:/exports/vol18/s1_e server2:/exports/vol18/s2_e redundancy server3:/exports/vol18/s3_e"
+TEST "kadalu volume stop DEV/vol18 --mode=script"
+TEST "kadalu volume delete DEV/vol18 --mode=script"
 
 puts TEST "kadalu volume list --json"
 
