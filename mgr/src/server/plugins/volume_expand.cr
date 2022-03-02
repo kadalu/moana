@@ -38,20 +38,13 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
 
   pool = Datastore.get_pool(pool_name)
   if pool.nil?
-    unless req.auto_create_pool
-      halt(env, status_code: 400, response: ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
-    end
-
-    # If the user is not global maintainer, can't create a Pool
-    unless Datastore.maintainer?(env.user_id)
-      halt(env, status_code: 403, response: ({"error": "Forbidden"}.to_json))
-    end
+    halt(env, status_code: 400, response: ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
   end
 
   # req.id = req.volume_id == "" ? UUID.random.to_s : req.volume_id
 
   puts "volId:", volume.not_nil!.id
-  req.id = req.volume_id == "" ? volume.not_nil!.id : req.volume_id
+  req.id = volume.not_nil!.id
 
   # Checks for types, replica counts etc
   puts "type", volume.not_nil!.type, req.type
@@ -78,9 +71,9 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
     end
   end
 
-  if req.volume_id != "" && !valid_uuid?(req.volume_id)
-    halt(env, status_code: 400, response: ({"error": "Volume ID does not match UUID format"}.to_json))
-  end
+  # if req.volume_id != "" && !valid_uuid?(req.volume_id)
+  #   halt(env, status_code: 400, response: ({"error": "Volume ID does not match UUID format"}.to_json))
+  # end
 
   # # To avoid creating existing volume with volume-id option
   # if req.volume_id != "" && Datastore.volume_exists_by_id?(pool.not_nil!.id, req.id)
@@ -218,10 +211,9 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
   services, volfiles = services_and_volfiles(req)
 
   action = ACTION_VOLUME_CREATE
-  req.state = "Started"
-  if req.no_start
+  req.state = volume.state
+  if volume.state != "Started"
     action = ACTION_VOLUME_CREATE_STOPPED
-    req.state = "Created"
   end
 
   # Volume create action {req, services, volfiles}

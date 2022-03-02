@@ -310,15 +310,6 @@ end
 
 command "volume.expand", "Kadalu Storage Volume Expand" do |parser, args|
   parser.banner = "Usage: kadalu volume expand POOL/VOLNAME TYPE STORAGE_UNITS [arguments]"
-  parser.on("--no-start", "Don't start the Volume on Expand") do
-    args.volume_args.no_start = true
-  end
-  parser.on("--volume-id=ID", "Set Volume ID to import a Volume") do |volume_id|
-    args.volume_args.volume_id = volume_id
-  end
-  parser.on("--auto-create-pool", "Auto create Pool if not exists") do
-    args.volume_args.auto_create_pool = true
-  end
   parser.on("--auto-add-nodes", "Automatically add nodes to the Pool") do
     args.volume_args.auto_add_nodes = true
   end
@@ -343,11 +334,8 @@ handler "volume.expand" do |args|
       # TODO: How to use import_data[0].options
     else
       req = VolumeRequestParser.parse(args.pos_args)
-      req.volume_id = args.volume_args.volume_id
     end
 
-    req.no_start = args.volume_args.no_start
-    req.auto_create_pool = args.volume_args.auto_create_pool
     req.auto_add_nodes = args.volume_args.auto_add_nodes
     args.pool_name = req.pool.name
 
