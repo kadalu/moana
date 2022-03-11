@@ -6,6 +6,8 @@ require "../datastore/*"
 require "./ping"
 require "./volume_utils.cr"
 
+ACTION_RESTART_SHD_SERVICE = "restart_shd_service"
+
 node_action ACTION_VALIDATE_VOLUME_CREATE do |data, _env|
   req = MoanaTypes::Volume.from_json(data)
   puts data, req
@@ -18,6 +20,10 @@ end
 
 node_action ACTION_VOLUME_CREATE_STOPPED do |data, _env|
   handle_volume_create(data, stopped: true)
+end
+
+node_action ACTION_RESTART_SHD_SERVICE do |data, _env|
+  restart_shd_service(data)
 end
 
 put "/api/v1/pools/:pool_name/volumes" do |env|
@@ -233,10 +239,21 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
     svcs.each do |svc|
       # Enable each Services
       begin
+        puts "in enable service"
         Datastore.enable_service(pool.not_nil!.id, node_id, svc)
       rescue ex : Exception
         # Avoid adding same service into DB
-        next
+
+        puts "in execption"
+
+        # update servcice in DB
+        # Write a node action to call svc.restart
+
+        # puts "after restarting shd"
+
+        Datastore.update_service(pool.not_nil!.id, node_id, svc)
+
+        puts "after updating service in DB"
       end
     end
   end
@@ -263,6 +280,24 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
 
   # Save Volume info
   Datastore.update_volume(pool.not_nil!.id, req, volume.not_nil!.distribute_groups.size)
+
+  puts "sending restart req"
+
+  resp = dispatch_action(
+    ACTION_RESTART_SHD_SERVICE,
+    pool_name,
+    nodes,
+    {services, volfiles, req}.to_json
+  )
+
+  puts "getting response"
+
+  if !resp.ok
+    halt(env, status_code: 400, response: node_errors("Failed to restart SHD service", resp.node_responses).to_json)
+  end
+
+  puts "after halt"
+  puts resp.node_responses
 
   env.response.status_code = 201
   req.to_json

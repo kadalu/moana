@@ -14,6 +14,7 @@ TEST_XATTR_VALUE = "testvalue"
 VOLUME_ID_XATTR_NAME = "trusted.glusterfs.volume-id"
 
 alias VolumeRequestToNode = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, Array(MoanaTypes::Volfile)), MoanaTypes::Volume)
+alias ServiceRequestToNode = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)))
 
 def volfile_get(name)
   # TODO: Add logic to read from the Templates directory
@@ -104,6 +105,21 @@ def validate_volume_create(req)
         elsif xattr_vol_id_string != req.id
           return NodeResponse.new(false, {"error": "Volume-id do not match to reuse storage-unit #{storage_unit.path}"}.to_json)
         end
+      end
+    end
+  end
+
+  NodeResponse.new(true, "")
+end
+
+def restart_shd_service(data)
+  services, _, _ = VolumeRequestToNode.from_json(data)
+
+  unless services[GlobalConfig.local_node.id]?.nil?
+    services[GlobalConfig.local_node.id].each do |service|
+      svc = Service.from_json(service.to_json)
+      if svc.name == "shdservice"
+        svc.restart
       end
     end
   end
