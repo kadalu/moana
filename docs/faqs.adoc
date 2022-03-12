@@ -14,7 +14,7 @@ Why not? Short answer is Yes. If the GlusterFS version available in the system i
 
 == Who is behind Kadalu Storage?
 
-The Kadalu Storage project is currently sponsored by Kadalu Software Pvt Ltd. The project was started by a few core team members of the GlusterFS project with the initial focus to provide a lightweight storage solution for the apps running on Kubernetes. With the release of the https://github.com/kadalu/moana[Kadalu Moana] project, GlusterFS management is simplified for non Kubernetes use cases as well.
+The project was started by a few core team members of the GlusterFS project with the initial focus to provide a lightweight storage solution for the apps running on Kubernetes. With the release of the https://github.com/kadalu/moana[Kadalu Moana] project, GlusterFS management is simplified for non Kubernetes use cases as well.
 
 == How stable is Kadalu Storage?
 
