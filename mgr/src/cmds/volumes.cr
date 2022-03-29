@@ -245,11 +245,7 @@ command "volume.set", "Set options to the Kadalu Storage Volume" do |parser, arg
 
   parser.on("--options=options", "Set the options") do |options|
     args.volume_args.options = options
-    # puts "options", options
   end
-  # parser.on("--volume-id=ID", "Set Volume ID to import a Volume") do |volume_id|
-  #   args.volume_args.volume_id = volume_id
-  # end
 end
 
 handler "volume.set" do |args|
@@ -266,5 +262,27 @@ handler "volume.set" do |args|
 
     handle_json_output(volume, args)
     puts "Volume #{volume_name} options set successfully"
+  end
+end
+
+command "volume.reset", "Re-Set options to the Kadalu Storage Volume" do |parser, args|
+  parser.banner = "Usage: kadalu volume reset POOL/VOLNAME [arguments]"
+
+  parser.on("--options=options", "Re-Set the options") do |options|
+    args.volume_args.options = options
+  end
+end
+
+handler "volume.reset" do |args|
+  args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
+
+  volume_option_keys = args.volume_args.options.split(" ")
+
+  api_call(args, "Failed to Set options to the Volume") do |client|
+    puts "in cmd", args.volume_args.options
+    volume = client.pool(args.pool_name).volume(volume_name).reset(volume_option_keys)
+
+    handle_json_output(volume, args)
+    puts "Volume #{volume_name} options reset successfully"
   end
 end

@@ -115,6 +115,22 @@ module MoanaClient
       end
     end
 
+    def reset(volume_option_keys : Array)
+      url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}/options/reset"
+
+      puts "in reset", volume_option_keys
+      response = MoanaClient.http_post(
+        url,
+        ({"volume_option_keys": volume_option_keys}).to_json,
+        headers: @client.auth_header
+      )
+      if response.status_code == 201
+        MoanaTypes::Volume.from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
+
     def delete
       url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}"
 
