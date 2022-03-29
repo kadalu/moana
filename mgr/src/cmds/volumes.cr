@@ -4,7 +4,7 @@ require "./gluster_volume_parser"
 
 struct VolumeArgs
   property status = false, detail = false, name = "", volume_id = "", no_start = false,
-    auto_create_pool = false, auto_add_nodes = false,
+    auto_create_pool = false, auto_add_nodes = false, options = "",
     node_maps = Hash(String, String).new
 end
 
@@ -237,5 +237,34 @@ handler "volume.delete" do |args|
 
     handle_json_output(nil, args)
     puts "Volume #{volume_name} deleted successfully"
+  end
+end
+
+command "volume.set", "Set options to the Kadalu Storage Volume" do |parser, args|
+  parser.banner = "Usage: kadalu volume set POOL/VOLNAME [arguments]"
+
+  parser.on("--options=options", "Set the options") do |options|
+    args.volume_args.options = options
+    # puts "options", options
+  end
+  # parser.on("--volume-id=ID", "Set Volume ID to import a Volume") do |volume_id|
+  #   args.volume_args.volume_id = volume_id
+  # end
+end
+
+handler "volume.set" do |args|
+  args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
+
+  volume_options = validate_volume_options(args.volume_args.options)
+  # without .to_json to conserve HASH.
+  puts "here", volume_options.to_json.to_s
+  puts "here", typeof(volume_options.to_s)
+
+  api_call(args, "Failed to Set options to the Volume") do |client|
+    puts "in cmd", args.volume_args.options
+    volume = client.pool(args.pool_name).volume(volume_name).set(volume_options.to_json.to_s)
+
+    handle_json_output(volume, args)
+    puts "Volume #{volume_name} options set successfully"
   end
 end

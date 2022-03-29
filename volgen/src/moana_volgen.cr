@@ -221,6 +221,7 @@ class Volfile
 
     volumes.each_with_index do |volume, vidx|
       opts = volume.options
+
       vvars = Volfile.volume_variables(volume, vidx)
 
       vgraph = graph
