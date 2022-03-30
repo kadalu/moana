@@ -126,22 +126,20 @@ def handle_json_error(message, args)
   end
 end
 
-def validate_volume_options(volume_options)
-  parts = volume_options.split(" ")
-  puts parts
-  if parts.size % 2 != 0
-    STDERR.puts "Volume options syntax invalid"
+def validate_volume_options(volume_options : Array)
+  if volume_options.size % 2 != 0
+    STDERR.puts "Volume options pairs invalid"
     exit 1
   end
 
-  opts = Hash(String, String).new
-  parts.each_with_index do |part, index|
-    if index == parts.size - 1
+  vol_opts = Hash(String, String).new
+  volume_options.each_with_index do |volume_option, index|
+    if index == volume_options.size - 1
       break
     end
     next unless index % 2 == 0
-    opts[part] = parts[index + 1]
+    vol_opts[volume_option] = volume_options[index + 1]
   end
 
-  opts
+  vol_opts
 end

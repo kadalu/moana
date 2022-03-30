@@ -4,7 +4,7 @@ require "./gluster_volume_parser"
 
 struct VolumeArgs
   property status = false, detail = false, name = "", volume_id = "", no_start = false,
-    auto_create_pool = false, auto_add_nodes = false, options = "",
+    auto_create_pool = false, auto_add_nodes = false,
     node_maps = Hash(String, String).new
 end
 
@@ -242,22 +242,17 @@ end
 
 command "volume.set", "Set options to the Kadalu Storage Volume" do |parser, args|
   parser.banner = "Usage: kadalu volume set POOL/VOLNAME [arguments]"
-
-  parser.on("--options=options", "Set the options") do |options|
-    args.volume_args.options = options
-  end
 end
 
 handler "volume.set" do |args|
   args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
 
-  volume_options = validate_volume_options(args.volume_args.options)
+  volume_options = validate_volume_options(args.pos_args[1..])
   # without .to_json to conserve HASH.
   puts "here", volume_options.to_json.to_s
   puts "here", typeof(volume_options.to_s)
 
   api_call(args, "Failed to Set options to the Volume") do |client|
-    puts "in cmd", args.volume_args.options
     volume = client.pool(args.pool_name).volume(volume_name).set(volume_options.to_json.to_s)
 
     handle_json_output(volume, args)
@@ -267,20 +262,13 @@ end
 
 command "volume.reset", "Re-Set options to the Kadalu Storage Volume" do |parser, args|
   parser.banner = "Usage: kadalu volume reset POOL/VOLNAME [arguments]"
-
-  parser.on("--options=options", "Re-Set the options") do |options|
-    args.volume_args.options = options
-  end
 end
 
 handler "volume.reset" do |args|
   args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
 
-  volume_option_keys = args.volume_args.options.split(" ")
-
   api_call(args, "Failed to Set options to the Volume") do |client|
-    puts "in cmd", args.volume_args.options
-    volume = client.pool(args.pool_name).volume(volume_name).reset(volume_option_keys)
+    volume = client.pool(args.pool_name).volume(volume_name).reset(args.pos_args[1..])
 
     handle_json_output(volume, args)
     puts "Volume #{volume_name} options reset successfully"
