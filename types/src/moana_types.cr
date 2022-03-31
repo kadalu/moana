@@ -26,7 +26,7 @@ module MoanaTypes
     include JSON::Serializable
 
     property name = "", endpoint = "", pool_name = "", mgr_node_id = "",
-      mgr_url = "", mgr_port = 3000, mgr_https = false
+      mgr_url = "", mgr_port = 3000, mgr_https = false, mgr_token = ""
 
     def initialize
     end

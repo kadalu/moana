@@ -76,9 +76,10 @@ module Datastore
     nodes.size > 0 ? nodes[0] : nil
   end
 
-  def create_node(pool_id, node_id, node_name, endpoint, token)
-    query = insert_query("nodes", %w[pool_id id name endpoint token])
-    connection.exec(query, pool_id, node_id, node_name, endpoint, token)
+  def create_node(pool_id, node_id, node_name, endpoint, token, mgr_token)
+    mgr_token_hash = hash_sha256(mgr_token)
+    query = insert_query("nodes", %w[pool_id id name endpoint token mgr_token_hash])
+    connection.exec(query, pool_id, node_id, node_name, endpoint, token, mgr_token_hash)
   end
 
   def storage_units_from_node?(pool_id, node_id)

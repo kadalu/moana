@@ -66,9 +66,10 @@ class AuthHandler < Kemal::Handler
     return call_next(env) if exclude_match?(env)
 
     user_id = env.request.headers["X-User-ID"]?
+    node_id = env.request.headers["X-Node-ID"]?
     auth = env.request.headers["Authorization"]?
 
-    return unauthorized(env, "X-User-ID is not set") if user_id.nil?
+    return unauthorized(env, "X-User-ID/X-Node-ID is not set") if user_id.nil? && node_id.nil?
     return unauthorized(env, "Authorization is not set") if auth.nil?
 
     bearer, _, token = auth.partition(" ")
@@ -76,9 +77,22 @@ class AuthHandler < Kemal::Handler
       return unauthorized(env, "Invalid Authoriation header")
     end
 
-    return unauthorized(env, "Invalid credentials") unless Datastore.valid_api_key?(user_id, token)
+    if !user_id.nil?
+      return unauthorized(env, "Invalid credentials") unless Datastore.valid_api_key?(user_id, token)
 
-    env.set("user_id", user_id)
+      env.set("user_id", user_id)
+    elsif !node_id.nil?
+      # Request coming from the node. Always provides
+      # pool_name in the URL.
+      pool_name = env.params.url["pool_name"]?
+      return unauthorized(env, "pool_name not provided") if pool_name.nil?
+
+      unless Datastore.valid_node_of_a_pool?(pool_name, node_id, token)
+        return unauthorized(env, "Invalid credentials")
+      end
+
+      env.set("node_id", node_id)
+    end
 
     call_next(env)
   end

@@ -97,7 +97,7 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
 
         node = MoanaTypes::Node.from_json(resp.node_responses[n.name].response)
         node.endpoint = endpoint
-        Datastore.create_node(pool.not_nil!.id, node.id, n.name, endpoint, node.token)
+        Datastore.create_node(pool.not_nil!.id, node.id, n.name, endpoint, node.token, invite.mgr_token)
       end
 
       if node.nil?

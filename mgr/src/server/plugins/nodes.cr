@@ -49,7 +49,7 @@ get "/api/v1/pools/:pool_name/nodes/:node_name/services" do |env|
   pool_name = env.params.url["pool_name"]
   node_name = env.params.url["node_name"]
 
-  # TODO: Handle Node authentication
+  next forbidden(env) unless env.get?("node_id").nil?
 
   node = Datastore.get_node(pool_name, node_name)
 
