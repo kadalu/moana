@@ -1,5 +1,7 @@
 require "yaml"
 
+require "./options"
+
 CONDITION_MORE_THAN_ONE_DISTRIBUTE_GROUP = "more_than_one_distribute_group"
 
 class Graph
@@ -213,6 +215,18 @@ class Volfile
     vars
   end
 
+  def self.get_expanded_options(opts)
+    outopts = Hash(String, String).new
+    opts.each do |k, v|
+      expanded_opt_names = VolumeOptions.expanded_options(k)
+      # Add same value to all the expanded options
+      expanded_opt_names.each do |name|
+        outopts[name] = v
+      end
+    end
+    outopts
+  end
+
   def self.pool_level(name, tmpl, volumes)
     volfile_tmpl = VolfileTmpl.from_yaml(tmpl)
 
@@ -220,7 +234,7 @@ class Volfile
     graph = Volfile.new(name, volfile_tmpl.pool[0], Hash(String, String).new, Hash(String, String).new)
 
     volumes.each_with_index do |volume, vidx|
-      opts = volume.options
+      opts = get_expanded_options(volume.options)
       vvars = Volfile.volume_variables(volume, vidx)
 
       vgraph = graph
@@ -269,7 +283,7 @@ class Volfile
   def self.volume_level(name, tmpl, volume)
     volfile_tmpl = VolfileTmpl.from_yaml(tmpl)
 
-    opts = volume.options
+    opts = get_expanded_options(volume.options)
 
     vvars = Volfile.volume_variables(volume, 0)
     # Create graph instance with first template element
@@ -313,7 +327,7 @@ class Volfile
   def self.storage_unit_level(name, tmpl, volume, storage_unit_id)
     content = ""
     volfile_tmpl = VolfileTmpl.from_yaml(tmpl)
-    opts = volume.options
+    opts = get_expanded_options(volume.options)
 
     # vvars = Volfile.volume_variables(volume, 0)
 
