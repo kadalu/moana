@@ -78,6 +78,8 @@ storage_unit:
     name: "{{ volume.name }}-io-threads"
   - type: "features/upcall"
     name: "{{ volume.name }}-upcall"
+  - type: "features/simple-quota"
+    name: "{{ volume.name }}-simple-quota"
   - type: "features/locks"
     name: "{{ volume.name }}-locks"
   - type: "features/access-control"
