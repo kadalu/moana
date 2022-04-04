@@ -247,7 +247,7 @@ module Datastore
 
   def update_volume_options(volume_id, options)
     query = update_query("volumes", ["options"], where: " id = ?")
-    connection.exec(query, options, volume_id)
+    connection.exec(query, options.to_json, volume_id)
   end
 
   def update_volume_state(volume_id, state)

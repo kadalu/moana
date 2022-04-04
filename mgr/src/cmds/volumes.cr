@@ -240,7 +240,7 @@ handler "volume.delete" do |args|
   end
 end
 
-command "volume.set", "Set options to the Kadalu Storage Volume" do |parser, args|
+command "volume.set", "Set options to the Kadalu Storage Volume" do |parser, _|
   parser.banner = "Usage: kadalu volume set POOL/VOLNAME [arguments]"
 end
 
@@ -248,19 +248,16 @@ handler "volume.set" do |args|
   args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
 
   volume_options = validate_volume_options(args.pos_args[1..])
-  # without .to_json to conserve HASH.
-  puts "here", volume_options.to_json.to_s
-  puts "here", typeof(volume_options.to_s)
 
   api_call(args, "Failed to Set options to the Volume") do |client|
-    volume = client.pool(args.pool_name).volume(volume_name).set(volume_options.to_json.to_s)
+    volume = client.pool(args.pool_name).volume(volume_name).set(volume_options)
 
     handle_json_output(volume, args)
     puts "Volume #{volume_name} options set successfully"
   end
 end
 
-command "volume.reset", "Re-Set options to the Kadalu Storage Volume" do |parser, args|
+command "volume.reset", "Re-Set options to the Kadalu Storage Volume" do |parser, _|
   parser.banner = "Usage: kadalu volume reset POOL/VOLNAME [arguments]"
 end
 

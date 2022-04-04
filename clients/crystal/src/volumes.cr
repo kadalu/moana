@@ -99,13 +99,12 @@ module MoanaClient
       start_stop_volume("stop")
     end
 
-    def set(volume_options : String)
+    def set(volume_options : Hash(String, String))
       url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}/options/set"
 
-      puts "in set", volume_options
       response = MoanaClient.http_post(
         url,
-        ({"volume_options": volume_options}).to_json,
+        volume_options.to_json,
         headers: @client.auth_header
       )
       if response.status_code == 201
@@ -115,13 +114,12 @@ module MoanaClient
       end
     end
 
-    def reset(volume_option_keys : Array)
+    def reset(volume_option_keys : Array(String))
       url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}/options/reset"
 
-      puts "in reset", volume_option_keys
       response = MoanaClient.http_post(
         url,
-        ({"volume_option_keys": volume_option_keys}).to_json,
+        volume_option_keys.to_json,
         headers: @client.auth_header
       )
       if response.status_code == 201
