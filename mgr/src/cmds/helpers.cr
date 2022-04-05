@@ -119,9 +119,22 @@ def handle_json_output(data, args)
   exit 0
 end
 
-def handle_json_error(message, args)
+def handle_json_error(message, args) 
   if args.json
     puts({"error": message}.to_json)
     exit 1
   end
+end
+
+def validate_volume_options(volume_options : Array)
+  if volume_options.size % 2 != 0
+    STDERR.puts "Volume options pairs invalid"
+    exit 1
+  end
+
+  vol_opts = Hash(String, String).new
+  volume_options.each_slice(2) do |opt|
+    vol_opts[opt[0]] = opt[1]
+  end
+  vol_opts
 end

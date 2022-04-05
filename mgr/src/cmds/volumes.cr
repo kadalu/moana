@@ -239,3 +239,35 @@ handler "volume.delete" do |args|
     puts "Volume #{volume_name} deleted successfully"
   end
 end
+
+command "volume.set", "Set options to the Kadalu Storage Volume" do |parser, _|
+  parser.banner = "Usage: kadalu volume set POOL/VOLNAME [arguments]"
+end
+
+handler "volume.set" do |args|
+  args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
+
+  volume_options = validate_volume_options(args.pos_args[1..])
+
+  api_call(args, "Failed to Set options to the Volume") do |client|
+    volume = client.pool(args.pool_name).volume(volume_name).set(volume_options)
+
+    handle_json_output(volume, args)
+    puts "Volume #{volume_name} options set successfully"
+  end
+end
+
+command "volume.reset", "Re-Set options to the Kadalu Storage Volume" do |parser, _|
+  parser.banner = "Usage: kadalu volume reset POOL/VOLNAME [arguments]"
+end
+
+handler "volume.reset" do |args|
+  args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
+
+  api_call(args, "Failed to Set options to the Volume") do |client|
+    volume = client.pool(args.pool_name).volume(volume_name).reset(args.pos_args[1..])
+
+    handle_json_output(volume, args)
+    puts "Volume #{volume_name} options reset successfully"
+  end
+end

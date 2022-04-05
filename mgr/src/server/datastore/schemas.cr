@@ -57,6 +57,7 @@ SCHEMAS = [
        name                VARCHAR,
        type                VARCHAR,
        state               VARCHAR,
+       options             VARCHAR,
        snapshot_plugin     VARCHAR,
        distribute_count    SMALLINT,
        storage_units_count SMALLINT,

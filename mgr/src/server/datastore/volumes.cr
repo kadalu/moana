@@ -14,7 +14,7 @@ module Datastore
       node_endpoint = "", storage_unit_path = "", storage_unit_port = 0, storage_unit_fs = "",
       storage_unit_type = "", storage_unit_size_bytes : Int64 = 0, storage_unit_inodes_count : Int64 = 0,
       pool_name = "", pool_id = "",
-      storage_unit_id = ""
+      storage_unit_id = "", options = "{}"
   end
 
   private def group_volumes(data)
@@ -27,6 +27,7 @@ module Datastore
       volume.id = rows[0].id
       volume.name = rows[0].name
       volume.state = rows[0].state
+      volume.options = Hash(String, String).from_json(rows[0].options)
       volume.metrics.size_bytes = rows[0].size_bytes
       volume.metrics.inodes_count = rows[0].inodes_count
       volume.pool.id = rows[0].pool_id
@@ -78,6 +79,7 @@ module Datastore
             volumes.state AS state,
             volumes.snapshot_plugin AS snapshot_plugin,
             volumes.type AS type,
+            volumes.options AS options,
             volumes.size_bytes AS size_bytes,
             volumes.inodes_count AS inodes_count,
             distribute_groups.idx AS distribute_group_index,
@@ -241,6 +243,11 @@ module Datastore
         end
       end
     end
+  end
+
+  def update_volume_options(volume_id, options)
+    query = update_query("volumes", ["options"], where: " id = ?")
+    connection.exec(query, options.to_json, volume_id)
   end
 
   def update_volume_state(volume_id, state)

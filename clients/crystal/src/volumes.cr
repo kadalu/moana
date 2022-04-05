@@ -99,6 +99,36 @@ module MoanaClient
       start_stop_volume("stop")
     end
 
+    def set(volume_options : Hash(String, String))
+      url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}/options/set"
+
+      response = MoanaClient.http_post(
+        url,
+        volume_options.to_json,
+        headers: @client.auth_header
+      )
+      if response.status_code == 201
+        MoanaTypes::Volume.from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
+
+    def reset(volume_option_keys : Array(String))
+      url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}/options/reset"
+
+      response = MoanaClient.http_post(
+        url,
+        volume_option_keys.to_json,
+        headers: @client.auth_header
+      )
+      if response.status_code == 201
+        MoanaTypes::Volume.from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
+
     def delete
       url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}"
 
