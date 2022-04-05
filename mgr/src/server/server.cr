@@ -68,12 +68,13 @@ module StorageMgr
             path: "/api/v1/pools/#{GlobalConfig.local_node.pool_name}/nodes/#{GlobalConfig.local_node.name}/services"
           )
           resp = HTTP::Client.get(mgr_url, headers: headers)
-          # # TODO: Exit on error
           if resp.status_code == 200
             services = Array(MoanaTypes::ServiceUnit).from_json(resp.body)
             break
           end
-          Log.debug &.emit("Fetch services of this node", status_code: resp.status_code)
+
+          Log.error &.emit("Failed to fetch services of this node", status_code: resp.status_code)
+          exit 1
         rescue Socket::ConnectError
           sleep 5.seconds
           next

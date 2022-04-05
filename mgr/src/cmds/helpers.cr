@@ -119,7 +119,7 @@ def handle_json_output(data, args)
   exit 0
 end
 
-def handle_json_error(message, args) 
+def handle_json_error(message, args)
   if args.json
     puts({"error": message}.to_json)
     exit 1

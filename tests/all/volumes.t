@@ -154,6 +154,7 @@ nodes.each do |node|
   puts TEST "cat /var/log/kadalu/storage_units/*;"
 end
 
+USE_NODE nodes[0]
 TEST "kadalu volume stop DEV/vol14 --mode=script"
 TEST "kadalu volume delete DEV/vol14 --mode=script"
 
