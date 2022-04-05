@@ -32,6 +32,7 @@ node_action ACTION_NODE_INVITE_ACCEPT do |data, env|
   local_node_data.pool_name = req.pool_name
   local_node_data.name = req.name
   local_node_data.token_hash = hash_sha256(node.token)
+  local_node_data.mgr_token = req.mgr_token
   if env.request.remote_address
     local_node_data.mgr_url, _sep, _port = env.request.remote_address.to_s.rpartition(":")
   else
@@ -98,6 +99,7 @@ def node_invite(pool_name : String, node_name : String, endpoint : String)
   invite.mgr_port = Kemal.config.port
   # TODO: Set https based on config or Kemal config
   invite.mgr_https = false
+  invite.mgr_token = UUID.random.to_s
 
   invite
 end
@@ -145,7 +147,7 @@ post "/api/v1/pools/:pool_name/nodes" do |env|
   end
 
   node = MoanaTypes::Node.from_json(resp.node_responses[node_name].response)
-  Datastore.create_node(pool.id, node.id, node_name, endpoint, node.token)
+  Datastore.create_node(pool.id, node.id, node_name, endpoint, node.token, invite.mgr_token)
 
   # TODO: If Datastore.create_node fails then call Rollback
 

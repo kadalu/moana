@@ -49,7 +49,7 @@ get "/api/v1/pools/:pool_name/nodes/:node_name/services" do |env|
   pool_name = env.params.url["pool_name"]
   node_name = env.params.url["node_name"]
 
-  # TODO: Handle Node authentication
+  next forbidden(env) if env.get?("node_id").nil?
 
   node = Datastore.get_node(pool_name, node_name)
 
@@ -57,5 +57,5 @@ get "/api/v1/pools/:pool_name/nodes/:node_name/services" do |env|
     halt(env, status_code: 400, response: ({"error": "Node doesn't exists"}.to_json))
   end
 
-  Datastore.list_services(node.pool.id, node.id)
+  Datastore.list_services(node.pool.id, node.id).to_json
 end

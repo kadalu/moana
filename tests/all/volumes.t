@@ -141,23 +141,22 @@ TEST 1, "kadalu volume create DEV/vol12 server1:/exports/vol11/s1 server2:/expor
 TEST 1, "kadalu volume create DEV/vol13 server1:/exports/vol12/s1 server2:/exports/vol12/s2 server3:/exports/vol12/s3 --no-start --volume-id=123-456-789"
 
 
-# # Tests for restarting of all services on node-reboot
-# TEST "kadalu volume create DEV/vol14 server1:/exports/vol14/s1 server2:/exports/vol14/s2 server3:/exports/vol14/s3"
-# nodes.each do |node|
-#   USE_NODE node
-#   puts "node: #{node}"
-#   RUN "cd /exports/vol14/"
-#   puts TEST "ps aux | grep 'glusterfsd'"
-#   EQUAL "1", (TEST "ps aux | grep '[g]lusterfsd'| wc -l").strip, "Check for equal number of services[brick-processes]"
-#   puts TEST "kill $(pidof 'glusterfsd')"
-#   TEST "systemctl restart kadalu-mgr"
-#   puts TEST "ps aux | grep 'glusterfsd'"
-#   EQUAL "1", (TEST "ps aux | grep '[g]lusterfsd'| wc -l").strip, "Check for equal number of services[brick-processes]"
-#   puts TEST "cat /var/log/kadalu/storage_units/*;"
-# end
+# Tests for restarting of all services on node-reboot
+TEST "kadalu volume create DEV/vol14 server1:/exports/vol14/s1 server2:/exports/vol14/s2 server3:/exports/vol14/s3"
+nodes.each do |node|
+  USE_NODE node
+  puts TEST "ps aux | grep 'glusterfsd'"
+  EQUAL "1", (TEST "ps aux | grep '[g]lusterfsd'| wc -l").strip, "Check for equal number of services[brick-processes]"
+  puts TEST "kill $(pidof 'glusterfsd')"
+  TEST "systemctl restart kadalu-mgr"
+  puts TEST "ps aux | grep 'glusterfsd'"
+  EQUAL "1", (TEST "ps aux | grep '[g]lusterfsd'| wc -l").strip, "Check for equal number of services[brick-processes]"
+  puts TEST "cat /var/log/kadalu/storage_units/*;"
+end
 
-# TEST "kadalu volume stop DEV/vol14 --mode=script"
-# TEST "kadalu volume delete DEV/vol14 --mode=script"
+USE_NODE nodes[0]
+TEST "kadalu volume stop DEV/vol14 --mode=script"
+TEST "kadalu volume delete DEV/vol14 --mode=script"
 
 puts TEST "kadalu volume list --json"
 

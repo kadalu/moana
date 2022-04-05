@@ -89,6 +89,12 @@ module Datastore
     res.rows_affected > 0
   end
 
+  def valid_node_of_a_pool?(pool_name, node_id, token)
+    token_hash = hash_sha256(token)
+    query = "SELECT COUNT(nodes.id) FROM nodes INNER JOIN pools WHERE pools.name = ? AND nodes.pool_id = pools.id AND nodes.id = ? AND nodes.mgr_token_hash = ?"
+    connection.scalar(query, pool_name, node_id, token_hash).as(Int64) > 0
+  end
+
   def create_user(username, name, password)
     password_hash = hash_sha256(password)
     user_id = UUID.random.to_s
