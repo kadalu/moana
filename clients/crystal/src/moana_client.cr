@@ -3,6 +3,7 @@ require "moana_types"
 require "./helpers"
 require "./pools"
 require "./users"
+require "./backup_restore"
 
 module MoanaClient
   class Client
@@ -29,6 +30,10 @@ module MoanaClient
 
     def pool(name : String)
       Pool.new(self, name)
+    end
+
+    def backup(backupdir : String)
+      Backup.backup(self, backupdir)
     end
 
     def create_user(username : String, name : String, password : String)
