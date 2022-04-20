@@ -36,6 +36,10 @@ module MoanaClient
       Backup.backup(self, backupdir)
     end
 
+    def restore(targetpath : String)
+      Restore.restore(self, targetpath)
+    end
+
     def create_user(username : String, name : String, password : String)
       User.create(self, username, name, password)
     end

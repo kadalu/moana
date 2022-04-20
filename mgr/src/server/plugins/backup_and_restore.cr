@@ -30,5 +30,33 @@ post "/api/v1/backup" do |env|
   # Create a tar file with info, kadalu.db as contents and remove non-tar files.
   system "cd #{backupdir} && tar -czvf kadalu_backup.tar.gz -C #{backupdir} ."
   system "cd #{backupdir} && ls | grep -P '[^.tar.gz]$' | xargs -d'\n' rm"
+end
 
+post "/api/v1/restore" do |env|
+  puts "hello"
+
+  # The target path is a '.tar.gz' file with info metadata and kadalu.db as contents.
+  targetpath = String.from_json(env.request.body.not_nil!)
+
+  puts "in restore plugins", targetpath
+
+  target_file_name = targetpath.split("/")
+  target_file_name = target_file_name.pop
+
+  puts target_file_name
+
+  FileUtils.cp(targetpath, "/tmp/#{target_file_name}")
+
+  system "cd /tmp && tar -xf #{target_file_name}"
+
+  system "ls /tmp"
+
+  FileUtils.touch("/var/lib/kadalu/mgr")
+
+  info_file_path = "/var/lib/kadalu/info"
+
+  FileUtils.cp("/tmp/info", info_file_path)
+
+  # TODO: Confirm for overwriting DB. [Right now the db file is empty after extraction have to fix this]
+  Datastore.restore("/tmp/kadalu.db")
 end

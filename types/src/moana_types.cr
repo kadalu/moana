@@ -101,19 +101,6 @@ module MoanaTypes
     end
   end
 
-  class Backup
-    include JSON::Serializable
-
-    property backupdir = ""
-
-    def initialize(@backupdir : String)
-    end
-
-    def initialize
-    end
-
-  end
-
   class Volume
     include JSON::Serializable
 
