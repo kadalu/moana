@@ -19,15 +19,15 @@ module MoanaClient
   end
 
   class Restore
-    def initialize(@client : Client, @targetpath : String)
+    def initialize(@client : Client, @backupdir : String)
     end
 
-    def self.restore(client : Client, targetpath : String)
+    def self.restore(client : Client, backupdir : String)
       url = "#{client.url}/api/v1/restore"
 
       response = MoanaClient.http_post(
         url,
-        targetpath.to_json,
+        backupdir.to_json,
         headers: client.auth_header
       )
 

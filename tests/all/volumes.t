@@ -39,6 +39,7 @@ nodes.each do |node|
   TEST "mkdir -p /exports/vol11"
   TEST "mkdir -p /exports/vol12"
   TEST "mkdir -p /exports/vol14"
+  TEST "mkdir -p /exports/vol19"
 end
 
 USE_NODE nodes[0]
@@ -157,6 +158,15 @@ end
 USE_NODE nodes[0]
 TEST "kadalu volume stop DEV/vol14 --mode=script"
 TEST "kadalu volume delete DEV/vol14 --mode=script"
+
+# Tests for Backup & Restore
+TEST "kadalu volume create DEV/vol19 server1:/exports/vol19/s1 server2:/exports/vol19/s2 server3:/exports/vol19/s3"
+USE_NODE nodes[0]
+TEST "kadalu backup backup1"
+TEST "kadalu restore backup1 --mode=script"
+
+TEST "kadalu volume stop DEV/vol19 --mode=script"
+TEST "kadalu volume delete DEV/vol19 --mode=script"
 
 puts TEST "kadalu volume list --json"
 

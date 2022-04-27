@@ -21,7 +21,7 @@ post "/api/v1/backup" do |env|
 
   time = Time.utc.to_s("%Y/%m/%d %H:%M:%s")
   metadata = {"created_at": time}.to_json
-  file = File.write("#{backup_dir}/meta.json", metadata)
+  File.write("#{backup_dir}/meta.json", metadata)
 
   Datastore.backup(backup_dir)
 
