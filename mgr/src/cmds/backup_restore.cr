@@ -9,6 +9,7 @@ handler "backup" do |args|
 
   api_call(args, "Failed to set the backup dir") do |client|
     client.backup(backupdir)
+    handle_json_output(nil, args)
   end
 end
 
@@ -17,14 +18,14 @@ command "restore", "Restore kadalu storage by specifying target-path" do |parser
 end
 
 handler "restore" do |args|
-  targetpath = args.pos_args[0]
+  backupdir = args.pos_args[0]
 
   if File.exists?("/var/lib/kadalu/meta/kadalu.db")
     next unless (args.script_mode || yes("Are you sure you want to overwrite Kadalu metadata?"))
   end
 
   api_call(args, "Failed to restore kadalu storage") do |client|
-    client.restore(targetpath)
+    client.restore(backupdir)
     handle_json_output(nil, args)
   end
 end

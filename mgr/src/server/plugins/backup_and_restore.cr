@@ -7,41 +7,43 @@ require "./ping"
 require "./volume_utils.cr"
 
 post "/api/v1/backup" do |env|
-  backupdir = String.from_json(env.request.body.not_nil!)
+  backup_name = String.from_json(env.request.body.not_nil!)
 
-  Dir.mkdir_p backupdir
+  backup_dir = "#{GlobalConfig.workdir}/backups" + "/#{backup_name}"
 
-  # Copy /var/lib/kadalu/info file into $(backupdir), only if it exists.
-  begin
-    FileUtils.cp("/var/lib/kadalu/info", backupdir)
-  rescue File::NotFoundError
-    halt(env, status_code: 403, response: ({"error": "Info file not found to backup"}.to_json))
+  if Dir.exists?(backup_dir)
+    halt(env, status_code: 400, response: ({"error": "Backup directory already exists`"}.to_json))
   end
 
-  Datastore.backup(backupdir)
+  Dir.mkdir_p backup_dir
 
-  # Create a tar file with info, kadalu.db as contents and remove non-tar files.
-  system "cd #{backupdir} && tar -czf kadalu_backup.tar.gz -C #{backupdir} . | bash"
-  system "cd #{backupdir} && ls | grep -P '[^.tar.gz]$' | xargs -d'\n' rm"
+  FileUtils.cp("#{GlobalConfig.workdir}/info", backup_dir) if File.exists?("#{GlobalConfig.workdir}/info")
+
+  time = Time.utc.to_s("%Y/%m/%d %H:%M:%s")
+  metadata = {"created_at": time}.to_json
+  file = File.write("#{backup_dir}/meta.json", metadata)
+
+  Datastore.backup(backup_dir)
 
   env.response.status_code = 204
 end
 
 post "/api/v1/restore" do |env|
-  # The target path is a '.tar.gz' file with info metadata and kadalu.db as contents.
-  targetpath = String.from_json(env.request.body.not_nil!)
+  backup_name = String.from_json(env.request.body.not_nil!)
 
-  target_file_name = targetpath.split("/").pop
+  backup_dir = "#{GlobalConfig.workdir}/backups/" + backup_name
 
-  FileUtils.cp(targetpath, "/tmp/#{target_file_name}")
+  FileUtils.touch("#{GlobalConfig.workdir}/mgr") if !File.exists?("#{GlobalConfig.workdir}/mgr")
 
-  system "cd /tmp && tar -xf #{target_file_name}"
+  Dir.mkdir_p "#{GlobalConfig.workdir}/meta" if !Dir.exists?("#{GlobalConfig.workdir}/meta")
 
-  FileUtils.touch("/var/lib/kadalu/mgr")
+  if !Dir.exists?(backup_dir)
+    halt(env, status_code: 400, response: ({"error": "Backup directory does not exist"}.to_json))
+  end
 
-  FileUtils.cp("/tmp/info", "/var/lib/kadalu/info")
+  FileUtils.cp("#{backup_dir}/info", "#{GlobalConfig.workdir}/info")
 
-  Datastore.restore("/tmp/kadalu_backup.db")
+  Datastore.restore("#{backup_dir}/kadalu_backup.db")
 
   env.response.status_code = 204
 end
