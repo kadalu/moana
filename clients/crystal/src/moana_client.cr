@@ -32,12 +32,12 @@ module MoanaClient
       Pool.new(self, name)
     end
 
-    def backup(backupdir : String)
-      Backup.backup(self, backupdir)
+    def backup(name : String)
+      Backups.backup(self, name)
     end
 
-    def restore(targetpath : String)
-      Restore.restore(self, targetpath)
+    def restore(name : String)
+      Backups.restore(self, name)
     end
 
     def create_user(username : String, name : String, password : String)

@@ -163,7 +163,16 @@ TEST "kadalu volume delete DEV/vol14 --mode=script"
 TEST "kadalu volume create DEV/vol19 server1:/exports/vol19/s1 server2:/exports/vol19/s2 server3:/exports/vol19/s3"
 USE_NODE nodes[0]
 TEST "kadalu backup backup1"
+
+TEST "systemctl stop kadalu-mgr"
+TEST "rm -rf /var/lib/kadalu/meta /var/lib/kadalu/info"
+TEST "systemctl start kadalu-mgr"
+
+TEST "kadalu user create admin --password=kadalu"
+TEST "kadalu user login admin --password=kadalu"
+
 TEST "kadalu restore backup1 --mode=script"
+TEST "kadalu user login admin --password=kadalu"
 
 TEST "kadalu volume stop DEV/vol19 --mode=script"
 TEST "kadalu volume delete DEV/vol19 --mode=script"
