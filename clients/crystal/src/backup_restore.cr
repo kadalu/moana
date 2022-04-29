@@ -19,16 +19,10 @@ module MoanaClient
       end
     end
 
-    def self.restore(client : Client, name : String)
-      url = "#{client.url}/api/v1/backups/#{name}/restore"
-
-      response = MoanaClient.http_post(
-        url,
-        {"name": name}.to_json,
-        headers: client.auth_header
-      )
-
-      if response.status_code != 200
+    def self.handle_restore_error(status_code, error_message)
+      if status_code != 200
+        # (status_code : Int32, body : String)
+        response = HTTP::Client::Response.new(status_code, error_message)
         MoanaClient.error_response(response)
       end
     end

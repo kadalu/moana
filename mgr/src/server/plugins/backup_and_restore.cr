@@ -33,23 +33,3 @@ post "/api/v1/backups" do |env|
 
   {"name": backup_name, "created_on": time}.to_json
 end
-
-post "/api/v1/backups/:backup_name/restore" do |env|
-  backup_name = env.params.url["backup_name"]
-
-  backup_dir = "#{GlobalConfig.workdir}/backups/" + backup_name
-
-  if !Dir.exists?(backup_dir)
-    halt(env, status_code: 400, response: ({"error": "Backup directory #{backup_dir} does not exist"}.to_json))
-  end
-
-  FileUtils.touch("#{GlobalConfig.workdir}/mgr")
-
-  Dir.mkdir_p "#{GlobalConfig.workdir}/meta"
-
-  FileUtils.cp("#{backup_dir}/info", "#{GlobalConfig.workdir}/info")
-
-  Datastore.restore("#{backup_dir}/kadalu_backup.db")
-
-  env.response.status_code = 200
-end

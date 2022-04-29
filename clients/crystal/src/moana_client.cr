@@ -36,8 +36,8 @@ module MoanaClient
       Backups.backup(self, name)
     end
 
-    def restore(name : String)
-      Backups.restore(self, name)
+    def handle_restore_error(status_code : Int32, error_message : String)
+      Backups.handle_restore_error(status_code, error_message)
     end
 
     def create_user(username : String, name : String, password : String)
