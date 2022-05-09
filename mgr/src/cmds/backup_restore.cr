@@ -17,6 +17,15 @@ handler "backup" do |args|
   api_call(args, "Failed to set the backup dir") do |client|
     response = client.backup(backup_name)
     handle_json_output(response, args)
+    puts <<-STRING
+    Backup #{backup_name} created Successfully! Upload or copy the files from
+    `/var/lib/kadalu/backups/#{backup_name}` directory from the Manager node
+    to the cloud or any other machines. To restore or recreate the Manager
+    node, then download the backup copy from the cloud to
+    `/var/lib/kadalu/backups/#{backup_name}` and run the restore command as below.
+
+    kadalu restore #{backup_name}
+    STRING
   end
 end
 
@@ -36,24 +45,28 @@ handler "restore" do |args|
     next unless (args.script_mode || yes("Are you sure you want to overwrite Kadalu metadata?"))
   end
 
-  api_call(args, "Failed to set the backup dir") do |client|
-    workdir = "/var/lib/kadalu"
-    backup_dir = "#{workdir}/backups/" + backup_name
+  workdir = "/var/lib/kadalu"
+  backup_dir = "#{workdir}/backups/" + backup_name
 
-    if !Dir.exists?(backup_dir)
-      error_message = {"error": "Backup directory #{backup_dir} does not exist"}.to_json
-      status_code = 400
-      client.handle_restore_error(status_code, error_message)
-    end
-
-    FileUtils.touch("#{workdir}/mgr")
-
-    Dir.mkdir_p "#{workdir}/meta"
-
-    FileUtils.cp("#{backup_dir}/info", "#{workdir}/info")
-
-    Datastore.restore("#{backup_dir}/kadalu_backup.db")
-
-    handle_json_output(nil, args)
+  if !Dir.exists?(backup_dir)
+    error_message = "Backup directory #{backup_dir} does not exist"
+    handle_json_error(error_message, args)
+    command_error(error_message)
   end
+
+  FileUtils.touch("#{workdir}/mgr")
+
+  Dir.mkdir_p "#{workdir}/meta"
+
+  FileUtils.cp("#{backup_dir}/info", "#{workdir}/info")
+
+  Datastore.restore_from("#{backup_dir}/kadalu_backup.db")
+
+  handle_json_output(nil, args)
+  puts <<-STRING
+  Kadalu Storage setup restored from the backup #{backup_name} successfully!.
+  Start the kadalu mgr process as below.
+
+  kadalu mgr
+  STRING
 end

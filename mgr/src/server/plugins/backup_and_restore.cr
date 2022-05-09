@@ -27,7 +27,7 @@ post "/api/v1/backups" do |env|
   metadata = {"created_on": time}.to_json
   File.write("#{backup_dir}/meta.json", metadata)
 
-  Datastore.backup(backup_dir)
+  Datastore.backup_to("#{backup_dir}/kadalu_backup.db")
 
   env.response.status_code = 200
 

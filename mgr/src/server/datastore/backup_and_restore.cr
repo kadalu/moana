@@ -4,8 +4,8 @@ require "db"
 require "sqlite3"
 
 module Datastore
-  def backup(backupdir)
-    DB.connect "sqlite3://#{backupdir}/kadalu_backup.db" do |backup_conn|
+  def backup_to(backup_db_path)
+    DB.connect "sqlite3://#{backup_db_path}" do |backup_conn|
       backup_conn = backup_conn.as(SQLite3::Connection)
       DB.connect "sqlite3://#{@@rootdir}/meta/kadalu.db" do |conn|
         conn = conn.as(SQLite3::Connection)
@@ -14,7 +14,7 @@ module Datastore
     end
   end
 
-  def restore(backup_db_path)
+  def restore_from(backup_db_path)
     DB.connect "sqlite3:///var/lib/kadalu/meta/kadalu.db" do |conn|
       conn = conn.as(SQLite3::Connection)
       DB.connect "sqlite3://#{backup_db_path}" do |backup_conn|

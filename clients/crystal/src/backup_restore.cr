@@ -18,13 +18,5 @@ module MoanaClient
         MoanaClient.error_response(response)
       end
     end
-
-    def self.handle_restore_error(status_code, error_message)
-      if status_code != 200
-        # (status_code : Int32, body : String)
-        response = HTTP::Client::Response.new(status_code, error_message)
-        MoanaClient.error_response(response)
-      end
-    end
   end
 end
