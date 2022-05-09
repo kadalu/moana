@@ -192,7 +192,7 @@ delete "/api/v1/pools/:pool_name/nodes/:node_name" do |env|
   )
 
   if !resp.ok
-    halt(env, status_code: 400, response: resp.node_responses[node_name].response)
+    halt(env, status_code: 400, response: resp.node_responses[node.id].response)
   end
 
   Datastore.delete_node(pool.id, node.id)
