@@ -162,12 +162,12 @@ TEST "kadalu volume delete DEV/vol14 --mode=script"
 # Tests for Backup & Restore
 TEST "kadalu volume create DEV/vol19 server1:/exports/vol19/s1 server2:/exports/vol19/s2 server3:/exports/vol19/s3"
 USE_NODE nodes[0]
-TEST "kadalu backup backup1"
+TEST "kadalu config-snapshot create snap1"
 
 TEST "systemctl stop kadalu-mgr"
 TEST "rm -rf /var/lib/kadalu/meta /var/lib/kadalu/info"
 
-TEST "kadalu restore backup1 --mode=script"
+TEST "kadalu config-snapshot restore snap1 --mode=script"
 
 TEST "systemctl start kadalu-mgr"
 

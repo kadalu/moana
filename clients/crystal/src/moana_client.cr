@@ -3,7 +3,7 @@ require "moana_types"
 require "./helpers"
 require "./pools"
 require "./users"
-require "./backup_restore"
+require "./config_snapshots"
 
 module MoanaClient
   class Client
@@ -32,8 +32,8 @@ module MoanaClient
       Pool.new(self, name)
     end
 
-    def backup(name : String)
-      Backups.backup(self, name)
+    def create_config_snapshot(name : String, overwrite = false)
+      ConfigSnapshot.create(self, name, overwrite)
     end
 
     def create_user(username : String, name : String, password : String)
