@@ -1,0 +1,58 @@
+= Config Snapshots
+
+Kadalu Storage configurations are only stored in Manager node, all the other nodes are agent nodes. Periodic backup of configuration data helps to recover Manager node failures.
+
+Kadalu Storage provides configuration snapshot APIs. Easily schedule backup of Storage configurations using these APIs.
+
+== Create Config Snapshot
+
+Use below command to create a Snapshot.
+
+----
+kadalu config-snapshot create <name> [--overwrite]
+----
+
+For example, to create a rolling hourly Snapshot:
+
+----
+kadalu config-snapshot create hourly-`date +%H` --overwrite
+----
+
+== Listing the Config Snapshots
+
+Use `list` command to see the list of Config Snapshots.
+
+----
+$ kadalu config-snapshots list
+----
+
+== Restore the configs from a Snapshot
+
+When a Manager node goes down and the new replacement node is required, download the latest available backup and restore from it. Make sure to use the same hostname as the previous mgr node.
+
+----
+kadalu config-snapshot restore <name> [--from-dir=PATH]
+----
+
+Example:
+
+----
+$ kadalu config-snapshot restore hourly-20 --from-dir=/root/backups
+----
+
+== Delete a config Snapshot
+
+Use delete command to delete a Configuration backup when not required.
+
+----
+$ kadalu config-snapshot delete hourly-20
+----
+
+== Backup
+
+Configuration Snapshots are stored under `/var/lib/kadalu/config-snapshots` directory. Copy to remote node to avoid losing all the Configuration data.
+
+----
+cd /var/lib/kadalu/config-snapshots && tar cvzf hourly-20.tar.gz hourly-20/
+scp /var/lib/kadalu/config-snapshots/hourly-20.tar.gz root@backup-server:/backups/
+----
