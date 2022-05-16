@@ -39,3 +39,21 @@ post "/api/v1/config-snapshots" do |env|
 
   data.to_json
 end
+
+delete "/api/v1/config-snapshots/:snap_name" do |env|
+  snap_name = env.params.url["snap_name"]
+
+  snap_dir = "#{GlobalConfig.workdir}/config-snapshots" + "/#{snap_name}"
+
+  unless Dir.exists?(snap_dir)
+    halt(env, status_code: 400, response: ({"error": "Snapshot doesn't exists"}.to_json))
+  end
+
+  FileUtils.rm_rf(snap_dir)
+
+  env.response.status_code = 204
+end
+
+get "/api/v1/config-snapshots" do
+  Datastore.list_config_snapshots.to_json
+end

@@ -1,6 +1,7 @@
 require "./helpers"
 require "../server/datastore/*"
 require "file_utils"
+require "./cli_table"
 
 struct ConfigSnapshotArgs
   property snaps_dir = "", overwrite = false, from_dir = ""
@@ -92,4 +93,42 @@ handler "config-snapshot.restore" do |args|
 
   kadalu mgr
   STRING
+end
+
+command "config-snapshot.list", "Kadalu Storage Config Snapshots List" do |parser, _args|
+  parser.banner = "Usage: kadalu config-snapshot list [arguments]"
+end
+
+handler "config-snapshot.list" do |args|
+  api_call(args, "Failed to get the list of Config Snapshots") do |client|
+    snaps = client.list_config_snapshots
+
+    handle_json_output(snaps, args)
+
+    puts "No Snapshots. Run `kadalu config-snapshot create <name>` to create a Snapshot." if snaps.size == 0
+
+    table = CliTable.new(2)
+    table.header("Name", "Created On")
+    snaps.each do |snap|
+      table.record(snap.name, snap.created_on)
+    end
+
+    table.render
+  end
+end
+
+command "config-snapshot.delete", "Delete the Kadalu Storage Config Snapshot" do |parser, _|
+  parser.banner = "Usage: kadalu config-snapshot delete SNAP [arguments]"
+end
+
+handler "config-snapshot.delete" do |args|
+  command_error "Snapshot name is required" if args.pos_args.size < 1
+
+  next unless (args.script_mode || yes("Are you sure you want to delete the Config Snapshot?"))
+
+  api_call(args, "Failed to Delete the Snapshot") do |client|
+    client.config_snapshot(args.pos_args[0]).delete
+    handle_json_output(nil, args)
+    puts "Config Snapshot #{args.pos_args[0]} deleted"
+  end
 end

@@ -163,6 +163,7 @@ TEST "kadalu volume delete DEV/vol14 --mode=script"
 TEST "kadalu volume create DEV/vol19 server1:/exports/vol19/s1 server2:/exports/vol19/s2 server3:/exports/vol19/s3"
 USE_NODE nodes[0]
 TEST "kadalu config-snapshot create snap1"
+puts TEST "kadalu config-snapshot list"
 
 TEST "systemctl stop kadalu-mgr"
 TEST "rm -rf /var/lib/kadalu/meta /var/lib/kadalu/info"
@@ -175,6 +176,11 @@ TEST "kadalu volume stop DEV/vol19 --mode=script"
 TEST "kadalu volume delete DEV/vol19 --mode=script"
 
 puts TEST "kadalu volume list --json"
+
+TEST "kadalu config-snapshot create snap2"
+puts TEST "kadalu config-snapshot list"
+TEST "kadalu config-snapshot delete snap2 --mode=script"
+puts TEST "kadalu config-snapshot list"
 
 nodes.each do |node|
   USE_NODE nodes[0]
