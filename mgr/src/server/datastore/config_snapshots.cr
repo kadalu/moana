@@ -13,4 +13,22 @@ module Datastore
       end
     end
   end
+
+  private def sort_config_snapshots(snaps)
+    snaps.sort do |snap_a, snap_b|
+      snap_b.created_on <=> snap_a.created_on
+    end
+  end
+
+  def list_config_snapshots
+    snaps = Dir.children("#{@@rootdir}/config-snapshots").map do |snap_name|
+      snap = MoanaTypes::ConfigSnapshot.from_json(
+        File.read("#{@@rootdir}/config-snapshots/#{snap_name}/meta.json")
+      )
+      snap.name = snap_name
+
+      snap
+    end
+    sort_config_snapshots(snaps)
+  end
 end

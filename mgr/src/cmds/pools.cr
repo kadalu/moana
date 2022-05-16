@@ -1,4 +1,5 @@
 require "./helpers"
+require "./cli_table"
 
 command "pool.create", "Create the Kadalu Storage Pool" do |parser, _|
   parser.banner = "Usage: kadalu pool create NAME [arguments]"

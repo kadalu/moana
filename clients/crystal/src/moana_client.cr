@@ -32,8 +32,16 @@ module MoanaClient
       Pool.new(self, name)
     end
 
+    def list_config_snapshots
+      ConfigSnapshot.list(self)
+    end
+
     def create_config_snapshot(name : String, overwrite = false)
       ConfigSnapshot.create(self, name, overwrite)
+    end
+
+    def config_snapshot(name : String)
+      ConfigSnapshot.new(self, name)
     end
 
     def create_user(username : String, name : String, password : String)
