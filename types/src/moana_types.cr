@@ -199,4 +199,14 @@ module MoanaTypes
     def initialize
     end
   end
+
+  struct ConfigSnapshot
+    include JSON::Serializable
+
+    property name = "", overwrite = false, created_on = "",
+      snaps_rootdir = "/var/lib/kadalu/config-snapshots"
+
+    def initialize
+    end
+  end
 end
