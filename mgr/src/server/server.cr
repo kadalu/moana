@@ -51,7 +51,7 @@ module StorageMgr
 
     if GlobalConfig.agent
       loop do
-        if GlobalConfig.local_node.mgr_url == ""
+        if GlobalConfig.local_node.mgr_hostname == ""
           break
         end
 
@@ -63,7 +63,7 @@ module StorageMgr
 
           mgr_url = URI.new(
             scheme: GlobalConfig.local_node.mgr_https ? "https" : "http",
-            host: GlobalConfig.local_node.mgr_url,
+            host: GlobalConfig.local_node.mgr_hostname,
             port: GlobalConfig.local_node.mgr_port,
             path: "/api/v1/pools/#{GlobalConfig.local_node.pool_name}/nodes/#{GlobalConfig.local_node.name}/services"
           )
@@ -133,7 +133,9 @@ module StorageMgr
       File.write(info_file, data.to_json)
     end
 
-    if File.exists?(hostname_file)
+    if args.mgr_args.hostname != ""
+      GlobalConfig.local_hostname = args.mgr_args.hostname
+    elsif File.exists?(hostname_file)
       GlobalConfig.local_hostname = File.read(hostname_file).strip
     end
 
