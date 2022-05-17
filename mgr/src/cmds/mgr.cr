@@ -4,7 +4,8 @@ require "../server/*"
 struct MgrArgs
   property metrics_interval_seconds = 15,
     workdir = "/var/lib/kadalu",
-    logdir = ""
+    logdir = "",
+    hostname = ""
 end
 
 class Args
@@ -18,6 +19,9 @@ command "mgr", "Start Kadalu Storage Manager" do |parser, args|
   end
   parser.on("--logdir=LOGDIR", "Kadalu Log directory") do |logdir|
     args.mgr_args.logdir = logdir
+  end
+  parser.on("--hostname=HOSTNAME", "Hostname") do |hostname|
+    args.mgr_args.hostname = hostname
   end
 end
 

@@ -25,8 +25,8 @@ class MgrRequestsProxyHandler < Kemal::Handler
     # No proxy required if
     # - the current process is a Manager or
     # - it is a internal request or
-    # - mgr_url is not set in Local node
-    if GlobalConfig.local_node.mgr_url == "" ||
+    # - mgr_hostname is not set in Local node
+    if GlobalConfig.local_node.mgr_hostname == "" ||
        env.request.path.starts_with?("/_api") ||
        Datastore.manager?
       return call_next(env)
@@ -34,7 +34,7 @@ class MgrRequestsProxyHandler < Kemal::Handler
 
     mgr_url = URI.new(
       scheme: GlobalConfig.local_node.mgr_https ? "https" : "http",
-      host: GlobalConfig.local_node.mgr_url,
+      host: GlobalConfig.local_node.mgr_hostname,
       port: GlobalConfig.local_node.mgr_port,
       path: env.request.path,
       query: env.request.query_params
