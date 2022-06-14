@@ -15,5 +15,5 @@ TEST "docker network create k1"
 
 nodes.each do |node|
   USE_NODE "local"
-  TEST "docker run -d -v /sys/fs/cgroup/:/sys/fs/cgroup:ro --privileged --name #{node} --hostname #{node} --network k1 kadalu/storage-node"
+  TEST "docker run -d -v /sys/fs/cgroup/:/sys/fs/cgroup:ro --privileged --name #{node} --hostname #{node} --network k1 kadalu/storage-node-testing"
 end

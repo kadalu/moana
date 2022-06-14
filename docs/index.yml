@@ -1,6 +1,7 @@
 - section: User Guide
   chapters:
     - title: Quick Start
+    - title: Container Based Setup
     - title: Introduction
     - title: Install
     - title: User Management
