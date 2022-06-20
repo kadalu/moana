@@ -220,6 +220,7 @@ module MountKadalu
     parse_options(raw_options)
     set_volfile_server_options(hostname, volume_name, volfile_path)
     set_process_name
+    add_option("--fs-display-name", "#{hostname}:#{pool_name}/#{volume_name}")
 
     # Subdir mount: Add slash if not added
     add_option("--subdir-mount", "/#{@@options["--subdir-mount"].lstrip("/")}") if @@options["--subdir-mount"]?

@@ -19,7 +19,7 @@ class StorageUnitService < Service
     @pid_file = "/var/run/kadalu/#{@id}.pid"
     @args = [
       "--volfile-id", @id,
-      "-S", "/var/run/kadalu/#{@id}.socket",
+      "-S", "/var/run/kadalu/#{storage_unit.node.id}.#{escaped_path(storage_unit.path)}.socket",
       "-p", @pid_file,
       "--brick-name", storage_unit.path,
       "-l", "/var/log/kadalu/storage_units/#{@id}.log",
