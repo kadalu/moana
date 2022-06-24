@@ -12,11 +12,6 @@ class Args
   property volume_args = VolumeArgs.new
 end
 
-def pool_and_volume_name(value)
-  pool_name, _, volume_name = value.partition("/")
-  {pool_name, volume_name}
-end
-
 command "volume.create", "Kadalu Storage Volume Create" do |parser, args|
   parser.banner = "Usage: kadalu volume create POOL/VOLNAME TYPE STORAGE_UNITS [arguments]"
   parser.on("--no-start", "Don't start the volume upon creation") do

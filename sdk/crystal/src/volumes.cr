@@ -141,5 +141,35 @@ module StorageManager
         StorageManager.error_response(response)
       end
     end
+
+    def heal_start
+      url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}/heal/start"
+
+      response = StorageManager.http_post(
+        url,
+        "{}",
+        headers: @client.auth_header
+      )
+
+      if response.status_code == 200
+        MoanaTypes::Volume.from_json(response.body)
+      else
+        StorageManager.error_response(response)
+      end
+    end
+
+    def heal_info
+      url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}/heal"
+
+      response = StorageManager.http_get(
+        url,
+        headers: @client.auth_header
+      )
+      if response.status_code == 200
+        MoanaTypes::Volume.from_json(response.body)
+      else
+        StorageManager.error_response(response)
+      end
+    end
   end
 end

@@ -1,0 +1,176 @@
+require "file_utils"
+require "xml"
+
+struct HealStorageUnit
+  include JSON::Serializable
+
+  property id = "", name = "", status = "", heal_total : Int64 = 0,
+    heal_pending_count : Int64 = 0, heal_split_brain_count : Int64 = 0,
+    heal_possibly_healing_count : Int64 = 0, heal_pending_files = [] of Tuple(String, String)
+
+  def initialize
+  end
+end
+
+def parse_heal_data(document)
+  bricks = document.xpath_nodes("//bricks")
+  brick_data = Hash(String, HealStorageUnit).new
+
+  bricks.map do |bk|
+    brick = HealStorageUnit.new
+    bk.children.each do |ele|
+      next unless ele.name == "brick"
+      next unless ele["hostUuid"] != "-"
+
+      brick.id = ele["hostUuid"].strip
+      brick.heal_pending_files.clear
+
+      brick.heal_total = 0
+      brick.heal_pending_count = 0
+      brick.heal_split_brain_count = 0
+      brick.heal_possibly_healing_count = 0
+
+      ele.children.each do |ele_child|
+        case ele_child.name
+        when "name"
+          brick.name = ele_child.content.strip
+        when "status"
+          brick.status = ele_child.content.strip
+        when "file"
+          brick.heal_pending_files << {ele_child["gfid"], ele_child.content.strip}
+        when "totalNumberOfEntries"
+          brick.heal_total = ele_child.content.strip.to_i64
+        when "numberOfEntries"
+          brick.heal_total = ele_child.content.strip.to_i64
+        when "numberOfEntriesInHealPending"
+          brick.heal_pending_count = ele_child.content.strip.to_i64
+        when "numberOfEntriesInSplitBrain"
+          brick.heal_split_brain_count = ele_child.content.strip.to_i64
+        when "numberOfEntriesPossiblyHealing"
+          brick.heal_possibly_healing_count = ele_child.content.strip.to_i64
+        end
+      end
+      brick_data[brick.name] = brick
+    end
+  end
+
+  brick_data
+end
+
+def set_heal_data(volume, brick_data)
+  volume.distribute_groups.each do |dist_grp|
+    dist_grp.storage_units.each do |storage_unit|
+      storage_unit_full_path = storage_unit.node.name + ":" + storage_unit.path
+
+      heal_storage_unit_data = brick_data[storage_unit_full_path]?
+      next if heal_storage_unit_data.nil?
+
+      storage_unit.heal_metrics.heal_status = heal_storage_unit_data.status
+      storage_unit.heal_metrics.heal_total = heal_storage_unit_data.heal_total
+      storage_unit.heal_metrics.heal_pending_count = heal_storage_unit_data.heal_pending_count
+      storage_unit.heal_metrics.heal_split_brain_count = heal_storage_unit_data.heal_split_brain_count
+      storage_unit.heal_metrics.heal_possibly_healing_count = heal_storage_unit_data.heal_possibly_healing_count
+      storage_unit.heal_metrics.heal_pending_files = heal_storage_unit_data.heal_pending_files
+    end
+  end
+
+  volume
+end
+
+def glfsheal_path
+  heal_bin_prefix = "/usr/libexec"
+  if File.exists?("/usr/local/libexec/glusterfs/glfsheal")
+    heal_bin_prefix = "/usr/local/libexec"
+  end
+  "#{heal_bin_prefix}/glusterfs/glfsheal"
+end
+
+post "/api/v1/pools/:pool_name/volumes/:volume_name/heal/start" do |env|
+  pool_name = env.params.url["pool_name"]
+  volume_name = env.params.url["volume_name"]
+
+  next forbidden(env) unless Datastore.maintainer?(env.user_id, pool_name)
+
+  pool = Datastore.get_pool(pool_name)
+  if pool.nil?
+    halt(env, status_code: 400, response: ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
+  end
+
+  volume = Datastore.get_volume(pool_name, volume_name)
+  if volume.nil?
+    halt(env, status_code: 400, response: ({"error": "The Volume(#{volume_name}) doesn't exists"}.to_json))
+  end
+
+  if !volume.replicate_family?
+    halt(env, status_code: 400, response: ({"error": "Cannot heal Volume(#{volume_name}). It is non replicated or dispersed"}.to_json))
+  end
+
+  client_volfile = "/var/lib/kadalu/volfiles/client-dev-#{volume_name}.vol"
+
+  if !File.exists?(client_volfile)
+    volfile_name = "client"
+    tmpl = volfile_get("client")
+    content = Volfile.volume_level(volfile_name, tmpl, volume)
+    Dir.mkdir_p "/var/lib/kadalu/volfiles"
+    File.write(client_volfile, content)
+  end
+
+  rc, output, err = execute(glfsheal_path, ["vol1", "--xml", "volfile-path", client_volfile])
+
+  if rc < 0
+    halt(env, status_code: 400, response: ({"error": err}.to_json))
+  end
+
+  document = XML.parse(output)
+
+  brick_data = parse_heal_data(document)
+  volume = set_heal_data(volume, brick_data)
+
+  env.response.status_code = 200
+  volume.to_json
+end
+
+get "/api/v1/pools/:pool_name/volumes/:volume_name/heal" do |env|
+  pool_name = env.params.url["pool_name"]
+  volume_name = env.params.url["volume_name"]
+
+  next forbidden(env) unless Datastore.maintainer?(env.user_id, pool_name)
+
+  pool = Datastore.get_pool(pool_name)
+  if pool.nil?
+    halt(env, status_code: 400, response: ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
+  end
+
+  volume = Datastore.get_volume(pool_name, volume_name)
+  if volume.nil?
+    halt(env, status_code: 400, response: ({"error": "The Volume(#{volume_name}) doesn't exists"}.to_json))
+  end
+
+  if !volume.replicate_family?
+    halt(env, status_code: 400, response: ({"error": "Cannot heal Volume(#{volume_name}). It is non replicated or dispersed"}.to_json))
+  end
+
+  client_volfile = "/var/lib/kadalu/volfiles/client-dev-#{volume_name}.vol"
+
+  if !File.exists?(client_volfile)
+    volfile_name = "client"
+    tmpl = volfile_get("client")
+    content = Volfile.volume_level(volfile_name, tmpl, volume)
+    Dir.mkdir_p "/var/lib/kadalu/volfiles"
+    File.write(client_volfile, content)
+  end
+
+  rc, output, err = execute(glfsheal_path, ["vol1", "info-summary", "--xml", "volfile-path", client_volfile])
+
+  if rc < 0
+    halt(env, status_code: 400, response: ({"error": err}.to_json))
+  end
+
+  document = XML.parse(output)
+
+  brick_data = parse_heal_data(document)
+  volume = set_heal_data(volume, brick_data)
+
+  env.response.status_code = 200
+  volume.to_json
+end
