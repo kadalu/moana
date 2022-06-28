@@ -20,6 +20,10 @@ def unauthorized(env, message)
   env.response.print ({"error": "Unauthorized. #{message}"}).to_json
 end
 
+def internal_api_or_ping?(path)
+  path.starts_with?("/_api") || path == "/ping"
+end
+
 class MgrRequestsProxyHandler < Kemal::Handler
   def call(env)
     # No proxy required if
@@ -27,7 +31,7 @@ class MgrRequestsProxyHandler < Kemal::Handler
     # - it is a internal request or
     # - mgr_hostname is not set in Local node
     if GlobalConfig.local_node.mgr_hostname == "" ||
-       env.request.path.starts_with?("/_api") ||
+       internal_api_or_ping?(env.request.path) ||
        Datastore.manager?
       return call_next(env)
     end
@@ -61,6 +65,7 @@ class AuthHandler < Kemal::Handler
   # Login is always done unauthorized.
   # Node internal API handles authentication differently.
   exclude ["/api/v1/users", "/api/v1/users/:username/api-keys", "/_api/v1/:action"], "POST"
+  exclude ["/ping"], "GET"
 
   def call(env)
     return call_next(env) if exclude_match?(env)

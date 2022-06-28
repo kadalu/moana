@@ -12,6 +12,7 @@ nodes.each do |node|
 end
 
 USE_NODE nodes[0]
+puts TEST "curl -i http://server1:3000/ping"
 puts TEST "kadalu user create admin --password=kadalu"
 puts TEST "kadalu user login admin --password=kadalu"
 puts TEST "kadalu pool create DEV"
