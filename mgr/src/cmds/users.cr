@@ -46,7 +46,12 @@ handler "user.create" do |args|
   end
 
   if args.user_args.password.strip == ""
-    args.user_args.password = prompt("Password")
+    new_password = prompt("Enter new password")
+    password = prompt("Confirm password")
+    if new_password != password
+      command_error "Password doesn't match. Retry"
+    end
+    args.user_args.password = password
   end
 
   api_call(args, "Failed to create the User") do |client|
