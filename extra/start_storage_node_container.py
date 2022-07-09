@@ -13,6 +13,7 @@ def execute(cmd):
 def get_args(default_hostname):
     parser = ArgumentParser()
     parser.add_argument("-w", "--workdir", help="Working directory", required=True)
+    parser.add_argument("--network", help="Network to communicate (Default: host)", default="host")
     parser.add_argument("storages", nargs="*", help="Storage Directories")
     parser.add_argument("--hostname", default=default_hostname, help=f"Hostname (Default: {default_hostname})")
     return parser.parse_args()
@@ -35,9 +36,17 @@ def main():
     if len(storage_vols) == 0:
         print("[WARNING] No Storage Volumes are exposed to the Storage container.")
 
+    if args.network != "host":
+        cmd = ["docker", "network", "create", args.network]
+        ret, out, err = execute(cmd)
+        if ret != 0:
+            print("\n[WARNING] Failed to create the network")
+            print(" ".join(cmd))
+            print(err)
+
     cmd = [
         "docker", "run", "-d",
-        "--network", "host",
+        "--network", args.network,
         "-v", f"{args.workdir}/workdir:/var/lib/kadalu",
         "-v", f"{args.workdir}/config:/root/.kadalu"
     ] + storage_vols + \
