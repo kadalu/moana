@@ -18,20 +18,20 @@ def pool_and_volume_name(value)
 end
 
 command "volume.create", "Kadalu Storage Volume Create" do |parser, args|
-  parser.banner = "Usage: kadalu volume create POOL/VOLNAME TYPE STORAGE_UNITS [arguments]"
-  parser.on("--no-start", "Don't start the Volume on Create") do
+  parser.banner = "Usage: kadalu volume create POOL/VOLNAME TYPE STORAGE_UNITS [arguments]\n\nArguments:"
+  parser.on("--no-start", "Don't start the volume upon creation") do
     args.volume_args.no_start = true
   end
-  parser.on("--volume-id=ID", "Set Volume ID to import a Volume") do |volume_id|
+  parser.on("--volume-id=ID", "Set volume-id to import a volume") do |volume_id|
     args.volume_args.volume_id = volume_id
   end
-  parser.on("--auto-create-pool", "Auto create Pool if not exists") do
+  parser.on("--auto-create-pool", "Auto create pool if it doesn't exist") do
     args.volume_args.auto_create_pool = true
   end
-  parser.on("--auto-add-nodes", "Automatically add nodes to the Pool") do
+  parser.on("--auto-add-nodes", "Automatically add nodes to the pool") do
     args.volume_args.auto_add_nodes = true
   end
-  parser.on("--node-map=NODEMAP", "Provide Node mapping while importing. Example: --node-map=\"server1.example.com=node1.example.com\"") do |node|
+  parser.on("--node-map=NODEMAP", "Provide node mapping while importing.\nExample: --node-map=\"server1.example.com=node1.example.com\"") do |node|
     old_name, new_name = node.split("=")
     args.volume_args.node_maps[old_name] = new_name
   end
@@ -59,12 +59,12 @@ handler "volume.create" do |args|
     req.auto_create_pool = args.volume_args.auto_create_pool
     req.auto_add_nodes = args.volume_args.auto_add_nodes
     args.pool_name = req.pool.name
-    api_call(args, "Failed to Create Volume") do |client|
+    api_call(args, "Failed to create volume") do |client|
       volume = client.pool(args.pool_name).create_volume(req)
 
       handle_json_output(volume, args)
 
-      puts "Volume #{req.name} created successfully"
+      puts "Volume #{req.name} created"
       puts "ID: #{volume.id}"
     end
   rescue ex : InvalidVolumeRequest
@@ -74,19 +74,19 @@ handler "volume.create" do |args|
   end
 end
 
-command "volume.start", "Start the Kadalu Storage Volume" do |parser, _|
+command "volume.start", "Start the Kadalu Storage volume" do |parser, _|
   parser.banner = "Usage: kadalu volume start POOL/VOLNAME [arguments]"
 end
 
 handler "volume.start" do |args|
   begin
     args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
-    api_call(args, "Failed to Start the Volume") do |client|
+    api_call(args, "Failed to start the volume") do |client|
       volume = client.pool(args.pool_name).volume(volume_name).start
 
       handle_json_output(volume, args)
 
-      puts "Volume #{volume.name} started successfully"
+      puts "Volume #{volume.name} started"
     end
   rescue ex : InvalidVolumeRequest
     STDERR.puts "Volume start failed"
@@ -95,21 +95,21 @@ handler "volume.start" do |args|
   end
 end
 
-command "volume.stop", "Stop the Kadalu Storage Volume" do |parser, _|
+command "volume.stop", "Stop the Kadalu Storage volume" do |parser, _|
   parser.banner = "Usage: kadalu volume stop POOL/VOLNAME [arguments]"
 end
 
 handler "volume.stop" do |args|
   begin
     args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
-    next unless (args.script_mode || yes("Are you sure you want to stop the Volume?"))
+    next unless (args.script_mode || yes("Are you sure you want to stop the volume? [y/N]"))
 
-    api_call(args, "Failed to Stop the Volume") do |client|
+    api_call(args, "Failed to stop the volume.") do |client|
       volume = client.pool(args.pool_name).volume(volume_name).stop
 
       handle_json_output(volume, args)
 
-      puts "Volume #{volume.name} stopped successfully"
+      puts "Volume #{volume.name} stopped"
     end
   rescue ex : InvalidVolumeRequest
     STDERR.puts "Volume stop failed"
@@ -118,12 +118,12 @@ handler "volume.stop" do |args|
   end
 end
 
-command "volume.list", "Volumes list of a Kadalu Storage Pool" do |parser, args|
+command "volume.list", "Volumes list of a Kadalu Storage pool" do |parser, args|
   parser.banner = "Usage: kadalu volume list POOL [arguments]"
   parser.on("--status", "Show Volumes states") do
     args.volume_args.status = true
   end
-  parser.on("--detail", "Show detailed Volumes info") do
+  parser.on("--detail", "Show detailed volume info") do
     args.volume_args.detail = true
   end
 end
@@ -144,12 +144,12 @@ def volume_detail(volume, status = false)
   volume.options.each do |k, v|
     printf("    %20s: %s\n", k, v)
   end
-  puts "Number of Storage units : #{volume.distribute_groups.size * volume.distribute_groups[0].storage_units.size}"
+  puts "Number of storage units : #{volume.distribute_groups.size * volume.distribute_groups[0].storage_units.size}"
   volume.distribute_groups.each_with_index do |dist_grp, grp_idx|
-    printf("Distribute Group %-2s     :%s\n", grp_idx + 1, status ? " Health: #{dist_grp.metrics.health}" : "")
+    printf("Distribute group %-2s     :%s\n", grp_idx + 1, status ? " Health: #{dist_grp.metrics.health}" : "")
     dist_grp.storage_units.each_with_index do |storage_unit, idx|
       printf(
-        "    Storage Unit %-3s    : %s:%s (Port: %s%s)\n",
+        "    Storage unit %-3s    : %s:%s (Port: %s%s)",
         idx + 1,
         storage_unit.node.name,
         storage_unit.path,
@@ -166,7 +166,7 @@ end
 handler "volume.list" do |args|
   args.pool_name, args.volume_args.name = pool_and_volume_name(args.pos_args.size < 1 ? "" : args.pos_args[0])
 
-  api_call(args, "Failed to get list of volumes") do |client|
+  api_call(args, "Failed to get the list of volumes") do |client|
     if args.pool_name == ""
       volumes = client.list_volumes(state: args.volume_args.status)
     elsif args.volume_args.name == ""
@@ -178,7 +178,7 @@ handler "volume.list" do |args|
     handle_json_output(volumes, args)
 
     if volumes.size == 0
-      puts "No Volumes available in the Pool. Run `kadalu volume create #{args.pool_name == "" ? "<pool>" : args.pool_name}/<volume-name> ...` to create a volume."
+      puts "No volumes available in the Pool.\nRun `kadalu volume create #{args.pool_name == "" ? "<pool>" : args.pool_name}/<volume-name> ...` to create a volume."
     end
 
     if args.volume_args.detail
@@ -224,23 +224,23 @@ handler "volume.list" do |args|
   end
 end
 
-command "volume.delete", "Delete the Kadalu Storage Volume" do |parser, _|
+command "volume.delete", "Delete the Kadalu Storage volume" do |parser, _|
   parser.banner = "Usage: kadalu volume delete POOL/VOLNAME [arguments]"
 end
 
 handler "volume.delete" do |args|
   args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
-  next unless (args.script_mode || yes("Are you sure you want to delete the Volume?"))
+  next unless (args.script_mode || yes("Are you sure you want to delete the volume? [y/N]"))
 
-  api_call(args, "Failed to Delete the Volume") do |client|
+  api_call(args, "Failed to delete the volume") do |client|
     client.pool(args.pool_name).volume(volume_name).delete
 
     handle_json_output(nil, args)
-    puts "Volume #{volume_name} deleted successfully"
+    puts "Volume #{volume_name} deleted"
   end
 end
 
-command "volume.set", "Set options to the Kadalu Storage Volume" do |parser, _|
+command "volume.set", "Set options to the Kadalu Storage volume" do |parser, _|
   parser.banner = "Usage: kadalu volume set POOL/VOLNAME [arguments]"
 end
 
@@ -249,25 +249,25 @@ handler "volume.set" do |args|
 
   volume_options = validate_volume_options(args.pos_args[1..])
 
-  api_call(args, "Failed to Set options to the Volume") do |client|
+  api_call(args, "Failed to Set options to the volume") do |client|
     volume = client.pool(args.pool_name).volume(volume_name).set(volume_options)
 
     handle_json_output(volume, args)
-    puts "Volume #{volume_name} options set successfully"
+    puts "Volume #{volume_name} options set"
   end
 end
 
-command "volume.reset", "Re-Set options to the Kadalu Storage Volume" do |parser, _|
+command "volume.reset", "Reset the options of the Kadalu Storage volume" do |parser, _|
   parser.banner = "Usage: kadalu volume reset POOL/VOLNAME [arguments]"
 end
 
 handler "volume.reset" do |args|
   args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
 
-  api_call(args, "Failed to Set options to the Volume") do |client|
+  api_call(args, "Failed to set options to the volume") do |client|
     volume = client.pool(args.pool_name).volume(volume_name).reset(args.pos_args[1..])
 
     handle_json_output(volume, args)
-    puts "Volume #{volume_name} options reset successfully"
+    puts "Volume #{volume_name} options reset"
   end
 end
