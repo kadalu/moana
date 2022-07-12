@@ -11,28 +11,29 @@ module CLI
     parsed.url = ENV.fetch("KADALU_URL", "http://localhost:3000")
 
     parser = OptionParser.new do |parser_1|
-      parser_1.banner = "Usage: kadalu [subcommand] [arguments]"
+      parser_1.banner = "Usage: kadalu [subcommand] [arguments]\n\nSubcommands:"
+
       parser_1.on("-h", "--help", "Show this help") do
         puts parser_1
         exit
       end
 
-      parser_1.on("--version", "Show Version information") do
-        puts "Kadalu Storage #{VERSION}"
-        exit
-      end
-
-      parser_1.on("version", "Show Version information") do
-        puts "Kadalu Storage #{VERSION}"
-        exit
-      end
-
-      parser_1.on("--mode=MODE", "Script Mode") do |mode|
+      parser_1.on("--mode=MODE", "Script mode") do |mode|
         parsed.script_mode = true if mode.strip.downcase == "script"
       end
 
       parser_1.on("--json", "Pretty print in JSON") do
         parsed.json = true
+      end
+
+      parser_1.on("--version", "Show version information") do
+        puts "Kadalu Storage #{VERSION}"
+        exit
+      end
+
+      parser_1.on("version", "Show version information") do
+        puts "Kadalu Storage #{VERSION}"
+        exit
       end
 
       Commands.commands.each do |name, cmd|
@@ -60,12 +61,12 @@ module CLI
     end
 
     parser.invalid_option do |flag|
-      STDERR.puts "Invalid Option: #{flag}"
+      STDERR.puts "Invalid option: #{flag}"
       exit 1
     end
 
     parser.missing_option do |flag|
-      STDERR.puts "Missing Option value: #{flag}=VALUE"
+      STDERR.puts "Missing option value: #{flag}=VALUE"
       exit 1
     end
 
