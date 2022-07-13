@@ -16,25 +16,24 @@ def validated_username(args)
   username
 end
 
-command "user.create", "Create a Kadalu Storage User" do |parser, args|
-  parser.banner = "Usage: kadalu user create USERNAME [arguments]"
-  parser.on("-p PASSWORD", "--password=PASSWORD", "User Password") do |password|
-    args.user_args.password = password
-  end
-  parser.on("-n NAME", "--name=NAME", "User Name") do |name|
-    args.user_args.name = name
-  end
-
-  parser.on("--pool=POOL_NAME", "Storage Pool Name") do |name|
+command "user.create", "Create a Kadalu Storage user" do |parser, args|
+  parser.banner = "Usage: kadalu user create USERNAME [arguments]\n\nArguments:"
+  parser.on("--pool=POOL_NAME", "Storage pool name") do |name|
     args.user_args.pool_name = name
   end
 
-  parser.on("--volume=VOLUME_NAME", "Volume Name") do |name|
+  parser.on("--volume=VOLUME_NAME", "Volume name") do |name|
     args.user_args.volume_name = name
   end
 
-  parser.on("--role=ROLE_NAME", "Role Name (admin,maintainer,viewer,client)") do |name|
+  parser.on("--role=ROLE_NAME", "Role name (admin,maintainer,viewer,client)") do |name|
     args.user_args.role_name = name
+  end
+  parser.on("-p PASSWORD", "--password=PASSWORD", "Password") do |password|
+    args.user_args.password = password
+  end
+  parser.on("-n NAME", "--name=NAME", "Username") do |name|
+    args.user_args.name = name
   end
 end
 
@@ -54,7 +53,7 @@ handler "user.create" do |args|
     args.user_args.password = password
   end
 
-  api_call(args, "Failed to create the User") do |client|
+  api_call(args, "Failed to create the user") do |client|
     user = client.create_user(args.user_args.username, args.user_args.name, args.user_args.password)
 
     handle_json_output(user, args)
@@ -106,22 +105,22 @@ handler "user.logout" do |args|
   end
 end
 
-command "user.delete", "Delete a Kadalu Storage User" do |parser, _|
+command "user.delete", "Delete a Kadalu Storage user" do |parser, _|
   parser.banner = "Usage: kadalu delete USERNAME"
 end
 
 handler "user.delete" do |args|
   command_error "Username is required." if args.pos_args.size == 0
-  next unless (args.script_mode || yes("Are you sure you want to delete the user(#{args.pos_args[0]})?"))
+  next unless (args.script_mode || yes("Are you sure you want to delete the user(#{args.pos_args[0]})? [y/N]"))
 
-  api_call(args, "Failed to delete the User") do |client|
+  api_call(args, "Failed to delete the user") do |client|
     client.delete_user(args.pos_args[0])
     handle_json_output(nil, args)
     puts "User deleted."
   end
 end
 
-command "user.password", "Update Kadalu Storage User Password" do |parser, args|
+command "user.password", "Update the Kadalu Storage user password" do |parser, args|
   parser.banner = "Usage: kadalu user password [arguments]"
   parser.on("-c PASSWORD", "--current-password=PASSWORD", "Current Password") do |password|
     args.user_args.current_password = password

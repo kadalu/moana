@@ -17,7 +17,7 @@ handler "pool.create" do |args|
 
     handle_json_output(pool, args)
 
-    puts "Pool #{name} created successfully"
+    puts "Pool #{name} created"
     puts "ID: #{pool.id}"
   end
 end
@@ -52,9 +52,9 @@ handler "pool.delete" do |args|
   command_error "Pool name is required" if args.pos_args.size < 1
   args.pool_name = args.pos_args[0]
 
-  next unless (args.script_mode || yes("Are you sure you want to delete the Pool?"))
+  next unless (args.script_mode || yes("Are you sure you want to delete the pool? [y/N]"))
 
-  api_call(args, "Failed to Delete the Pool") do |client|
+  api_call(args, "Failed to delete the pool") do |client|
     client.pool(args.pool_name).delete
     handle_json_output(nil, args)
     puts "Pool #{args.pool_name} deleted"

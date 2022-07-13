@@ -9,16 +9,16 @@ delete "/api/v1/pools/:pool_name/volumes/:volume_name" do |env|
 
   pool = Datastore.get_pool(pool_name)
   if pool.nil?
-    halt(env, status_code: 400, response: ({"error": "Pool doesn't exists"}.to_json))
+    halt(env, status_code: 400, response: ({"error": "Pool does not exist."}.to_json))
   end
 
   volume = Datastore.get_volume(pool_name, volume_name)
   if volume.nil?
-    halt(env, status_code: 400, response: ({"error": "Volume doesn't exists"}.to_json))
+    halt(env, status_code: 400, response: ({"error": "Volume does not exist."}.to_json))
   end
 
   if volume.state == "Started"
-    halt(env, status_code: 400, response: ({"error": "Volume is not Stopped"}.to_json))
+    halt(env, status_code: 400, response: ({"error": "Volume should be stopped before deleting."}.to_json))
   end
 
   Datastore.delete_volume(pool.id, volume.id)
