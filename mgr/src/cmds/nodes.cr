@@ -8,9 +8,9 @@ class Args
   property node_args = NodeArgs.new
 end
 
-command "node.add", "Add a node to Kadalu Storage Pool" do |parser, args|
+command "node.add", "Add a node to Kadalu Storage pool" do |parser, args|
   parser.banner = "Usage: kadalu node add POOL/NAME ENDPOINT [arguments]"
-  parser.on("--endpoint", "Node Endpoint. Default is http://<nodename>:3000") do |endpoint|
+  parser.on("--endpoint", "Node endpoint. Default is http://<nodename>:3000") do |endpoint|
     args.node_args.endpoint = endpoint
   end
 end
@@ -34,17 +34,17 @@ handler "node.add" do |args|
     exit 1
   end
 
-  api_call(args, "Failed to add the Node") do |client|
+  api_call(args, "Failed to add the node") do |client|
     node = client.pool(args.pool_name).add_node(name, args.node_args.endpoint)
 
     handle_json_output(node, args)
 
-    puts "Node #{name} added to #{args.pool_name} successfully"
+    puts "Node #{name} added to #{args.pool_name}"
     puts "ID: #{node.id}"
   end
 end
 
-command "node.list", "Nodes list of a Kadalu Storage Pool" do |parser, args|
+command "node.list", "Nodes list of a Kadalu Storage pool" do |parser, args|
   parser.banner = "Usage: kadalu node list POOL [arguments]"
   parser.on("--status", "Show nodes states") do
     args.node_args.status = true
@@ -63,7 +63,7 @@ handler "node.list" do |args|
 
     handle_json_output(nodes, args)
 
-    puts "No nodes added to the Pool. Run `kadalu node add #{args.pool_name}/<node-name>` to add a node." if nodes.size == 0
+    puts "No nodes found in the pool. Run `kadalu node add #{args.pool_name}/<node-name>` to add a node." if nodes.size == 0
 
     if args.node_args.status
       table = CliTable.new(4)
@@ -91,11 +91,11 @@ end
 
 handler "node.remove" do |args|
   args.pool_name, node_name = pool_and_node_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
-  next unless (args.script_mode || yes("Are you sure you want to remove the Node from the Pool?"))
+  next unless (args.script_mode || yes("Are you sure you want to remove the node from the pool?"))
 
-  api_call(args, "Failed to Remove the Node") do |client|
+  api_call(args, "Failed to remove the node") do |client|
     client.pool(args.pool_name).node(node_name).delete
     handle_json_output(nil, args)
-    puts "Node #{node_name} removed from the Pool"
+    puts "Node #{node_name} removed from the pool"
   end
 end

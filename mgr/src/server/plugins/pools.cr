@@ -49,11 +49,11 @@ delete "/api/v1/pools/:pool_name" do |env|
 
   pool = Datastore.get_pool(pool_name)
   if pool.nil?
-    halt(env, status_code: 400, response: ({"error": "Pool doesn't exists"}.to_json))
+    halt(env, status_code: 400, response: ({"error": "Pool does not exist"}.to_json))
   end
 
   if Datastore.nodes_in_pool?(pool.id)
-    halt(env, status_code: 400, response: ({"error": "One or more nodes are part of this Pool"}.to_json))
+    halt(env, status_code: 400, response: ({"error": "One or more nodes are part of this pool"}.to_json))
   end
 
   Datastore.delete_pool(pool.id)
