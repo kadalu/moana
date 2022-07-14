@@ -17,7 +17,7 @@ def validated_username(args)
 end
 
 command "user.create", "Create a Kadalu Storage user" do |parser, args|
-  parser.banner = "Usage: kadalu user create USERNAME [arguments]\n\nArguments:"
+  parser.banner = "Usage: kadalu user create USERNAME [arguments]"
   parser.on("--pool=POOL_NAME", "Storage pool name") do |name|
     args.user_args.pool_name = name
   end
