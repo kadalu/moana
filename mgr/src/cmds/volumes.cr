@@ -18,7 +18,7 @@ def pool_and_volume_name(value)
 end
 
 command "volume.create", "Kadalu Storage Volume Create" do |parser, args|
-  parser.banner = "Usage: kadalu volume create POOL/VOLNAME TYPE STORAGE_UNITS [arguments]\n\nArguments:"
+  parser.banner = "Usage: kadalu volume create POOL/VOLNAME TYPE STORAGE_UNITS [arguments]"
   parser.on("--no-start", "Don't start the volume upon creation") do
     args.volume_args.no_start = true
   end
