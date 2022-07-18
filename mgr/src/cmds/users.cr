@@ -32,7 +32,7 @@ command "user.create", "Create a Kadalu Storage user" do |parser, args|
   parser.on("-p PASSWORD", "--password=PASSWORD", "Password") do |password|
     args.user_args.password = password
   end
-  parser.on("-n NAME", "--name=NAME", "Username") do |name|
+  parser.on("-n NAME", "--name=NAME", "Name of the user") do |name|
     args.user_args.name = name
   end
 end
