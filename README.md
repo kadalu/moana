@@ -27,3 +27,11 @@ Start the Kadalu Management Server in all the Storage nodes
 ```
 
 Refer [docs](./docs) for more details.
+
+## Moana for those who used gluster before
+
+If you are already familiar with gluster project, and how to use the CLI and setup volumes, treat moana as an alternative management layer, which provides CLI and management layer without the complexity of `glusterd` process.
+
+Check [this link](https://kadalu.tech/gluster-vs-kadalu/) for understanding the key differences before going ahead.
+
+For developers, glusterd uses C lang, where as moana uses crystal lang.
