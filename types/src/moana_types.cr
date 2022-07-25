@@ -1,6 +1,15 @@
 require "json"
 
 module MoanaTypes
+  struct Info
+    include JSON::Serializable
+
+    property manager_url = "", version = ""
+
+    def initialize
+    end
+  end
+
   struct PoolCreateRequest
     include JSON::Serializable
 
