@@ -9,7 +9,7 @@ class Args
 end
 
 command "node.add", "Add a node to Kadalu Storage pool" do |parser, args|
-  parser.banner = "Usage: kadalu node add POOL/NAME ENDPOINT [arguments]"
+  parser.banner = "Usage: kadalu node add POOL/NAME [arguments]"
   parser.on("--endpoint", "Node endpoint. Default is http://<nodename>:3000") do |endpoint|
     args.node_args.endpoint = endpoint
   end
