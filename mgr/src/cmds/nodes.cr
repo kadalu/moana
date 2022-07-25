@@ -52,10 +52,10 @@ command "node.list", "Nodes list of a Kadalu Storage pool" do |parser, args|
 end
 
 handler "node.list" do |args|
-  args.pool_name, _ = pool_and_node_name(args.pos_args.size < 1 ? "" : args.pos_args[0])
+  args.pool_name, _ = pool_and_node_name(args.pos_args.size < 1 ? "<pool-name>" : args.pos_args[0])
 
   api_call(args, "Failed to get list of nodes") do |client|
-    if args.pool_name == ""
+    if args.pool_name == "<pool-name>"
       nodes = client.list_nodes(state: args.node_args.status)
     else
       nodes = client.pool(args.pool_name).list_nodes(state: args.node_args.status)
@@ -63,7 +63,7 @@ handler "node.list" do |args|
 
     handle_json_output(nodes, args)
 
-    puts "No nodes found in the pool. Run `kadalu node add #{args.pool_name}/<node-name>` to add a node." if nodes.size == 0
+    puts "No nodes found in the pool.\nRun `kadalu node add #{args.pool_name}/<node-name>` to add a node." if nodes.size == 0
 
     if args.node_args.status
       table = CliTable.new(4)
