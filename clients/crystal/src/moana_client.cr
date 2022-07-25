@@ -12,6 +12,19 @@ module MoanaClient
     def initialize(@url : String)
     end
 
+    def info
+      url = "#{@url}/api/v1"
+      response = MoanaClient.http_get(
+        url,
+        headers: auth_header
+      )
+      if response.status_code == 200
+        MoanaTypes::Info.from_json(response.body)
+      else
+        MoanaClient.error_response(response)
+      end
+    end
+
     def create_pool(name : String)
       Pool.create(self, name)
     end
