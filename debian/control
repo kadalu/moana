@@ -1,0 +1,14 @@
+Source: moana
+Section: main
+Priority: optional
+Maintainer: Kadalu Technologies Private Limited <hello@kadalu.tech>
+Build-Depends: debhelper (>=11~), libevent-dev
+Standards-Version: 4.1.4
+Homepage: <https://github.com/kadalu/moana>
+
+Package: moana
+Architecture: any
+Multi-Arch: foreign
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: The Moana Project is a frontend for the Kadalu Storage.
+    Moana provides tools for setting up and managing the Kadalu cluster.
