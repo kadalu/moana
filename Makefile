@@ -11,8 +11,8 @@ install: build
 
 	install -D mgr/bin/kadalu \
                 $(DESTDIR)$(prefix)/sbin/kadalu
-	install -d clients/python/kadalu \
-                $(DESTDIR)$(prefix)/lib/python3/dist-packages/kadalu
+	install -d sdk/python/kadalu \
+                $(DESTDIR)$(prefix)/lib/python3/dist-packages/kadalu_storage
 	install -D extra/mount.kadalu \
                 $(DESTDIR)/sbin/mount.kadalu
 	install -m 700 -D extra/kadalu-mgr.service \
@@ -25,7 +25,7 @@ distclean: clean
 
 uninstall:
 	-rm -f $(DESTDIR)$(prefix)/sbin/kadalu
-	-rm -f $(DESTDIR)$(prefix)/lib/python3/dist-packages/kadalu
+	-rm -f $(DESTDIR)$(prefix)/lib/python3/dist-packages/kadalu_storage
 	-rm -f $(DESTDIR)/sbin/mount.kadalu
 	-rm -f $(DESTDIR)/lib/systemd/system/kadalu-mgr.service
 
