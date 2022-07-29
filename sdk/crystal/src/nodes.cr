@@ -1,4 +1,4 @@
-module MoanaClient
+module StorageManager
   class Node
     def initialize(@client : Client, @pool_name : String, @name : String)
     end
@@ -10,7 +10,7 @@ module MoanaClient
       req.name = name
       req.endpoint = endpoint
 
-      response = MoanaClient.http_post(
+      response = StorageManager.http_post(
         url,
         req.to_json,
         headers: client.auth_header
@@ -18,46 +18,46 @@ module MoanaClient
       if response.status_code == 201
         MoanaTypes::Node.from_json(response.body)
       else
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
 
     def self.list(client : Client, pool_name : String, state = false)
       url = "#{client.url}/api/v1/pools/#{pool_name}/nodes?state=#{state ? 1 : 0}"
-      response = MoanaClient.http_get(
+      response = StorageManager.http_get(
         url,
         headers: client.auth_header
       )
       if response.status_code == 200
         Array(MoanaTypes::Node).from_json(response.body)
       else
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
 
     def self.list(client : Client, state = false)
       url = "#{client.url}/api/v1/nodes?state=#{state ? 1 : 0}"
-      response = MoanaClient.http_get(
+      response = StorageManager.http_get(
         url,
         headers: client.auth_header
       )
       if response.status_code == 200
         Array(MoanaTypes::Node).from_json(response.body)
       else
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
 
     def delete
       url = "#{@client.url}/api/v1/pools/#{@pool_name}/nodes/#{@name}"
 
-      response = MoanaClient.http_delete(
+      response = StorageManager.http_delete(
         url,
         headers: @client.auth_header
       )
 
       if response.status_code != 204
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
   end

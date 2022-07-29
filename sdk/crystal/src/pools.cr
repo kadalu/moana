@@ -1,21 +1,21 @@
 require "./nodes"
 require "./volumes"
 
-module MoanaClient
+module StorageManager
   class Pool
     def initialize(@client : Client, @name : String)
     end
 
     def self.list(client : Client)
       url = "#{client.url}/api/v1/pools"
-      response = MoanaClient.http_get(
+      response = StorageManager.http_get(
         url,
         headers: client.auth_header
       )
       if response.status_code == 200
         Array(MoanaTypes::Pool).from_json(response.body)
       else
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
 
@@ -25,7 +25,7 @@ module MoanaClient
       req = MoanaTypes::PoolCreateRequest.new
       req.name = name
 
-      response = MoanaClient.http_post(
+      response = StorageManager.http_post(
         url,
         req.to_json,
         headers: client.auth_header
@@ -33,7 +33,7 @@ module MoanaClient
       if response.status_code == 201
         MoanaTypes::Pool.from_json(response.body)
       else
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
 
@@ -67,27 +67,27 @@ module MoanaClient
 
     def get_volfile(name : String)
       url = "#{@client.url}/api/v1/pools/#{@name}/volfiles/#{name}"
-      response = MoanaClient.http_get(
+      response = StorageManager.http_get(
         url,
         headers: @client.auth_header
       )
       if response.status_code == 200
         MoanaTypes::Volfile.from_json(response.body)
       else
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
 
     def delete
       url = "#{@client.url}/api/v1/pools/#{@name}"
 
-      response = MoanaClient.http_delete(
+      response = StorageManager.http_delete(
         url,
         headers: @client.auth_header
       )
 
       if response.status_code != 204
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
   end

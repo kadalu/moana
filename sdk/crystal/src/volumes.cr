@@ -1,4 +1,4 @@
-module MoanaClient
+module StorageManager
   class Volume
     def initialize(@client : Client, @pool_name : String, @name : String)
     end
@@ -6,7 +6,7 @@ module MoanaClient
     def self.create(client : Client, pool_name : String, volume : MoanaTypes::Volume)
       url = "#{client.url}/api/v1/pools/#{pool_name}/volumes"
 
-      response = MoanaClient.http_post(
+      response = StorageManager.http_post(
         url,
         volume.to_json,
         headers: client.auth_header
@@ -14,7 +14,7 @@ module MoanaClient
       if response.status_code == 201
         MoanaTypes::Volume.from_json(response.body)
       else
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
 
@@ -30,64 +30,64 @@ module MoanaClient
       url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}/volfiles/#{name}"
       url += "?storage_unit=#{storage_unit}" if storage_unit != ""
 
-      response = MoanaClient.http_get(
+      response = StorageManager.http_get(
         url,
         headers: @client.auth_header
       )
       if response.status_code == 200
         MoanaTypes::Volfile.from_json(response.body)
       else
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
 
     def get(state = false)
       url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}?state=#{state ? 1 : 0}"
-      response = MoanaClient.http_get(
+      response = StorageManager.http_get(
         url,
         headers: @client.auth_header
       )
       if response.status_code == 200
         MoanaTypes::Volume.from_json(response.body)
       else
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
 
     def self.list(client : Client, pool_name : String, state = false)
       url = "#{client.url}/api/v1/pools/#{pool_name}/volumes?state=#{state ? 1 : 0}"
-      response = MoanaClient.http_get(
+      response = StorageManager.http_get(
         url,
         headers: client.auth_header
       )
       if response.status_code == 200
         Array(MoanaTypes::Volume).from_json(response.body)
       else
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
 
     def self.list(client : Client, state = false)
       url = "#{client.url}/api/v1/volumes?state=#{state ? 1 : 0}"
-      response = MoanaClient.http_get(
+      response = StorageManager.http_get(
         url,
         headers: client.auth_header
       )
       if response.status_code == 200
         Array(MoanaTypes::Volume).from_json(response.body)
       else
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
 
     def start_stop_volume(action)
       url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}/#{action}"
 
-      response = MoanaClient.http_post(url, "{}", headers: @client.auth_header)
+      response = StorageManager.http_post(url, "{}", headers: @client.auth_header)
       if response.status_code == 200
         MoanaTypes::Volume.from_json(response.body)
       else
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
 
@@ -102,7 +102,7 @@ module MoanaClient
     def set(volume_options : Hash(String, String))
       url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}/options/set"
 
-      response = MoanaClient.http_post(
+      response = StorageManager.http_post(
         url,
         volume_options.to_json,
         headers: @client.auth_header
@@ -110,14 +110,14 @@ module MoanaClient
       if response.status_code == 201
         MoanaTypes::Volume.from_json(response.body)
       else
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
 
     def reset(volume_option_keys : Array(String))
       url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}/options/reset"
 
-      response = MoanaClient.http_post(
+      response = StorageManager.http_post(
         url,
         volume_option_keys.to_json,
         headers: @client.auth_header
@@ -125,20 +125,20 @@ module MoanaClient
       if response.status_code == 201
         MoanaTypes::Volume.from_json(response.body)
       else
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
 
     def delete
       url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}"
 
-      response = MoanaClient.http_delete(
+      response = StorageManager.http_delete(
         url,
         headers: @client.auth_header
       )
 
       if response.status_code != 204
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
   end

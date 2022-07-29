@@ -6,23 +6,19 @@ shards:
 
   db:
     git: https://github.com/crystal-lang/crystal-db.git
-    version: 0.10.1
+    version: 0.11.0
 
   exception_page:
     git: https://github.com/crystal-loot/exception_page.git
-    version: 0.2.1
+    version: 0.2.2
+
+  kadalu_storage_manager:
+    path: ../sdk/crystal
+    version: 0.1.0
 
   kemal:
     git: https://github.com/kemalcr/kemal.git
-    version: 1.1.0
-
-  kilt:
-    git: https://github.com/jeromegn/kilt.git
-    version: 0.6.1
-
-  moana_client:
-    path: ../clients/crystal
-    version: 0.1.0
+    version: 1.2.0
 
   moana_types:
     path: ../types
@@ -38,9 +34,9 @@ shards:
 
   sqlite3:
     git: https://github.com/crystal-lang/crystal-sqlite3.git
-    version: 0.18.0
+    version: 0.19.0
 
   xattr:
     git: https://github.com/aravindavk/xattr-crystal.git
-    version: 0.1.0+git.commit.40adf6b7f0dd4f0a36c5a35d38e9a3924426fb95
+    version: 0.1.0+git.commit.2fc9b70536a16d12780f19c4b00b3b65b8e7175d
 

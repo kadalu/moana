@@ -2,9 +2,9 @@ name: moana_types
 version: 0.1.0
 
 authors:
-  - Kadalu.io <engineering@kadalu.io>
+  - Kadalu Technologies Private Limited <hello@kadalu.tech>
 
 description: |
-  Kadalu Gluster Manager Types
+  Kadalu Storage Manager Types
 
 license: GPLv3
