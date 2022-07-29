@@ -1,0 +1,21 @@
+Source: moana
+Section: main
+Priority: optional
+Maintainer: Kadalu Technologies Private Limited <packaging@kadalu.tech>
+Build-Depends: debhelper (>=11~), libevent-dev
+Standards-Version: 4.1.4
+Homepage: <https://github.com/kadalu/moana>
+
+Package: python3-kadalu-storage
+Architecture: any
+Multi-Arch: foreign
+Depends: python3-urllib3, ${shlibs:Depends}, ${misc:Depends}
+Description: Kadalu Storage Client is a SDK in Python for developers to
+    build tools atop Kadalu.
+
+Package: kadalu-storage-manager
+Architecture: any
+Multi-Arch: foreign
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Kadalu Storage Manager is a frontend for the Kadalu Storage.
+    Moana provides tools for setting up and managing the Kadalu cluster.

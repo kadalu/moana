@@ -1,0 +1,8 @@
+Kadalu Storage provides tools for setting up and managing the Kadalu cluster.
+
+Which includes:
+    * Creating storage pool and adding nodes to the pool
+    * Creating and managing storage volume
+among other things.
+
+ -- Kadalu Technologies Pvt Limited <hello@kadalu.tech> Tue, 26 Jul 2022 11:13:39 +0530
