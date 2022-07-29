@@ -2,7 +2,7 @@ name: moana
 version: 0.4.5
 
 authors:
-  - Kadalu.io <engineering@kadalu.io>
+  - Kadalu Technologies Private Limited <hello@kadalu.tech>
 
 description: |
   Moana - Kadalu Storage Manager
@@ -23,8 +23,8 @@ dependencies:
   moana_types:
     path: ../types
 
-  moana_client:
-    path: ../clients/crystal
+  kadalu_storage_manager:
+    path: ../sdk/crystal
 
   moana_volgen:
     path: ../volgen

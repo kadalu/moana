@@ -7,7 +7,7 @@ USE_NODE "server1"
 TEST "sudo -H pip install pytest"
 
 USE_NODE "local"
-TEST "docker cp clients/python server1:/root/"
+TEST "docker cp sdk/python server1:/root/"
 
 USE_NODE "server1"
 TEST "cd /root/python && python3 setup.py install"

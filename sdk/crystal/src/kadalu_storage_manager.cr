@@ -5,7 +5,7 @@ require "./pools"
 require "./users"
 require "./config_snapshots"
 
-module MoanaClient
+module StorageManager
   class Client
     property url, user_id = "", token = "", username = "", api_key_id = ""
 
@@ -14,14 +14,14 @@ module MoanaClient
 
     def info
       url = "#{@url}/api/v1"
-      response = MoanaClient.http_get(
+      response = StorageManager.http_get(
         url,
         headers: auth_header
       )
       if response.status_code == 200
         MoanaTypes::Info.from_json(response.body)
       else
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
 

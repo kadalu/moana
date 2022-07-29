@@ -6,13 +6,13 @@ Path: `$SRC/mgr/src/server/plugins/`
 
 Add API routes and node actions in this file.
 
-== Update Clients/Crystal
+== Update SDK/Crystal
 
-Path: `$SRC/clients/crystal`
+Path: `$SRC/sdk/crystal`
 
-== Update Clients/Python
+== Update SDK/Python
 
-Path: `$SRC/clients/python`
+Path: `$SRC/sdk/python`
 
 == CLI
 
@@ -20,7 +20,7 @@ Path: `$SRC/mgr/src/cmds`
 
 == Tests
 
-Clients/Crystal gets tested by running the CLI. But separate tests are needed to test Python SDK. Refer link:testing.adoc[Testing] or `$SRC/tests/all` directory for adding new tests.
+SDK/Crystal gets tested by running the CLI. But separate tests are needed to test Python SDK. Refer link:testing.adoc[Testing] or `$SRC/tests/all` directory for adding new tests.
 
 == Documentation update CLI based
 

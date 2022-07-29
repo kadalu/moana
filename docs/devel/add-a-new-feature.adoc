@@ -170,7 +170,7 @@ $ curl http://localhost:3000/api/v1/pools/DEV/uptime
 ]
 ----
 
-Now add the Client library (`$SRC/clients/crystal/src/pools.cr`)
+Now add the Client library (`$SRC/sdk/crystal/src/pools.cr`)
 
 [source,crystal]
 ----

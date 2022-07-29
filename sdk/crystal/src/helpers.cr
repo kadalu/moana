@@ -1,6 +1,6 @@
 require "http/client"
 
-module MoanaClient
+module StorageManager
   class ClientException < Exception
     property message, status_code, node_errors
 

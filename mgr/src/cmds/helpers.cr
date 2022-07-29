@@ -1,6 +1,6 @@
 require "option_parser"
 
-require "moana_client"
+require "kadalu_storage_manager"
 
 class Args
   property cmd = "", pos_args = [] of String, url = "", pool_name = "", script_mode = false, json = false
@@ -60,15 +60,15 @@ def handler(name, &block : Args -> Nil)
   Commands.add_handler(name, &block)
 end
 
-def api_call(args, message, &block : MoanaClient::Client -> Nil)
+def api_call(args, message, &block : StorageManager::Client -> Nil)
   begin
-    client = MoanaClient::Client.new(args.url)
+    client = StorageManager::Client.new(args.url)
     # If Token file exists then load it to client
     if File.exists?(session_file)
       client.set_api_key(MoanaTypes::ApiKey.from_json(File.read(session_file)))
     end
     block.call(client)
-  rescue ex : MoanaClient::ClientException
+  rescue ex : StorageManager::ClientException
     handle_json_error(ex.message.not_nil!, args)
     STDERR.puts message
     STDERR.puts ex.message

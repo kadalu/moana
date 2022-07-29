@@ -1,11 +1,11 @@
-name: moana_volgen
+name: kadalu_storage_manager
 version: 0.1.0
 
 authors:
   - Kadalu Technologies Private Limited <hello@kadalu.tech>
 
 description: |
-  Kadalu Storage Volfiles generation
+  Kadalu Storage Manager SDK
 
 license: GPLv3
 
