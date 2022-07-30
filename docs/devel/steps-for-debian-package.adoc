@@ -1,0 +1,33 @@
+Step 1: Download the upstream tarball & extract
+
+[source,console]
+----
+$ tar -xvf moana-0.4.8.tar.gz
+----
+
+Step 2: Make changes in Makefile to install & clean target binary files
+
+Step 3: Run `debmake` command from $SRC to generate debian package templates of control, copyright, changelog files
+        under `debian` directory in $SRC.
+
+[source,console]
+----
+$ debmake
+----
+
+Step 4: Make necessary changes to these default template files to suit the packaging needs.
+
+Step 5: Run 'debuild' command from $SRC to generate debian packages based on the control file and also package lintian is run to make sure
+        the packages are installable correctly. All target binary files will be installed under `debian` directory in $SRC as `DESTDIR`.
+
+[source,console]
+----
+$ debuild
+----
+
+Step 6: Run `dpkg` commmand to install the package.
+
+[source,console]
+----
+$ dpkg -i kadalu-storage-manager.deb
+----
