@@ -1,11 +1,12 @@
 prefix = /usr
+VERSION?=0.0.0
 
 all:
 	: # do nothing
 
 build:
 
-	cd mgr && shards install && shards build
+	cd mgr && shards install && VERSION=$(VERSION) shards build --production --release
 
 install: build
 
@@ -40,4 +41,22 @@ lint:
 fmt:
 	crystal tool format mgr/src types/src volgen/src volgen/spec sdk/crystal/src
 
-.PHONY: all build install clean distclean uninstall fmt-check lint fmt
+dist:
+	rm -rf moana-$(VERSION)
+	mkdir moana-$(VERSION)
+	cp -r extra mgr sdk types volgen Makefile moana-$(VERSION)/
+	tar cvzf moana-$(VERSION).tar.gz moana-$(VERSION)
+
+deb: debclean
+	VERSION=$(VERSION) $(MAKE) dist
+	cp -r debian moana-$(VERSION)/
+	cd moana-$(VERSION) && debmake && debuild -eVERSION=$(VERSION)
+
+debclean:
+	rm -rf kadalu-storage-manager-dbgsym_*
+	rm -rf kadalu-storage-manager_*
+	rm -rf moana_*
+	rm -rf python3-kadalu-storage_*
+	rm -rf moana-*
+
+.PHONY: all build install clean distclean uninstall fmt-check lint fmt dist deb debclean
