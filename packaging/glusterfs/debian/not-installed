@@ -1,0 +1,7 @@
+etc/init.d/glusterd
+etc/init.d/glustereventsd
+etc/ganesha/ganesha-ha.conf.sample
+usr/lib/*-linux-gnu*/ganesha/create-export-ganesha.sh
+usr/lib/*-linux-gnu*/ganesha/ganesha-ha.sh
+usr/lib/*-linux-gnu*/ganesha/dbus-send.sh
+usr/lib/*-linux-gnu*/ganesha/generate-epoch.py

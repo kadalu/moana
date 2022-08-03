@@ -49,7 +49,7 @@ dist:
 
 deb: debclean
 	VERSION=$(VERSION) $(MAKE) dist
-	cp -r debian moana-$(VERSION)/
+	cp -r packaging/moana/debian moana-$(VERSION)/
 	cd moana-$(VERSION) && debmake && debuild -eVERSION=$(VERSION)
 
 debclean:

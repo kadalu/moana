@@ -1,0 +1,8 @@
+etc/logrotate.d/*
+usr/lib/*
+usr/libexec/glusterfs/*
+usr/sbin/glusterfsd
+usr/sbin/gluster-georep-sshkey
+usr/sbin/gluster-mountbroker
+libglusterfs/src/*.h usr/include/glusterfs/
+api/src/*.h usr/include/glusterfs/api/

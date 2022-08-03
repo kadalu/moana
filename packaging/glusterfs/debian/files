@@ -1,0 +1,5 @@
+glusterfs_2022.08.01-1_amd64.buildinfo admin optional
+kadalu-storage-client_2022.08.01-1_amd64.deb admin optional
+kadalu-storage-common_2022.08.01-1_amd64.deb libs optional
+kadalu-storage-dbg_2022.08.01-1_amd64.deb debug extra
+kadalu-storage-server_2022.08.01-1_amd64.deb admin optional

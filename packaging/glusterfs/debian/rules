@@ -1,0 +1,40 @@
+#!/usr/bin/make -f
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+	dh $@ --parallel --with python3,autotools-dev
+
+override_dh_auto_configure:
+	mv configure configure.dist && ./autogen.sh
+	dh_auto_configure -- --disable-gnfs --disable-glusterd --disable-linux-io_uring --libexecdir=/usr/libexec
+
+override_dh_install:
+	strip --remove-section=.comment --remove-section=.note --strip-unneeded \
+		debian/tmp/usr/lib/*/glusterfs/*/xlator/debug/trace.so
+	strip --remove-section=.comment --remove-section=.note --strip-unneeded \
+		debian/tmp/usr/lib/*/glusterfs/*/xlator/debug/error-gen.so
+	strip --remove-section=.comment --remove-section=.note --strip-unneeded \
+		debian/tmp/usr/lib/*/glusterfs/*/xlator/debug/io-stats.so
+	find debian/tmp/usr/lib -type f -name \*.la -exec sed 's|^dependency_libs|#dependency_libs|g' -i {} \;
+	install -D -p -m 0644 extras/glusterfs-logrotate \
+		debian/tmp/etc/logrotate.d/glusterfs
+	install -D -p -m 0644 extras/glusterfs-georep-logrotate \
+		debian/tmp/etc/logrotate.d/glusterfs-georep
+	install -c -d -m 755 debian/tmp/lib/systemd/system
+	install -D -p -m 0644 extras/systemd/gluster-ta-volume.service \
+		debian/tmp/lib/systemd/system/gluster-ta-volume.service
+	install -c -d -m 0755 debian/tmp/run/gluster/metrics
+	dh_install --list-missing
+	mkdir -p $(CURDIR)/debian/glusterfs-common/usr/lib/glusterfs
+	rm -rf $(CURDIR)/debian/glusterfs-common/usr/libexec/glusterfs/glfsheal
+
+override_dh_python3:
+	dh_python3 usr/libexec/glusterfs/glusterfind/
+
+override_dh_installinit:
+	dh_installinit -p kadalu-storage-server --name=glusterta-volume
+	dh_installinit -p kadalu-storage-server --name=glustereventsd
+
+override_dh_strip:
+	dh_strip --dbg-package=kadalu-storage-dbg
