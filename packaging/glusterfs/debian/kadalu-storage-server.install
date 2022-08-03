@@ -1,0 +1,5 @@
+lib/systemd/system/*
+usr/libexec/glusterfs/glfsheal
+usr/share/glusterfs/scripts/*
+run/gluster/*
+usr/share/glusterfs/scripts/*

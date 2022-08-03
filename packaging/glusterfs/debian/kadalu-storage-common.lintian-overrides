@@ -1,0 +1,28 @@
+glusterfs-common: non-dev-pkg-with-shlib-symlink usr/lib/*/libgfrpc.so.0.0.0 usr/lib/*/libgfrpc.so
+glusterfs-common: non-dev-pkg-with-shlib-symlink usr/lib/*/libgfxdr.so.0.0.0 usr/lib/*/libgfxdr.so
+glusterfs-common: non-dev-pkg-with-shlib-symlink usr/lib/*/libglusterfs.so.0.0.0 usr/lib/*/libglusterfs.so
+glusterfs-common: no-symbols-control-file usr/lib/*/libgfrpc.so.0.0.0
+glusterfs-common: no-symbols-control-file usr/lib/*/libgfxdr.so.0.0.0
+glusterfs-common: no-symbols-control-file usr/lib/*/libglusterfs.so.0.0.0
+glusterfs-common: no-symbols-control-file usr/lib/*/libgfapi.so.0.0.0
+glusterfs-common: package-name-doesnt-match-sonames libgfapi0 libgfrpc0 libgfxdr0 libglusterfs0
+glusterfs-common: possible-gpl-code-linked-with-openssl
+glusterfs-common: hardening-no-fortify-functions usr/lib/*/libgfapi.so.0.0.0
+glusterfs-common: non-dev-pkg-with-shlib-symlink usr/lib/*/libgfapi.so.0.0.0 usr/lib/*/libgfapi.so
+glusterfs-common: unused-shlib-entry-in-control-file error gen
+glusterfs-common: unused-shlib-entry-in-control-file symlink cache
+glusterfs-common: unused-shlib-entry-in-control-file io stats
+glusterfs-common: unused-shlib-entry-in-control-file read ahead
+glusterfs-common: unused-shlib-entry-in-control-file md cache
+glusterfs-common: unused-shlib-entry-in-control-file io threads
+glusterfs-common: unused-shlib-entry-in-control-file mac compat
+glusterfs-common: unused-shlib-entry-in-control-file read only
+glusterfs-common: unused-shlib-entry-in-control-file quick read
+glusterfs-common: unused-shlib-entry-in-control-file open behind
+glusterfs-common: unused-shlib-entry-in-control-file io cache
+glusterfs-common: unused-shlib-entry-in-control-file write behind
+glusterfs-common: unused-shlib-entry-in-control-file posix acl
+glusterfs-common: spelling-error-in-binary usr/lib/*/glusterfs/*/xlator/cluster/dht.so tEH the
+glusterfs-common: spelling-error-in-binary usr/lib/*/glusterfs/*/xlator/cluster/nufa.so tEH the
+glusterfs-common: spelling-error-in-binary usr/lib/*/glusterfs/*/xlator/cluster/switch.so tEH the
+glusterfs-common: spelling-error-in-binary usr/lib/*/glusterfs/*/xlator/nfs/server.so tEH the

@@ -1,0 +1,97 @@
+Source: glusterfs
+Section: admin
+Priority: optional
+Maintainer: Kadalu Software Private Limited <packaging@kadalu.tech>
+Build-Depends: debhelper (>= 9),
+ libfuse-dev,
+ libibverbs-dev,
+ libdb-dev,
+ librdmacm-dev,
+ libaio-dev,
+ libacl1-dev,
+ libsqlite3-dev,
+ liburcu-dev,
+ uuid-dev,
+ liblvm2-dev,
+ libattr1-dev,
+ flex,
+ bison,
+ libreadline-dev,
+ libncurses5-dev,
+ libglib2.0-dev,
+ libssl-dev,
+ libxml2-dev,
+ libfile-fcntllock-perl,
+ libgoogle-perftools-dev,
+ pkg-config,
+ autotools-dev,
+ dh-systemd,
+ dh-python,
+ python3-all-dev (>= 3.5.5-1~)
+Standards-Version: 3.9.7
+Homepage: http://www.kadalu.tech
+
+Package: kadalu-storage-client
+Architecture: any
+Pre-Depends: dpkg (>= 1.15.6~)
+Depends: ${misc:Depends},
+ ${shlibs:Depends},
+ python3,
+ fuse,
+ kadalu-storage-common (>= ${binary:Version}),
+Conflicts: glusterfs-client
+Description: clustered file-system (client package)
+ This package provides the FUSE based Kadalu-Storage/GlusterFS tool.
+
+Package: kadalu-storage-server
+Architecture: any
+Pre-Depends: dpkg (>= 1.15.6~)
+Depends: ${misc:Depends},
+ ${shlibs:Depends},
+ lsb-base (>= 3.0-6),
+ nfs-common,
+ kadalu-storage-common (>= ${binary:Version}),
+ kadalu-storage-client (>= ${binary:Version}),
+ libgoogle-perftools-dev
+Conflicts: glusterfs-server
+Description: clustered file-system (server package)
+ This package installs init scripts and configuration files to turn
+ Kadalu-Storage/GlusterFS into a fully fledged file server.
+
+Package: kadalu-storage-common
+Section: libs
+Architecture: any
+Pre-Depends: ${misc:Pre-Depends},
+ dpkg (>= 1.15.6~)
+Depends: ${misc:Depends},
+ ${shlibs:Depends},
+ ${python:Depends},
+ libacl1-dev,
+ attr,
+ psmisc,
+ libgoogle-perftools-dev,
+ python3-prettytable,
+ python3-requests,
+ python3-jwt, kadalu-storage-manager
+Conflicts: libglusterfs0,
+ libglusterfs-dev, glusterfs-common
+Breaks: kadalu-storage-server
+Replaces: kadalu-storage-server,
+ libglusterfs0,
+ libglusterfs-dev
+Description: Kadalu-Storage common libraries and translator modules
+ This package includes libglusterfs and glusterfs translator modules
+ common to both Kadalu-Storage server and client framework, as well as
+ header files for development.
+
+Package: kadalu-storage-dbg
+Section: debug
+Priority: extra
+Architecture: any
+Pre-Depends: dpkg (>= 1.15.6~)
+Depends: ${shlibs:Depends},
+ ${misc:Depends},
+ kadalu-storage-client (= ${binary:Version})
+Conflicts: glusterfs-dbg
+Description: Kadalu-Storage debugging symbols
+ This package includes the debugging symbols.
