@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 KADALU_STORAGE_BRANCH=kadalu_1
 
 # Repo is already checked to a specific
@@ -45,11 +47,12 @@ gzip -k -f Packages
 
 # Import the Signing key from env var
 echo -n "$PACKAGING_GPG_SIGNING_KEY" | base64 --decode | gpg --import
+gpg --list-keys
 
 # Release, Release.gpg & InRelease
 apt-ftparchive release . > Release
-gpg --default-key "packaging@kadalu.tech" -abs -o - Release > Release.gpg
-gpg --default-key "packaging@kadalu.tech" --clearsign -o - Release > InRelease
+gpg --local-user "packaging@kadalu.tech" -abs -o - Release > Release.gpg
+gpg --local-user "packaging@kadalu.tech" --clearsign -o - Release > InRelease
 gpg --armor --export "packaging@kadalu.tech" > KEY.gpg
 
 echo "deb https://github.com/kadalu/moana/releases/latest/download ./" > kadalu_storage.list

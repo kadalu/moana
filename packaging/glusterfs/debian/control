@@ -21,11 +21,9 @@ Build-Depends: debhelper (>= 9),
  libglib2.0-dev,
  libssl-dev,
  libxml2-dev,
- libfile-fcntllock-perl,
  libgoogle-perftools-dev,
  pkg-config,
  autotools-dev,
- dh-systemd,
  dh-python,
  python3-all-dev (>= 3.5.5-1~)
 Standards-Version: 3.9.7
