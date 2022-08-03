@@ -18,3 +18,6 @@ __pycache__
 *.buildinfo
 *.changes
 moana-*
+build
+glusterfs-*
+glusterfs_*
