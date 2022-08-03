@@ -9,3 +9,12 @@ __pycache__
 *.pyc
 *.pid
 *.log
+*.tar.gz
+*.deb
+*.ddeb
+*.diff.gz
+*.dsc
+*.build
+*.buildinfo
+*.changes
+moana-*

@@ -1,5 +1,11 @@
+moana (1.0.0-1) UNRELEASED; urgency=low
+
+  * First Stable release
+
+ -- Kadalu Technologies Pvt Limited <packaging@kadalu.tech>  Tue, 02 Aug 2022 23:33:17 +0530
+
 moana (0.4.8-1) UNRELEASED; urgency=low
 
   * Initial release.
 
- -- root Kadalu Technologies Pvt Limited <packaging@kadalu.tech>  Tue, 26 Jul 2022 10:39:17 +0530
+ -- Kadalu Technologies Pvt Limited <packaging@kadalu.tech>  Tue, 26 Jul 2022 10:39:17 +0530
