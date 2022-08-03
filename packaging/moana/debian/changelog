@@ -1,6 +1,6 @@
-moana (1.0.0-1) UNRELEASED; urgency=low
+moana (0.5.1-1) UNRELEASED; urgency=low
 
-  * First Stable release
+  * Test release to check using GH releases as PPA
 
  -- Kadalu Technologies Pvt Limited <packaging@kadalu.tech>  Tue, 02 Aug 2022 23:33:17 +0530
 
