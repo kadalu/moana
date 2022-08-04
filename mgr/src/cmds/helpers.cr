@@ -108,6 +108,11 @@ def yes(label)
   ["yes", "y", "yy", "ok", "sure", "on"].includes?(value.strip.downcase)
 end
 
+def pool_and_volume_name(value)
+  pool_name, _, volume_name = value.partition("/")
+  {pool_name, volume_name}
+end
+
 def handle_json_output(data, args)
   return unless args.json
 

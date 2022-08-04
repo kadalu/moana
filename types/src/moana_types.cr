@@ -66,6 +66,20 @@ module MoanaTypes
     end
   end
 
+  struct HealMetrics
+    include JSON::Serializable
+    # TODO: Include CPU, Memory and Uptime details
+    property heal_status : String = "Not Connected",
+      heal_total : Int64 = -1,
+      heal_pending_count : Int64 = -1,
+      heal_split_brain_count : Int64 = -1,
+      heal_possibly_healing_count : Int64 = -1,
+      heal_pending_files = [] of Tuple(String, String)
+
+    def initialize
+    end
+  end
+
   class StorageUnit
     include JSON::Serializable
 
@@ -76,6 +90,7 @@ module MoanaTypes
       type = "",
       fs = "",
       metrics = Metrics.new,
+      heal_metrics = HealMetrics.new,
       service = ServiceUnit.new
 
     def initialize(node_name, @port, @path)
