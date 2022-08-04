@@ -19,22 +19,9 @@ override_dh_install:
 	find debian/tmp/usr/lib -type f -name \*.la -exec sed 's|^dependency_libs|#dependency_libs|g' -i {} \;
 	install -D -p -m 0644 extras/glusterfs-logrotate \
 		debian/tmp/etc/logrotate.d/glusterfs
-	install -D -p -m 0644 extras/glusterfs-georep-logrotate \
-		debian/tmp/etc/logrotate.d/glusterfs-georep
-	install -c -d -m 755 debian/tmp/lib/systemd/system
-	install -D -p -m 0644 extras/systemd/gluster-ta-volume.service \
-		debian/tmp/lib/systemd/system/gluster-ta-volume.service
-	install -c -d -m 0755 debian/tmp/run/gluster/metrics
 	dh_install --list-missing
 	mkdir -p $(CURDIR)/debian/glusterfs-common/usr/lib/glusterfs
 	rm -rf $(CURDIR)/debian/glusterfs-common/usr/libexec/glusterfs/glfsheal
-
-override_dh_python3:
-	dh_python3 usr/libexec/glusterfs/glusterfind/
-
-override_dh_installinit:
-	dh_installinit -p kadalu-storage-server --name=glusterta-volume
-	dh_installinit -p kadalu-storage-server --name=glustereventsd
 
 override_dh_strip:
 	dh_strip --dbg-package=kadalu-storage-dbg

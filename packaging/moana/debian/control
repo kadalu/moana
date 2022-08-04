@@ -1,4 +1,4 @@
-Source: moana
+Source: kadalu-storage-manager
 Section: main
 Priority: optional
 Maintainer: Kadalu Technologies Private Limited <packaging@kadalu.tech>
@@ -7,6 +7,7 @@ Standards-Version: 4.1.4
 Homepage: <https://github.com/kadalu/moana>
 
 Package: python3-kadalu-storage
+Section: libs
 Architecture: any
 Multi-Arch: foreign
 Depends: python3-urllib3, ${shlibs:Depends}, ${misc:Depends}

@@ -1,4 +1,4 @@
-Source: glusterfs
+Source: kadalu-storage
 Section: admin
 Priority: optional
 Maintainer: Kadalu Software Private Limited <packaging@kadalu.tech>
@@ -29,44 +29,16 @@ Build-Depends: debhelper (>= 9),
 Standards-Version: 3.9.7
 Homepage: http://www.kadalu.tech
 
-Package: kadalu-storage-client
-Architecture: any
-Pre-Depends: dpkg (>= 1.15.6~)
-Depends: ${misc:Depends},
- ${shlibs:Depends},
- python3,
- fuse,
- kadalu-storage-common (>= ${binary:Version}),
-Conflicts: glusterfs-client
-Replaces: kadalu-storage-client
-Description: clustered file-system (client package)
- This package provides the FUSE based Kadalu-Storage/GlusterFS tool.
-
-Package: kadalu-storage-server
-Architecture: any
-Pre-Depends: dpkg (>= 1.15.6~)
-Depends: ${misc:Depends},
- ${shlibs:Depends},
- lsb-base (>= 3.0-6),
- nfs-common,
- kadalu-storage-common (>= ${binary:Version}),
- kadalu-storage-client (>= ${binary:Version}),
- libgoogle-perftools-dev
-Conflicts: glusterfs-server
-Replaces: kadalu-storage-server
-Description: clustered file-system (server package)
- This package installs init scripts and configuration files to turn
- Kadalu-Storage/GlusterFS into a fully fledged file server.
-
-Package: kadalu-storage-common
-Section: libs
+Package: kadalu-storage
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends},
  dpkg (>= 1.15.6~)
 Depends: ${misc:Depends},
  ${shlibs:Depends},
  ${python:Depends},
+ lsb-base (>= 3.0-6),
  libacl1-dev,
+ fuse,
  attr,
  psmisc,
  libgoogle-perftools-dev,
@@ -74,12 +46,11 @@ Depends: ${misc:Depends},
  python3-requests,
  python3-jwt, kadalu-storage-manager
 Conflicts: libglusterfs0,
- libglusterfs-dev, glusterfs-common
-Replaces: kadalu-storage-common
-Description: Kadalu-Storage common libraries and translator modules
- This package includes libglusterfs and glusterfs translator modules
- common to both Kadalu-Storage server and client framework, as well as
- header files for development.
+ libglusterfs-dev, glusterfs-common, glusterfs-server,
+ glusterfs-client
+Replaces: kadalu-storage
+Description: Kadalu-Storage is an Opinionated distributed filesystem
+  based on GlusterFS.
 
 Package: kadalu-storage-dbg
 Section: debug
@@ -88,7 +59,7 @@ Architecture: any
 Pre-Depends: dpkg (>= 1.15.6~)
 Depends: ${shlibs:Depends},
  ${misc:Depends},
- kadalu-storage-client (= ${binary:Version})
+ kadalu-storage (= ${binary:Version})
 Conflicts: glusterfs-dbg
 Description: Kadalu-Storage debugging symbols
  This package includes the debugging symbols.
