@@ -89,7 +89,7 @@ jobs:
           file_glob: true
 
   build_deb_files:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v1
       # TODO: Review the below list of dependencies
