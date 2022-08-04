@@ -26,3 +26,4 @@ glusterfs-common: spelling-error-in-binary usr/lib/*/glusterfs/*/xlator/cluster/
 glusterfs-common: spelling-error-in-binary usr/lib/*/glusterfs/*/xlator/cluster/nufa.so tEH the
 glusterfs-common: spelling-error-in-binary usr/lib/*/glusterfs/*/xlator/cluster/switch.so tEH the
 glusterfs-common: spelling-error-in-binary usr/lib/*/glusterfs/*/xlator/nfs/server.so tEH the
+glusterfs-server: possible-gpl-code-linked-with-openssl

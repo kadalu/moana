@@ -1,11 +1,5 @@
-moana (0.5.4-1) UNRELEASED; urgency=low
-
-  * Test release to check using GH releases as PPA
-
- -- Kadalu Technologies Pvt Limited <packaging@kadalu.tech>  Tue, 02 Aug 2022 23:33:17 +0530
-
-moana (0.4.8-1) UNRELEASED; urgency=low
+kadalu-storage-manager (0.5.4-1) UNRELEASED; urgency=low
 
   * Initial release.
 
- -- Kadalu Technologies Pvt Limited <packaging@kadalu.tech>  Tue, 26 Jul 2022 10:39:17 +0530
+ -- Kadalu Technologies Pvt Limited <packaging@kadalu.tech>  Tue, 02 Aug 2022 23:33:17 +0530

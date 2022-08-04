@@ -9,6 +9,7 @@ KADALU_STORAGE_BRANCH=kadalu_1
 
 # Cleanup
 rm -rf kadalu-storage-manager-dbgsym_*
+rm -rf kadalu-storage-manager-*
 rm -rf kadalu-storage-manager_*
 rm -rf moana_*
 rm -rf python3-kadalu-storage_*
@@ -16,22 +17,26 @@ rm -rf moana-*
 
 # Build deb packages
 VERSION=${VERSION} make dist
-cp -r packaging/moana/debian moana-${VERSION}/
+mv moana-${VERSION} kadalu-storage-manager-${VERSION}
+rm -rf moana-${VERSION}.tar.gz
+tar cvzf kadalu-storage-manager-${VERSION}.tar.gz kadalu-storage-manager-${VERSION}
+cp -r packaging/moana/debian kadalu-storage-manager-${VERSION}/
 
-cd moana-${VERSION}/
+cd kadalu-storage-manager-${VERSION}/
 debmake -b":python3"
 debuild -eVERSION=${VERSION}
 cd ..
 
 # Clone the GlusterFS and checkout Branch
-git clone https://github.com/kadalu/glusterfs.git glusterfs-${VERSION}
-cd glusterfs-${VERSION}
+rm -rf kadalu-storage-${VERSION}
+git clone https://github.com/kadalu/glusterfs.git kadalu-storage-${VERSION}
+cd kadalu-storage-${VERSION}
 git checkout -b ${KADALU_STORAGE_BRANCH} origin/${KADALU_STORAGE_BRANCH}
 cd ..
-tar cvzf glusterfs-${VERSION}.tar.gz glusterfs-${VERSION}
-cp -r packaging/glusterfs/debian glusterfs-${VERSION}/
+tar cvzf kadalu-storage-${VERSION}.tar.gz kadalu-storage-${VERSION}
+cp -r packaging/glusterfs/debian kadalu-storage-${VERSION}/
 
-cd glusterfs-${VERSION}/
+cd kadalu-storage-${VERSION}/
 debmake -b":python3"
 debuild
 cd ..
@@ -44,16 +49,3 @@ cp *.deb build/
 cd build
 dpkg-scanpackages --multiversion . > Packages
 gzip -k -f Packages
-
-# Import the Signing key from env var
-echo -n "$PACKAGING_GPG_SIGNING_KEY" | base64 --decode | gpg --import
-gpg --list-keys
-
-# Release, Release.gpg & InRelease
-apt-ftparchive release . > Release
-gpg --local-user "packaging@kadalu.tech" -abs -o - Release > Release.gpg
-gpg --local-user "packaging@kadalu.tech" --clearsign -o - Release > InRelease
-gpg --armor --export "packaging@kadalu.tech" > KEY.gpg
-
-echo "deb https://github.com/kadalu/moana/releases/latest/download ./" > kadalu_storage.list
-cd ..

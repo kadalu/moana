@@ -18,6 +18,8 @@ __pycache__
 *.buildinfo
 *.changes
 moana-*
+kadalu-storage-*
+kadalu-storage_*
 build
 glusterfs-*
 glusterfs_*
