@@ -87,38 +87,3 @@ jobs:
           tag: ${{ github.ref }}
           overwrite: true
           file_glob: true
-
-  build_deb_files:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v1
-      # TODO: Review the below list of dependencies
-      - name: Install the Build dependencies
-        run: |
-          sudo apt update -y
-          sudo apt install -y --no-install-recommends python3 libtirpc3 init     \
-          python3-pip ssh rsync lvm2 less software-properties-common             \
-          sudo curl wget git build-essential automake autoconf automake libtool  \
-          flex bison libssl-dev pkg-config uuid-dev acl-dev zlib1g-dev           \
-          libxml2-dev libxml2-utils liburcu-dev xfsprogs gdb attr                \
-          libgoogle-perftools-dev zfsutils-linux screen libsqlite3-dev sqlite3   \
-          debmake python3-debian debhelper dh-python                             \
-          libaio-dev libdb-dev libfuse-dev libibverbs-dev liblvm2-dev            \
-          libncurses5-dev librdmacm-dev libreadline-dev python3-all-dev
-      - name: Install Crystal
-        run: |
-          curl -fsSL https://crystal-lang.org/install.sh | sudo bash
-      - name: Build Debian packages
-        run: |
-          PACKAGING_GPG_SIGNING_KEY="${{ secrets.PACKAGING_GPG_SIGNING_KEY }}" VERSION="${{ github.ref_name }}" ./generate_deb_packages.sh
-      - name: Check built packages
-        run: |
-          ls -lh build/
-      - name: Upload deb packages and meta files to the release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/*
-          tag: ${{ github.ref }}
-          overwrite: true
-          file_glob: true

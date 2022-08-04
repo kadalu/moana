@@ -38,6 +38,7 @@ Depends: ${misc:Depends},
  fuse,
  kadalu-storage-common (>= ${binary:Version}),
 Conflicts: glusterfs-client
+Replaces: kadalu-storage-client
 Description: clustered file-system (client package)
  This package provides the FUSE based Kadalu-Storage/GlusterFS tool.
 
@@ -52,6 +53,7 @@ Depends: ${misc:Depends},
  kadalu-storage-client (>= ${binary:Version}),
  libgoogle-perftools-dev
 Conflicts: glusterfs-server
+Replaces: kadalu-storage-server
 Description: clustered file-system (server package)
  This package installs init scripts and configuration files to turn
  Kadalu-Storage/GlusterFS into a fully fledged file server.
@@ -73,10 +75,7 @@ Depends: ${misc:Depends},
  python3-jwt, kadalu-storage-manager
 Conflicts: libglusterfs0,
  libglusterfs-dev, glusterfs-common
-Breaks: kadalu-storage-server
-Replaces: kadalu-storage-server,
- libglusterfs0,
- libglusterfs-dev
+Replaces: kadalu-storage-common
 Description: Kadalu-Storage common libraries and translator modules
  This package includes libglusterfs and glusterfs translator modules
  common to both Kadalu-Storage server and client framework, as well as
