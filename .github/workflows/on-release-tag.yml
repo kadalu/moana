@@ -103,7 +103,7 @@ jobs:
           libxml2-dev libxml2-utils liburcu-dev xfsprogs gdb attr                \
           libgoogle-perftools-dev zfsutils-linux screen libsqlite3-dev sqlite3   \
           debmake python3-debian debhelper dh-python                             \
-          dh-systemd libaio-dev libdb-dev libfuse-dev libibverbs-dev liblvm2-dev \
+          libaio-dev libdb-dev libfuse-dev libibverbs-dev liblvm2-dev            \
           libncurses5-dev librdmacm-dev libreadline-dev python3-all-dev
       - name: Install Crystal
         run: |
