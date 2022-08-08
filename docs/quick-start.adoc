@@ -1,81 +1,138 @@
 = Kadalu Storage - Quick Start
 
-== Install
+== Introduction
 
-Install the latest GlusterFS packages and then download and install Kadalu Storage Manager by running the following command
+Kadalu Storage is a distributed filesystem management system. At its core, Kadalu uses the GlusterFS filesystem.
+
+== Installation
+
+This guide assumes you will create a replica 3 (1x3) cluster using three nodes. The steps are the same if you plan to use a single node.
+
+- Add Kadalu Storage repository using the below commands.
++
+[source, console]
+----
+curl -sL --compressed "https://kadalu.tech/pkgs/1/ubuntu/20.04/KEY.gpg" | sudo apt-key add -
+sudo curl -sL --compressed -o /etc/apt/sources.list.d/kadalu_storage.list "https://kadalu.tech/pkgs/1/ubuntu/20.04/sources.list"
+sudo apt update
+----
++
+- Install the latest Kadalu Storage packages on all the nodes.
++
+[source]
+----
+$ sudo apt install kadalu-storage
+----
+
+== Service Setup
+
+Enable and start the kadalu-mgr service on all the storage nodes.
+
+[source]
+----
+$ sudo systemctl enable kadalu-mgr
+$ sudo systemctl start kadalu-mgr
+----
+
+== Create a user and login
+
+Users can be created in any one of the storage nodes or in any dedicated node other than the storage nodes.
 
 [source,console]
 ----
-$ curl -fsSL https://github.com/kadalu/moana/releases/latest/download/install.sh | sudo bash -x
-----
-
-Test to ensure the version you installed is up-to-date
-
-[source,console]
-----
-$ kadalu --version
-----
-
-== Setup
-
-Run Storage manager in any one Storage node or a dedicated node.
-
-[source,console]
-----
-# systemctl enable kadalu-mgr
-# systemctl start kadalu-mgr
-----
-
-== Create a User and Login
-
-[source,console]
-----
-# kadalu user create admin
-Password:
+$ kadalu user create admin
+Password: 
 User admin created successfully
 ----
 
-Login using,
+Login
 
 [source,console]
 ----
-# kadalu user login admin
+$ kadalu user login admin
 Password:
 Login successful. Details saved in `/root/.kadalu/session`. Delete this file or run `kadalu logout` command to delete the session.
 ----
 
-== Create Pool and add Storage nodes
+== Create a pool and add storage nodes
+The following commands are run from the storage manager (which can be one of the storage nodes or any separate node) which was chosen in the previous step.
 
-Create a Pool and add the Storage manager node to the Pool. Storage manager node is not part of any Pool since it supports multiple Pools.
+**Note**: The below steps 1 and 2 can be skipped and can be done as part of volume create by passing `--auto-add-nodes` and `--auto-create-pool` during volume create command.
 
-[source,console]
-----
-# kadalu pool create DEV
-Pool created successfully.
-ID: 4e67989e-0c24-44ac-b0a7-81aa5cb4ec6b
-#
-# kadalu node add DEV/server1.example.com
-Node server1.example.com added to DEV successfully
-ID: 3befd57b-1d31-4664-94e9-f87bf7ce90f9
-----
+=== Step 1:
 
-== Create a Kadalu Storage Volume
-
-Now create a directory to use it as Storage unit and then create a Kadalu Storage Volume.
+Create a pool
 
 [source,console]
 ----
-# mkdir /exports/vol1
-#
-# kadalu volume create DEV/vol1 server1.example.com:/exports/vol1/s1
-Volume vol1 created successfully
-ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
+$ kadalu pool create DEV
+Pool DEV created successfully
+ID: 2a643b56-3fd9-4782-882a-3915853d67a7
 ----
-
-== Mount a Volume
 
 [source,console]
 ----
-# mkdir /mnt/vol1
-# mount -t kadalu server1.example.com:/DEV/vol1 /mnt/vol1
+$ kadalu pool list
+Name  ID
+DEV   2a643b56-3fd9-4782-882a-3915853d67a7
+----
+
+=== Step 2:
+
+Add nodes to the pool
+
+[source,console]
+----
+$ kadalu node add DEV/vm1
+Node vm1 added to DEV successfully
+ID: 710acd83-d3aa-4292-b362-543599d12edf
+$
+$ kadalu node add DEV/vm2
+Node vm2 added to DEV successfully
+ID: dfed8210-53d4-44e6-8a8b-7abe3fddb145
+$
+$ kadalu node add DEV/vm3
+Node vm3 added to DEV successfully
+ID: 9ac5d869-9542-4dac-9c88-97cfb11a5738
+$ kadalu node list
+Name     ID                                    Endpoint
+DEV/vm3  9ac5d869-9542-4dac-9c88-97cfb11a5738  http://vm3:3000
+DEV/vm2  dfed8210-53d4-44e6-8a8b-7abe3fddb145  http://vm2:3000
+DEV/vm1  710acd83-d3aa-4292-b362-543599d12edf  http://vm1:3000
+----
+
+== Create a storage volume
+Now create a directory to use as a storage unit and create a Kadalu Storage Volume.
+
+[source,console]
+----
+$ sudo mkdir /data/t2     (Run on all the storage nodes)
+$
+$ kadalu volume create DEV/Test-Vol replica 3 vm1:/data/t2 vm2:/data/t2 vm3:/data/t2
+Volume Test-Vol created successfully
+ID: 59a726ad-0010-4a4f-ac4d-b11e54e722d7
+$
+$ kadalu volume list
+Name          ID                                    State    Type          Size  Inodes
+DEV/Test-Vol  59a726ad-0010-4a4f-ac4d-b11e54e722d7  Started  Replicate  50.0GiB   26.2M
+----
+
+**Note**: The above command can be written as:
+
+[source,console]
+----
+$ kadalu volume create DEV/Test-Vol replica 3 vm1:/data/t2 vm2:/data/t2 vm3:/data/t2 --auto-add-nodes --auto-create-pool
+----
+
+And the steps to create pool and node addition can be skipped.
+
+== Mount the volume
+
+[source,console]
+----
+$ sudo mkdir /mnt/kadalu_vol
+$ sudo mount -t kadalu vm1:DEV/Test-Vol /mnt/kadalu_vol/
+$ df -h /mnt/kadalu_vol/
+Filesystem           Size  Used Avail Use% Mounted on
+kadalu:/Test-Vol   30G  554M   30G   2% /mnt/kadalu_vol
 ----
