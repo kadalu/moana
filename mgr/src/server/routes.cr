@@ -1,21 +1,39 @@
 require "kemal"
 
+# CORS allowed headers and methods
+options "/*" do |env|
+  env.response.headers["Allow"] = "HEAD,GET,PUT,POST,DELETE,OPTIONS"
+  env.response.headers["Access-Control-Allow-Headers"] = "Authorization,X-User-ID,X-Node-ID"
+
+  halt env
+end
+
+def add_cors_header(env)
+  env.response.headers.add("Access-Control-Allow-Origin", "*")
+  env.response.headers.add("Access-Control-Allow-Methods", "*")
+  env.response.headers.add("Access-Control-Allow-Credentials", "true")
+end
+
 before_all do |env|
+  add_cors_header(env)
   env.response.content_type = "application/json"
 end
 
 error 404 do |env|
+  add_cors_header(env)
   env.response.content_type = "application/json"
   {"error": "Invalid URL"}.to_json
 end
 
 error 500 do |env, exc|
+  add_cors_header(env)
   env.response.content_type = "application/json"
   {"error": "#{exc}"}.to_json
 end
 
 def unauthorized(env, message)
   env.response.status_code = 401
+  add_cors_header(env)
   env.response.content_type = "application/json"
   env.response.print ({"error": "Unauthorized. #{message}"}).to_json
 end
@@ -52,6 +70,7 @@ class MgrRequestsProxyHandler < Kemal::Handler
     if resp
       env.response.status_code = resp.status_code
       env.response.content_type = "application/json"
+      add_cors_header(env)
       env.response.print resp.body
     else
       call_next(env)
@@ -66,6 +85,7 @@ class AuthHandler < Kemal::Handler
   # Node internal API handles authentication differently.
   exclude ["/api/v1/users", "/api/v1/users/:username/api-keys", "/_api/v1/:action"], "POST"
   exclude ["/ping", "/api/v1"], "GET"
+  exclude ["/*"], "OPTIONS"
 
   def call(env)
     return call_next(env) if exclude_match?(env)
