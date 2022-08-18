@@ -90,5 +90,21 @@ module StorageManager
         StorageManager.error_response(response)
       end
     end
+
+    def rename(new_pool_name : String)
+      url = "#{@client.url}/api/v1/pools/#{@name}/rename"
+
+      response = StorageManager.http_post(
+        url,
+        {"new_pool_name": new_pool_name}.to_json,
+        headers: @client.auth_header
+      )
+
+      if response.status_code == 200
+        MoanaTypes::Pool.from_json(response.body)
+      else
+        StorageManager.error_response(response)
+      end
+    end
   end
 end

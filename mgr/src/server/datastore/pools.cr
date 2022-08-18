@@ -125,4 +125,9 @@ module Datastore
     query = "DELETE FROM pools WHERE id = ?"
     connection.exec(query, pool_id)
   end
+
+  def rename_pool_name(pool_id, new_pool_name)
+    query = "UPDATE pools SET name = ? WHERE id = ?"
+    connection.exec(query, new_pool_name, pool_id)
+  end
 end

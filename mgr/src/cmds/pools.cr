@@ -60,3 +60,20 @@ handler "pool.delete" do |args|
     puts "Pool #{args.pool_name} deleted"
   end
 end
+
+command "pool.rename", "Rename the Kadalu Storage Pool" do |parser, _|
+  parser.banner = "Usage: kadalu pool rename Exiting_POOL New_POOL [arguments]"
+end
+
+handler "pool.rename" do |args|
+  command_error "Existing & New Pool name is required" if args.pos_args.size < 2
+  args.pool_name = args.pos_args[0]
+  new_pool_name = args.pos_args[1]
+  next unless (args.script_mode || yes("Are you sure you want to rename the pool? [y/N]"))
+
+  api_call(args, "Failed to rename the pool") do |client|
+    pool = client.pool(args.pool_name).rename(new_pool_name)
+    handle_json_output(pool, args)
+    puts "Pool #{args.pool_name} renamed to #{new_pool_name}"
+  end
+end
