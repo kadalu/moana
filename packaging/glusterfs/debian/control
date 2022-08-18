@@ -49,7 +49,7 @@ Conflicts: libglusterfs0,
  libglusterfs-dev, glusterfs-common, glusterfs-server,
  glusterfs-client
 Replaces: kadalu-storage
-Description: Kadalu-Storage is an Opinionated distributed filesystem
+Description: Kadalu Storage is an Opinionated distributed filesystem
   based on GlusterFS.
 
 Package: kadalu-storage-dbg
@@ -61,5 +61,5 @@ Depends: ${shlibs:Depends},
  ${misc:Depends},
  kadalu-storage (= ${binary:Version})
 Conflicts: glusterfs-dbg
-Description: Kadalu-Storage debugging symbols
+Description: Kadalu Storage debugging symbols
  This package includes the debugging symbols.

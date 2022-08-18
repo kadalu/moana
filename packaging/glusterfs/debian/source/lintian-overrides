@@ -1,0 +1,2 @@
+kadalu-storage source: patch-file-present-but-not-mentioned-in-series 0001-cloudsync-cvlt.patch
+kadalu-storage source: python-depends-but-no-python-helper kadalu-storage

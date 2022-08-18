@@ -1,29 +1,64 @@
-glusterfs-common: non-dev-pkg-with-shlib-symlink usr/lib/*/libgfrpc.so.0.0.0 usr/lib/*/libgfrpc.so
-glusterfs-common: non-dev-pkg-with-shlib-symlink usr/lib/*/libgfxdr.so.0.0.0 usr/lib/*/libgfxdr.so
-glusterfs-common: non-dev-pkg-with-shlib-symlink usr/lib/*/libglusterfs.so.0.0.0 usr/lib/*/libglusterfs.so
-glusterfs-common: no-symbols-control-file usr/lib/*/libgfrpc.so.0.0.0
-glusterfs-common: no-symbols-control-file usr/lib/*/libgfxdr.so.0.0.0
-glusterfs-common: no-symbols-control-file usr/lib/*/libglusterfs.so.0.0.0
-glusterfs-common: no-symbols-control-file usr/lib/*/libgfapi.so.0.0.0
-glusterfs-common: package-name-doesnt-match-sonames libgfapi0 libgfrpc0 libgfxdr0 libglusterfs0
-glusterfs-common: possible-gpl-code-linked-with-openssl
-glusterfs-common: hardening-no-fortify-functions usr/lib/*/libgfapi.so.0.0.0
-glusterfs-common: non-dev-pkg-with-shlib-symlink usr/lib/*/libgfapi.so.0.0.0 usr/lib/*/libgfapi.so
-glusterfs-common: unused-shlib-entry-in-control-file error gen
-glusterfs-common: unused-shlib-entry-in-control-file symlink cache
-glusterfs-common: unused-shlib-entry-in-control-file io stats
-glusterfs-common: unused-shlib-entry-in-control-file read ahead
-glusterfs-common: unused-shlib-entry-in-control-file md cache
-glusterfs-common: unused-shlib-entry-in-control-file io threads
-glusterfs-common: unused-shlib-entry-in-control-file mac compat
-glusterfs-common: unused-shlib-entry-in-control-file read only
-glusterfs-common: unused-shlib-entry-in-control-file quick read
-glusterfs-common: unused-shlib-entry-in-control-file open behind
-glusterfs-common: unused-shlib-entry-in-control-file io cache
-glusterfs-common: unused-shlib-entry-in-control-file write behind
-glusterfs-common: unused-shlib-entry-in-control-file posix acl
-glusterfs-common: spelling-error-in-binary usr/lib/*/glusterfs/*/xlator/cluster/dht.so tEH the
-glusterfs-common: spelling-error-in-binary usr/lib/*/glusterfs/*/xlator/cluster/nufa.so tEH the
-glusterfs-common: spelling-error-in-binary usr/lib/*/glusterfs/*/xlator/cluster/switch.so tEH the
-glusterfs-common: spelling-error-in-binary usr/lib/*/glusterfs/*/xlator/nfs/server.so tEH the
-glusterfs-server: possible-gpl-code-linked-with-openssl
+kadalu-storage: non-dev-pkg-with-shlib-symlink usr/lib/*/libgfrpc.so.0.0.0 usr/lib/*/libgfrpc.so
+kadalu-storage: non-dev-pkg-with-shlib-symlink usr/lib/*/libgfxdr.so.0.0.0 usr/lib/*/libgfxdr.so
+kadalu-storage: non-dev-pkg-with-shlib-symlink usr/lib/*/libglusterfs.so.0.0.0 usr/lib/*/libglusterfs.so
+kadalu-storage: no-symbols-control-file usr/lib/*/libgfrpc.so.0.0.0
+kadalu-storage: no-symbols-control-file usr/lib/*/libgfxdr.so.0.0.0
+kadalu-storage: no-symbols-control-file usr/lib/*/libglusterfs.so.0.0.0
+kadalu-storage: no-symbols-control-file usr/lib/*/libgfapi.so.0.0.0
+kadalu-storage: package-name-doesnt-match-sonames libgfapi0 libgfrpc0 libgfxdr0 libglusterfs0 libgfchangelog0
+kadalu-storage: possible-gpl-code-linked-with-openssl
+kadalu-storage: hardening-no-fortify-functions usr/lib/*/libgfapi.so.0.0.0
+kadalu-storage: non-dev-pkg-with-shlib-symlink usr/lib/*/libgfapi.so.0.0.0 usr/lib/*/libgfapi.so
+kadalu-storage: unused-shlib-entry-in-control-file error gen
+kadalu-storage: unused-shlib-entry-in-control-file symlink cache
+kadalu-storage: unused-shlib-entry-in-control-file io stats
+kadalu-storage: unused-shlib-entry-in-control-file read ahead
+kadalu-storage: unused-shlib-entry-in-control-file md cache
+kadalu-storage: unused-shlib-entry-in-control-file io threads
+kadalu-storage: unused-shlib-entry-in-control-file mac compat
+kadalu-storage: unused-shlib-entry-in-control-file read only
+kadalu-storage: unused-shlib-entry-in-control-file quick read
+kadalu-storage: unused-shlib-entry-in-control-file open behind
+kadalu-storage: unused-shlib-entry-in-control-file io cache
+kadalu-storage: unused-shlib-entry-in-control-file write behind
+kadalu-storage: unused-shlib-entry-in-control-file posix acl
+kadalu-storage: spelling-error-in-binary usr/lib/*/glusterfs/*/xlator/cluster/dht.so tEH the
+kadalu-storage: spelling-error-in-binary usr/lib/*/glusterfs/*/xlator/cluster/nufa.so tEH the
+kadalu-storage: spelling-error-in-binary usr/lib/*/glusterfs/*/xlator/cluster/switch.so tEH the
+kadalu-storage: spelling-error-in-binary usr/lib/*/glusterfs/*/xlator/nfs/server.so tEH the
+kadalu-storage: possible-gpl-code-linked-with-openssl
+kadalu-storage: unstripped-binary-or-object usr/lib/x86_64-linux-gnu/glusterfs/2022.08.01/xlator/debug/delay-gen.so
+kadalu-storage: unstripped-binary-or-object usr/lib/x86_64-linux-gnu/glusterfs/2022.08.01/xlator/debug/sink.so
+kadalu-storage: non-dev-pkg-with-shlib-symlink usr/lib/x86_64-linux-gnu/libgfapi.so.0.0.0 usr/lib/x86_64-linux-gnu/libgfapi.so
+kadalu-storage: non-dev-pkg-with-shlib-symlink usr/lib/x86_64-linux-gnu/libgfchangelog.so.0.0.1 usr/lib/x86_64-linux-gnu/libgfchangelog.so
+kadalu-storage: non-dev-pkg-with-shlib-symlink usr/lib/x86_64-linux-gnu/libgfrpc.so.0.0.1 usr/lib/x86_64-linux-gnu/libgfrpc.so
+kadalu-storage: non-dev-pkg-with-shlib-symlink usr/lib/x86_64-linux-gnu/libgfxdr.so.0.0.1 usr/lib/x86_64-linux-gnu/libgfxdr.so
+kadalu-storage: non-dev-pkg-with-shlib-symlink usr/lib/x86_64-linux-gnu/libglusterfs.so.0.0.1 usr/lib/x86_64-linux-gnu/libglusterfs.so
+kadalu-storage: script-not-executable usr/libexec/glusterfs/glusterfind/main.py
+kadalu-storage: script-not-executable usr/libexec/glusterfs/python/syncdaemon/gsyncd.py
+kadalu-storage: script-not-executable usr/libexec/glusterfs/python/syncdaemon/gsyncdstatus.py
+kadalu-storage: library-not-linked-against-libc usr/lib/x86_64-linux-gnu/glusterfs/2022.08.01/xlator/features/selinux.so
+kadalu-storage: library-not-linked-against-libc usr/lib/x86_64-linux-gnu/glusterfs/2022.08.01/xlator/mount/api.so
+kadalu-storage: python-package-missing-depends-on-python
+kadalu-storage: python-script-but-no-python-dep usr/libexec/glusterfs/gfevents/glustereventsd.py #!/usr/bin/python3
+kadalu-storage: python-script-but-no-python-dep usr/libexec/glusterfs/gfind_missing_files/gfid_to_path.py #!/usr/bin/python3
+kadalu-storage: python-script-but-no-python-dep usr/libexec/glusterfs/glusterfind/S57glusterfind-delete-post.py #!/usr/bin/python3
+kadalu-storage: python-script-but-no-python-dep usr/libexec/glusterfs/glusterfind/brickfind.py #!/usr/bin/python3
+kadalu-storage: python-script-but-no-python-dep usr/libexec/glusterfs/glusterfind/changelog.py #!/usr/bin/python3
+kadalu-storage: python-script-but-no-python-dep usr/libexec/glusterfs/glusterfind/nodeagent.py #!/usr/bin/python3
+kadalu-storage: python-script-but-no-python-dep usr/libexec/glusterfs/peer_eventsapi.py #!/usr/bin/python3
+kadalu-storage: python-script-but-no-python-dep usr/libexec/glusterfs/peer_georep-sshkey.py #!/usr/bin/python3
+kadalu-storage: python-script-but-no-python-dep usr/libexec/glusterfs/peer_mountbroker #!/usr/bin/python3
+kadalu-storage: python-script-but-no-python-dep usr/libexec/glusterfs/peer_mountbroker.py #!/usr/bin/python3
+kadalu-storage: python-script-but-no-python-dep usr/libexec/glusterfs/scripts/schedule_georep.py #!/usr/bin/python3
+kadalu-storage: systemd-service-file-outside-lib usr/lib/systemd/system/gluster-ta-volume.service
+kadalu-storage: systemd-service-file-outside-lib usr/lib/systemd/system/glusterd.service
+kadalu-storage: systemd-service-file-outside-lib usr/lib/systemd/system/glustereventsd.service
+kadalu-storage: systemd-service-file-outside-lib usr/lib/systemd/system/glusterfssharedstorage.service
+kadalu-storage: package-name-doesnt-match-sonames libgfapi0 libgfchangelog0 libgfrpc0 libgfxdr0 libglusterfs0
+kadalu-storage: new-package-should-close-itp-bug
+kadalu-storage: package-installs-python-pycache-dir usr/lib/python3/dist-packages/gluster/__pycache__/
+kadalu-storage: package-installs-python-pycache-dir usr/lib/python3/dist-packages/gluster/cliutils/__pycache__/
+kadalu-storage: package-installs-python-pycache-dir usr/libexec/glusterfs/gfevents/__pycache__/
+kadalu-storage: package-installs-python-pycache-dir usr/libexec/glusterfs/glusterfind/__pycache__/
+kadalu-storage: package-installs-python-pycache-dir usr/libexec/glusterfs/python/syncdaemon/__pycache__/
