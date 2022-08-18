@@ -3,7 +3,7 @@ require "kemal"
 # CORS allowed headers and methods
 options "/*" do |env|
   env.response.headers["Allow"] = "HEAD,GET,PUT,POST,DELETE,OPTIONS"
-  env.response.headers["Access-Control-Allow-Headers"] = "Authorization,X-User-ID,X-Node-ID"
+  env.response.headers["Access-Control-Allow-Headers"] = "Authorization,X-User-ID,X-Node-ID,Content-Type"
 
   halt env
 end
@@ -26,7 +26,6 @@ error 404 do |env|
 end
 
 error 500 do |env, exc|
-  add_cors_header(env)
   env.response.content_type = "application/json"
   {"error": "#{exc}"}.to_json
 end
