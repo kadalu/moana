@@ -114,7 +114,7 @@ handler "volume.stop" do |args|
 end
 
 command "volume.list", "Volumes list of a Kadalu Storage pool" do |parser, args|
-  parser.banner = "Usage: kadalu volume list [POOL] [arguments]"
+  parser.banner = "Usage: kadalu volume list [POOL[/VOLNAME]] [arguments]"
   parser.on("--status", "Show Volumes states") do
     args.volume_args.status = true
   end
