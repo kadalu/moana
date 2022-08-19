@@ -266,3 +266,24 @@ handler "volume.reset" do |args|
     puts "Volume #{volume_name} options reset"
   end
 end
+
+command "volume.rename", "Rename the Kadalu Storage volume" do |parser, _|
+  parser.banner = "Usage: kadalu volume rename POOL/VOLNAME POOL/NEW_VOLNAME [arguments]"
+end
+
+handler "volume.rename" do |args|
+  if args.pos_args.size < 2
+    puts "POOL/VOLNAME POOL/NEW_VOLNAME is required"
+    exit(0)
+  end
+
+  args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
+  new_pool_name, new_volname = pool_and_volume_name(args.pos_args.size > 1 ? args.pos_args[1] : "")
+
+  api_call(args, "Failed to rename the volume") do |client|
+    volume = client.pool(args.pool_name).volume(volume_name).rename(new_pool_name, new_volname)
+
+    handle_json_output(volume, args)
+    puts "Volume #{args.pool_name}/#{volume_name} renamed to #{new_pool_name}/#{new_volname} successfully!"
+  end
+end
