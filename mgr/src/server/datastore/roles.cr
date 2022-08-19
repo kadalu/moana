@@ -12,8 +12,8 @@ module Datastore
   end
 
   def viewable_volume_ids(user_id, pool_id)
-    query = "SELECT DISTINCT volume_id FROM roles WHERE user_id = ? AND pool_id = ?"
-    connection.query_all(query, user_id, as: String)
+    query = "SELECT DISTINCT volume_id FROM roles WHERE user_id = ? AND (pool_id = ? OR pool_id = ?)"
+    connection.query_all(query, user_id, pool_id, "all", as: String)
   end
 
   def role?(user_id, pool_name, volume_name, roles)
