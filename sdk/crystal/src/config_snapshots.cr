@@ -35,8 +35,13 @@ module StorageManager
       end
     end
 
-    def self.list(client : Client)
-      url = "#{client.url}/api/v1/config-snapshots"
+    def self.list(client : Client, snap_name : String)
+      if snap_name
+        url = "#{client.url}/api/v1/config-snapshots/#{snap_name}"
+      else
+        url = "#{client.url}/api/v1/config-snapshots"
+      end
+
       response = StorageManager.http_get(
         url,
         headers: client.auth_header

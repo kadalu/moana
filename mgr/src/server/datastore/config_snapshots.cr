@@ -31,4 +31,19 @@ module Datastore
     end
     sort_config_snapshots(snaps)
   end
+
+  def list_config_snapshots(snap_list_name)
+    snap_arr = [] of MoanaTypes::ConfigSnapshot
+
+    if !Dir.exists?("#{GlobalConfig.workdir}/config-snapshots/#{snap_list_name}")
+      return snap_arr
+    end
+
+    snap = MoanaTypes::ConfigSnapshot.from_json(
+      File.read("#{@@rootdir}/config-snapshots/#{snap_list_name}/meta.json")
+    )
+    snap.name = snap_list_name
+
+    snap_arr << snap
+  end
 end

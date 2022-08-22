@@ -96,12 +96,14 @@ handler "config-snapshot.restore" do |args|
 end
 
 command "config-snapshot.list", "Kadalu Storage Config Snapshots List" do |parser, _args|
-  parser.banner = "Usage: kadalu config-snapshot list [arguments]"
+  parser.banner = "Usage: kadalu config-snapshot list [snap-name] [arguments]"
 end
 
 handler "config-snapshot.list" do |args|
-  api_call(args, "Failed to get the list of Config Snapshots") do |client|
-    snaps = client.list_config_snapshots
+  api_call(args, "Failed to get the list of Config Snapshot(s)") do |client|
+    snap_name = args.pos_args.size > 0 ? args.pos_args[0] : ""
+
+    snaps = client.list_config_snapshots(snap_name)
 
     handle_json_output(snaps, args)
 
