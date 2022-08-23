@@ -49,10 +49,6 @@ module StorageManager
       ConfigSnapshot.list(self)
     end
 
-    def get_config_snapshot(snap_name)
-      ConfigSnapshot.get_config_snapshot(self, snap_name)
-    end
-
     def create_config_snapshot(name : String, overwrite = false)
       ConfigSnapshot.create(self, name, overwrite)
     end

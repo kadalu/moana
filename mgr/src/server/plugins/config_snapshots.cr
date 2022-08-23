@@ -57,10 +57,6 @@ end
 get "/api/v1/config-snapshots" do |env|
   snaps = Datastore.list_config_snapshots
 
-  if snaps.nil?
-    next ([] of MoanaTypes::ConfigSnapshot).to_json
-  end
-
   env.response.status_code = 200
 
   snaps.to_json

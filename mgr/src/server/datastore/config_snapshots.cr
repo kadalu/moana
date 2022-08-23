@@ -21,12 +21,12 @@ module Datastore
   end
 
   def list_config_snapshots
-    snap_dir = "#{GlobalConfig.workdir}/config-snapshots"
-    return nil unless Dir.exists?(snap_dir)
+    snap_dir = "#{@@rootdir}/config-snapshots"
+    return ([] of MoanaTypes::ConfigSnapshot) unless Dir.exists?(snap_dir)
 
-    snaps = Dir.children("#{@@rootdir}/config-snapshots").map do |snap_name|
+    snaps = Dir.children(snap_dir).map do |snap_name|
       snap = MoanaTypes::ConfigSnapshot.from_json(
-        File.read("#{@@rootdir}/config-snapshots/#{snap_name}/meta.json")
+        File.read("#{snap_dir}/#{snap_name}/meta.json")
       )
       snap.name = snap_name
 
@@ -36,7 +36,7 @@ module Datastore
   end
 
   def get_config_snapshot(snap_name)
-    snap_dir = "#{GlobalConfig.workdir}/config-snapshots/#{snap_name}"
+    snap_dir = "#{@@rootdir}/config-snapshots/#{snap_name}"
     return nil unless Dir.exists?(snap_dir)
 
     snap = MoanaTypes::ConfigSnapshot.from_json(

@@ -104,7 +104,7 @@ handler "config-snapshot.list" do |args|
     snap_name = args.pos_args.size > 0 ? args.pos_args[0] : ""
 
     if snap_name != ""
-      snaps = [client.get_config_snapshot(snap_name)]
+      snaps = [client.config_snapshot(snap_name).get]
     else
       snaps = client.list_config_snapshots
     end

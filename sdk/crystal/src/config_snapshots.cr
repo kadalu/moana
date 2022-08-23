@@ -49,12 +49,12 @@ module StorageManager
       end
     end
 
-    def self.get_config_snapshot(client : Client, snap_name : String)
-      url = "#{client.url}/api/v1/config-snapshots/#{snap_name}"
+    def get
+      url = "#{@client.url}/api/v1/config-snapshots/#{@snap_name}"
 
       response = StorageManager.http_get(
         url,
-        headers: client.auth_header
+        headers: @client.auth_header
       )
       if response.status_code == 200
         MoanaTypes::ConfigSnapshot.from_json(response.body)
