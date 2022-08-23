@@ -45,8 +45,12 @@ module StorageManager
       Pool.new(self, name)
     end
 
-    def list_config_snapshots(snap_name)
-      ConfigSnapshot.list(self, snap_name)
+    def list_config_snapshots
+      ConfigSnapshot.list(self)
+    end
+
+    def get_config_snapshot(snap_name)
+      ConfigSnapshot.get_config_snapshot(self, snap_name)
     end
 
     def create_config_snapshot(name : String, overwrite = false)

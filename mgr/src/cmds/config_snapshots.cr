@@ -103,7 +103,11 @@ handler "config-snapshot.list" do |args|
   api_call(args, "Failed to get the list of Config Snapshot(s)") do |client|
     snap_name = args.pos_args.size > 0 ? args.pos_args[0] : ""
 
-    snaps = client.list_config_snapshots(snap_name)
+    if snap_name != ""
+      snaps = [client.get_config_snapshot(snap_name)]
+    else
+      snaps = client.list_config_snapshots
+    end
 
     handle_json_output(snaps, args)
 

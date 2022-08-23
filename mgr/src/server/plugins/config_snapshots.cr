@@ -55,26 +55,27 @@ delete "/api/v1/config-snapshots/:snap_name" do |env|
 end
 
 get "/api/v1/config-snapshots" do |env|
-  snap_dir = "#{GlobalConfig.workdir}/config-snapshots"
+  snaps = Datastore.list_config_snapshots
 
-  if !Dir.exists?(snap_dir)
+  if snaps.nil?
     next ([] of MoanaTypes::ConfigSnapshot).to_json
   end
 
   env.response.status_code = 200
 
-  Datastore.list_config_snapshots.to_json
+  snaps.to_json
 end
 
 get "/api/v1/config-snapshots/:snap_name" do |env|
   snap_name = env.params.url["snap_name"]
-  snap = Datastore.list_config_snapshots(snap_name)
 
-  # When configshot list is not empty, but specified configshot is not present
-  if snap.size == 0
+  snap = Datastore.get_config_snapshot(snap_name)
+
+  if snap.nil?
     halt(env, status_code: 400, response: ({"error": "Snapshot #{snap_name} does not exist"}.to_json))
   end
 
   env.response.status_code = 200
+
   snap.to_json
 end
