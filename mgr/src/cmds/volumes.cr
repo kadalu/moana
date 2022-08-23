@@ -75,6 +75,7 @@ end
 
 handler "volume.start" do |args|
   begin
+    command_error "Pool/Volname is required" if args.pos_args.size == 0
     args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
     api_call(args, "Failed to start the volume") do |client|
       volume = client.pool(args.pool_name).volume(volume_name).start
@@ -96,6 +97,7 @@ end
 
 handler "volume.stop" do |args|
   begin
+    command_error "Pool/Volname is required" if args.pos_args.size == 0
     args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
     next unless (args.script_mode || yes("Are you sure you want to stop the volume? [y/N]"))
 
@@ -240,7 +242,10 @@ command "volume.set", "Set options to the Kadalu Storage volume" do |parser, _|
 end
 
 handler "volume.set" do |args|
+  command_error "Pool/Volname is required" if args.pos_args.size == 0
   args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
+
+  command_error "No volume options have been passed." if args.pos_args.size < 3
 
   volume_options = validate_volume_options(args.pos_args[1..])
 
@@ -257,7 +262,10 @@ command "volume.reset", "Reset the options of the Kadalu Storage volume" do |par
 end
 
 handler "volume.reset" do |args|
+  command_error "Pool/Volname is required" if args.pos_args.size == 0
   args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
+
+  command_error "No volume options have been passed." if args.pos_args.size < 3
 
   api_call(args, "Failed to set options to the volume") do |client|
     volume = client.pool(args.pool_name).volume(volume_name).reset(args.pos_args[1..])
