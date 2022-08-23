@@ -60,3 +60,28 @@ delete "/api/v1/pools/:pool_name" do |env|
 
   env.response.status_code = 204
 end
+
+post "/api/v1/pools/:pool_name/rename" do |env|
+  name = env.params.url["pool_name"].as(String)
+  new_pool_name = env.params.json["new_pool_name"].as(String)
+
+  next forbidden(env) unless Datastore.admin?(env.user_id, name)
+
+  pool = Datastore.get_pool(name)
+  if pool.nil?
+    halt(env, status_code: 400, response: ({"error": "Pool does not exist"}.to_json))
+  end
+
+  if name == new_pool_name
+    halt(env, status_code: 400, response: ({"error": "Existing & New pool names are the same!"}.to_json))
+  end
+
+  Datastore.rename_pool_name(pool.id, new_pool_name)
+
+  pool.name = new_pool_name
+
+  # TODO: Pool name validations
+  env.response.status_code = 200
+
+  pool.to_json
+end
