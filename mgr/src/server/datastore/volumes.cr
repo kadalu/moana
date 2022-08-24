@@ -276,4 +276,9 @@ module Datastore
     query = "SELECT COUNT(id) FROM volumes WHERE pool_id = ? AND id = ?"
     connection.scalar(query, pool_id, volume_id).as(Int64) > 0
   end
+
+  def rename_volume(pool_id, volume_id, new_volname)
+    query = "UPDATE volumes SET name = ? WHERE pool_id = ? AND id = ?"
+    connection.exec(query, new_volname, pool_id, volume_id)
+  end
 end
