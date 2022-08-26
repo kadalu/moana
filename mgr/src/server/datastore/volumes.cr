@@ -281,4 +281,57 @@ module Datastore
     query = "UPDATE volumes SET name = ? WHERE pool_id = ? AND id = ?"
     connection.exec(query, new_volname, pool_id, volume_id)
   end
+
+  def volume_name_exists_by_pool_id?(name, pool_id)
+    query = "SELECT COUNT(name) FROM volumes WHERE name = ? and pool_id = ?"
+    connection.scalar(query, name, pool_id).as(Int64) > 0
+  end
+
+  def node_part_of_other_volume?(pool_id, vol_id)
+    query = "DROP table if exists t1"
+    connection.exec(query)
+
+    query = "DROP table if exists t2"
+    connection.exec(query)
+
+    query = "CREATE TABLE if not exists t1 as select pools.id as pool_id, nodes.id as node_id from pools inner join nodes where nodes.pool_id = pools.id"
+    connection.exec(query)
+
+    query = "CREATE TABLE if not exists t2 as select t1.pool_id as pool_id, t1.node_id as node_id, volumes.id as vol_id from t1 inner join volumes where volumes.pool_id = t1.pool_id"
+    connection.exec(query)
+
+    query = "select count(distinct(node_id)) from t2 where pool_id = ? and vol_id != ?"
+    connection.scalar(query, pool_id, vol_id).as(Int64) > 0
+  end
+
+  def list_of_nodes_part_of_curr_volume(pool_id, vol_id)
+    query = "select distinct(node_id) from t2 where pool_id = ? and vol_id = ?"
+    res = connection.query_all(query, pool_id, vol_id, as: String)
+
+    query = "DROP table if exists t1"
+    connection.exec(query)
+
+    query = "DROP table if exists t2"
+    connection.exec(query)
+
+    return res
+  end
+
+  def update_volume_to_new_pool(new_volname, pool_id, vol_id)
+    puts "#{new_volname}, #{pool_id}, #{vol_id}"
+    query = "UPDATE volumes SET name = ?, pool_id = ? WHERE id = ?"
+    connection.exec(query, new_volname, pool_id, vol_id)
+  end
+
+  # Change vol_id to volume_id later
+  def update_dist_grps_to_new_pool(pool_id, vol_id)
+    query = "UPDATE distribute_groups SET pool_id = ? WHERE volume_id = ?"
+    connection.exec(query, pool_id, vol_id)
+  end
+
+  def update_storage_units_to_new_pool(pool_id, vol_id)
+    # Here node_id is not mandtory since vol_id is sufficient, can be removed after review.
+    query = "UPDATE storage_units SET pool_id = ? WHERE volume_id = ?"
+    connection.exec(query, pool_id, vol_id)
+  end
 end

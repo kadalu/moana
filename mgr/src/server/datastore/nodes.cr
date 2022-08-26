@@ -114,4 +114,9 @@ module Datastore
       node
     end
   end
+
+  def update_node_to_new_pool(id, pool_id)
+    query = "UPDATE nodes SET pool_id = ? WHERE id = ?"
+    connection.exec(query, pool_id, id)
+  end
 end
