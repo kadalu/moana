@@ -65,6 +65,7 @@ storage_unit:
       auth-path: "{{ storage_unit.path }}"
       "auth.login.{{ storage_unit.path }}.ssl-allow": "*"
       "auth.addr.{{ storage_unit.path }}.allow": "*"
+      volspec-directory: "/var/lib/kadalu/volfiles"
   - type: "debug/io-stats"
     name: "{{ storage_unit.path }}"
   - type: "features/index"
