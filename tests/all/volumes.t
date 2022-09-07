@@ -152,12 +152,32 @@ nodes.each do |node|
   TEST "systemctl restart kadalu-mgr"
   puts TEST "ps aux | grep 'glusterfsd'"
   EQUAL "1", (TEST "ps aux | grep '[g]lusterfsd'| wc -l").strip, "Check for equal number of services[brick-processes]"
-  puts TEST "cat /var/log/kadalu/storage_units/*;"
 end
 
 USE_NODE nodes[0]
 TEST "kadalu volume stop DEV/vol14 --mode=script"
 TEST "kadalu volume delete DEV/vol14 --mode=script"
+
+# Volfile Server tests
+# Volume create with known Storage unit port
+TEST "mkdir -p /exports/vol_volfile/s1"
+TEST "kadalu volume create DEV/vol_volfile server1:5007:/exports/vol_volfile/s1"
+puts TEST "ls /var/lib/kadalu/volfiles"
+
+# Mount the Volume
+TEST "mkdir -p /mnt/vol_volfile"
+TEST "glusterfs -s server1:5007 --volfile-id client-DEV-vol_volfile -l/tmp/volspec.log /mnt/vol_volfile"
+puts TEST "df /mnt/vol_volfile"
+
+# Change option using Volume set
+TEST "kadalu volume set DEV/vol_volfile debug/io-stats.log-level DEBUG"
+TEST "sleep 5"
+
+# Print the mount log to see if the option changed is reflected
+puts TEST "cat /tmp/volspec.log"
+
+TEST "kadalu volume stop DEV/vol_volfile --mode=script"
+TEST "kadalu volume delete DEV/vol_volfile --mode=script"
 
 # Tests for Backup & Restore
 TEST "kadalu volume create DEV/vol19 server1:/exports/vol19/s1 server2:/exports/vol19/s2 server3:/exports/vol19/s3"
@@ -192,4 +212,5 @@ puts TEST "kadalu user logout"
 nodes.each do |node|
   USE_NODE node
   puts TEST "cat /var/log/kadalu/mgr.log"
+  puts TEST "cat /var/log/kadalu/storage_units/*;"
 end

@@ -22,8 +22,8 @@ RUN sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/' /etc/ssh/sshd_config \
     /etc/lvm/lvm.conf &&                                                      \
   systemctl mask getty.target
 
-RUN git clone https://github.com/gluster/glusterfs && \
-    cd glusterfs && \
+RUN git clone https://github.com/kadalu/glusterfs && \
+    cd glusterfs && git checkout -b kadalu_1 origin/kadalu_1 && \
     ./autogen.sh && ./configure --disable-linux-io_uring && make && make install && ldconfig
 
 RUN curl -fsSL https://crystal-lang.org/install.sh | sudo bash

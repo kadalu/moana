@@ -253,6 +253,18 @@ def services_and_volfiles(req)
   return {services, volfiles} if req.no_start
 
   shd_services = Hash(String, Bool).new
+  client_volfiles = Hash(String, Bool).new
+
+  # Client Volfile
+  tmpl = volfile_get("client")
+  client_volfile_content = Volfile.volume_level("client", tmpl, req)
+
+  # SHD Volfile
+  shd_volfile_content = ""
+  if req.replicate_family?
+    tmpl = volfile_get("shd")
+    shd_volfile_content = Volfile.pool_level("shd", tmpl, [req])
+  end
 
   req.distribute_groups.each do |dist_grp|
     dist_grp.storage_units.each do |storage_unit|
@@ -269,15 +281,21 @@ def services_and_volfiles(req)
       volfiles[storage_unit.node.id] = [] of MoanaTypes::Volfile unless volfiles[storage_unit.node.id]?
       volfiles[storage_unit.node.id] << MoanaTypes::Volfile.new(service.id, content)
 
+      # Store Client Volfile
+      if client_volfiles[storage_unit.node.id]?.nil?
+        volfiles[storage_unit.node.id] << MoanaTypes::Volfile.new(
+          "client-#{req.pool.name}-#{req.name}", client_volfile_content
+        )
+        client_volfiles[storage_unit.node.id] = true
+      end
+
       # Generate and add shd Volfiles and services only if it is
       # not added for that node.
       if req.replicate_family? && shd_services[storage_unit.node.id]?.nil?
         shd_services[storage_unit.node.id] = true
         service = ShdService.new(req.name, storage_unit.node.id)
         services[storage_unit.node.id] << service.unit
-        tmpl = volfile_get("shd")
-        content = Volfile.pool_level("shd", tmpl, [req])
-        volfiles[storage_unit.node.id] << MoanaTypes::Volfile.new(service.id, content)
+        volfiles[storage_unit.node.id] << MoanaTypes::Volfile.new(service.id, shd_volfile_content)
       end
     end
   end
