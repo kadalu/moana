@@ -6,7 +6,7 @@ OPTIONS_NOT_HANDLED           = %w[async sync dirsync mand nomand silent loud iv
 
 # these ones(auto,noauto,_netdev) are interpreted during system initialization
 IGNORE_OPTIONS     = %w[rw auto noauto _netdev]
-OPTIONS_WITH_VALUE = %w[log-level log-file transport direct-io-mode volume-name volume-id subdir-mount volfile-check server-port attribute-timeout entry-timeout negative-timeout gid-timeout lru-limit invalidate-limit fetch-attempts background-qlen congestion-threshold oom-score-adj xlator-option fuse-mountopts use-readdirp fopen-keep-cache event-history reader-thread-count auto-invalidation no-root-squash root-squash kernel-writeback-cache attr-times-granularity dump-fuse fuse-flush-handle-interrupt fuse-dev-eperm-ratelimit-ns halo-max-latency halo-max-replicas halo-min-replicas process-name fopen-keep-cache io-engine backup-volfile-servers backupvolfile-server] + FUSE_MOUNT_OPTIONS_WITH_VALUE
+OPTIONS_WITH_VALUE = %w[log-level log-file transport direct-io-mode volume-name volume-id subdir-mount volfile-check server-port attribute-timeout entry-timeout negative-timeout gid-timeout lru-limit invalidate-limit fetch-attempts background-qlen congestion-threshold oom-score-adj xlator-option fuse-mountopts use-readdirp fopen-keep-cache event-history reader-thread-count auto-invalidation no-root-squash root-squash kernel-writeback-cache attr-times-granularity dump-fuse fuse-flush-handle-interrupt fuse-dev-eperm-ratelimit-ns halo-max-latency halo-max-replicas halo-min-replicas process-name fopen-keep-cache io-engine backup-volfile-servers backupvolfile-server volfile-server volfile-servers] + FUSE_MOUNT_OPTIONS_WITH_VALUE
 
 OPTIONS_WITHOUT_VALUE = %w[ro acl selinux worm enable-ino32 mem-accounting aux-gfid-mount thin-client resolve-gids localtime-logging global-threading fopen-keep-cache] + FUSE_MOUNT_OPTIONS + OPTIONS_NOT_HANDLED + IGNORE_OPTIONS
 
@@ -33,6 +33,7 @@ module MountKadalu
   @@glusterfs_cmd = Process.find_executable("glusterfs", path: system_path)
   @@getfattr_cmd = Process.find_executable("getfattr", path: system_path)
   @@options = Hash(String, String).new
+  @@volfile_servers = [] of String
 
   def handle_log_level_option(old_name, key, value)
     if key == "log-level"
@@ -83,6 +84,16 @@ module MountKadalu
     end
   end
 
+  def handle_volfile_servers_options(old_name, key, value)
+    # Do not set Volfile server if Volfile path is specified
+    return if @@options["--volfile"]?
+
+    servers = value.split(" ")
+    servers.each do |server|
+      @@volfile_servers << server.strip
+    end
+  end
+
   def validate_and_add_option(opt_name, opt_value)
     new_name = opt_name
     if OPTION_ALIAS[opt_name]?
@@ -90,7 +101,6 @@ module MountKadalu
     end
 
     new_name = "" if IGNORE_OPTIONS.includes?(new_name)
-
     handle_log_level_option(opt_name, new_name, opt_value)
     handle_root_squash_option(opt_name, new_name, opt_value)
     handle_halo_options(opt_name, new_name, opt_value)
@@ -104,8 +114,10 @@ module MountKadalu
     when "fopen-keep-cache"
       # Set default value if value is not provided
       add_option("--fopen-keep-cache", opt_value == "" ? "true" : opt_value)
+    when "volfile-server", "volfile-servers"
+      handle_volfile_servers_options(opt_name, new_name, opt_value)
     else
-      add_option("--#{new_name}", opt_value) if new_name != ""
+      add_option("--#{new_name}", opt_value) if new_name != "" && @@options["--#{new_name}"]?.nil?
     end
   end
 
@@ -162,24 +174,31 @@ module MountKadalu
     end
   end
 
-  def set_volfile_server_options(hostname, volume_name, volfile_path)
+  def set_volfile_server_options(hostname, pool_name, volume_name, volfile_path)
     # TODO: Validate Hostname
     # TODO: Handle Backup Volfile servers
     if volfile_path == ""
-      add_option("--volfile-server", hostname)
-      add_option("--volfile-id", "/#{volume_name}") if @@options["--volfile-id"]?.nil?
+      add_option("--volfile-id", "client-#{pool_name}-#{volume_name}") if @@options["--volfile-id"]?.nil?
     else
       if volume_name != "" && @@options["--volfile-id"]?.nil?
-        add_option("--volfile-id", "/#{volume_name}")
+        add_option("--volfile-id", "client-#{pool_name}-#{volume_name}")
       end
-      add_option("--volfile", volfile_path)
+    end
+
+    if @@volfile_servers.size == 0 && hostname == "" && volfile_path == ""
+      command_error "Hostname or volfile-server(s) not provided."
     end
   end
 
   def options_to_args
-    @@options.map do |name, value|
+    args = @@options.map do |name, value|
       value == "" ? name : "#{name}=#{value}"
     end
+    @@volfile_servers.uniq.each do |server|
+      args << "--volfile-server=#{server}"
+    end
+
+    args
   end
 
   def volume_details(volume)
@@ -188,7 +207,6 @@ module MountKadalu
     # Example: server1.example.com:mypool
     hostname, _, pool_volume_name = volume.rpartition(":")
 
-    command_error "Hostname not provided" if hostname == ""
     pool_name, _, volume_name = pool_volume_name.rpartition("/")
     pool_name = pool_name.strip("/")
 
@@ -196,6 +214,27 @@ module MountKadalu
     command_error "Volume name is not provided" if volume_name == ""
 
     {hostname, pool_name, volume_name, ""}
+  end
+
+  def pretty_mount_command
+    cmd_lines = [@@glusterfs_cmd.not_nil!]
+    options_to_args.each do |arg|
+      if (cmd_lines[-1] + arg).size > 80
+        cmd_lines[-1] += " \\"
+        cmd_lines << "    #{arg}"
+      else
+        cmd_lines[-1] += " #{arg}"
+      end
+    end
+    cmd_lines.join("\n")
+  end
+
+  def set_display_name(pool_name, volume_name, volfile_path)
+    if volfile_path != ""
+      add_option("--fs-display-name", "kadalu:#{File.basename(volfile_path)}")
+    else
+      add_option("--fs-display-name", "kadalu:#{pool_name}/#{volume_name}")
+    end
   end
 
   def run(hostname, pool_name, volume_name, volfile_path, mount_path, raw_options)
@@ -217,10 +256,19 @@ module MountKadalu
     volume_name, _, subdir = volume_name.partition("/")
     add_option("--subdir-mount", "/#{subdir}") if subdir != ""
 
+    if volfile_path == ""
+      if hostname != "" && !(hostname.starts_with?("http://") || hostname.starts_with?("https://"))
+        @@volfile_servers << hostname
+      end
+    else
+      add_option("--volfile", volfile_path)
+    end
+
     parse_options(raw_options)
-    set_volfile_server_options(hostname, volume_name, volfile_path)
+    set_volfile_server_options(hostname, pool_name, volume_name, volfile_path)
+
     set_process_name
-    add_option("--fs-display-name", "#{hostname}:#{pool_name}/#{volume_name}")
+    set_display_name(pool_name, volume_name, volfile_path)
 
     # Subdir mount: Add slash if not added
     add_option("--subdir-mount", "/#{@@options["--subdir-mount"].lstrip("/")}") if @@options["--subdir-mount"]?
@@ -228,6 +276,10 @@ module MountKadalu
     add_option(mount_path)
 
     # TODO: Handle Updatedb settings
+
+    puts "Executing the following command to mount the Kadalu Storage Volume"
+    puts
+    puts pretty_mount_command
 
     # Execute glusterfs with all Options
     rc, _, err = execute(@@glusterfs_cmd.not_nil!, options_to_args)

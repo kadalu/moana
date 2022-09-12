@@ -46,7 +46,7 @@ end
 USE_NODE nodes[1]
 TEST "mkdir /mnt/vol1"
 TEST "chattr +i /mnt/vol1"
-TEST "mount -t kadalu #{nodes[1]}:DEV/vol1 /mnt/vol1"
+puts TEST "mount -t kadalu http://#{nodes[1]}:3000:DEV/vol1 /mnt/vol1"
 
 TEST "echo \"Hello World\" > /mnt/vol1/f1"
 # TODO: Validate this value below
