@@ -70,7 +70,7 @@ end
 USE_NODE nodes[0]
 TEST "mkdir /mnt/vol2"
 TEST "chattr +i /mnt/vol2"
-TEST "mount -t kadalu #{nodes[0]}:DEV/vol2 /mnt/vol2"
+puts TEST "mount -t kadalu http://#{nodes[0]}:3000:DEV/vol2 /mnt/vol2"
 
 TEST "echo \"Hello World\" > /mnt/vol2/f1"
 # TODO: Validate this value below
@@ -169,12 +169,48 @@ TEST "mkdir -p /mnt/vol_volfile"
 TEST "glusterfs -s server1:5007 --volfile-id client-DEV-vol_volfile -l/tmp/volspec.log /mnt/vol_volfile"
 puts TEST "df /mnt/vol_volfile"
 
+# Use mount command (Different options)
+# Using Mgr URL
+TEST "mkdir -p /mnt/vol_volfile_1"
+puts TEST "mount -t kadalu http://server1:3000:/DEV/vol_volfile /mnt/vol_volfile_1"
+puts TEST "df /mnt/vol_volfile_1"
+
+# TODO: Mgr URL from ENV
+TEST "mkdir -p /mnt/vol_volfile_2"
+puts TEST "mount -t kadalu /DEV/vol_volfile /mnt/vol_volfile_2"
+puts TEST "df /mnt/vol_volfile_2"
+
+# Using Storage Unit URL directly
+TEST "mkdir -p /mnt/vol_volfile_3"
+puts TEST "mount -t kadalu server1:5007:/DEV/vol_volfile /mnt/vol_volfile_3"
+puts TEST "df /mnt/vol_volfile_3"
+
+# Using Volfile Server option
+TEST "mkdir -p /mnt/vol_volfile_4"
+puts TEST "mount -t kadalu -o \"volfile-server=server1:5007\" /DEV/vol_volfile /mnt/vol_volfile_4"
+puts TEST "df /mnt/vol_volfile_4"
+
+# Using Volfile Servers option
+TEST "mkdir -p /mnt/vol_volfile_5"
+puts TEST "mount -t kadalu -o \"volfile-servers=server1:5007 server1:5007\" /DEV/vol_volfile /mnt/vol_volfile_5"
+puts TEST "df /mnt/vol_volfile_5"
+
+# Using Volfile Path option
+TEST "mkdir -p /mnt/vol_volfile_6"
+puts TEST "mount -t kadalu /var/lib/kadalu/volfiles/client-DEV-vol_volfile.vol /mnt/vol_volfile_6"
+puts TEST "df /mnt/vol_volfile_6"
+
+TEST "umount /mnt/vol_volfile_*"
+
 # Change option using Volume set
 TEST "kadalu volume set DEV/vol_volfile debug/io-stats.log-level DEBUG"
 TEST "sleep 5"
 
 # Print the mount log to see if the option changed is reflected
 puts TEST "cat /tmp/volspec.log"
+TEST "grep -q \"Volume file changed\" /tmp/volspec.log"
+
+TEST "umount /mnt/vol_volfile"
 
 TEST "kadalu volume stop DEV/vol_volfile --mode=script"
 TEST "kadalu volume delete DEV/vol_volfile --mode=script"
