@@ -12,7 +12,7 @@ install: build
 
 	install -D mgr/bin/kadalu \
                 $(DESTDIR)$(prefix)/sbin/kadalu
-	install -d sdk/python/kadalu \
+	install -d sdk/python/kadalu_storage \
                 $(DESTDIR)$(prefix)/lib/python3/dist-packages/kadalu_storage
 	install -D extra/mount.kadalu \
                 $(DESTDIR)/sbin/mount.kadalu
