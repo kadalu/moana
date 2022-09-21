@@ -1,0 +1,155 @@
+= Changelog
+All notable changes to the Kadalu Storage project will be documented in this file.
+
+The format is based on https://keepachangelog.com/en/1.0.0/[Keep a Changelog],
+and this project adheres to https://semver.org/spec/v2.0.0.html[Semantic Versioning].
+
+== https://github.com/kadalu/moana/compare/v1.0.0...HEAD[Unreleased]
+
+== https://github.com/kadalu/moana/releases/tag/v1.0.0[1.0.0 - 2022-09-30 (Tentative)]
+=== Added
+- New CLI(`kadalu`) is added. Manage Kadalu Storage from any node
+  using the CLI.
++
+----
+export KADALU_URL=http://server1:3000
+kadalu user login admin
+kadalu pool list
+----
++
+- Added support for managing multiple Pools
+- Support for `mirror` keyword which is alias to `replica` keyword.
++
+----
+kadalu volume create PROD/vol1 mirror 3 \
+    server1:/data/s1                    \
+    server2:/data/s2                    \
+    server3:/data/s3
+----
++
+- Support for implicit mirror/replica count
++
+----
+kadalu volume create PROD/vol1 \
+    mirror server1:/data/s1    \
+           server2:/data/s2    \
+           server3:/data/s3    \
+    mirror server4:/data/s4    \
+           server5:/data/s5    \
+           server6:/data/s6
+----
++
+- Support for automatically creating a Pool
+- Support for automatically add nodes to the Pool
+- Support for persistent Storage unit ports - Storage unit ports are
+  assigned while creating the volume. These ports will not change on
+  node reboot or Volume restart.
+- Support for manually choosing the Storage unit ports.
++
+----
+kadalu volume create PROD/vol1 \
+    mirror server1:4001:/data/vol1/s1 server2:4001:/data/vol1/s2
+----
++
+- Support for auto starting Volume on create and disable this
+  behaviour using `--no-start` option.
+- ReST APIs for Pool, nodes and Volume operations
+- Support for importing a Gluster Volume
++
+----
+gluster volume info vol1 --xml | kadalu volume create PROD/- \
+    --auto-add-nodes
+----
++
+- Secured communication between nodes.
+- Support for fuse based mount.
++
+----
+$ mkdir /mnt/vol1
+$ kadalu user login admin
+Password:
+$ mount -t kadalu /PROD/vol1 /mnt/vol1
+----
++
+- Support for Replica/Mirror 2 Volume
++
+----
+kadalu volume create PROD/vol1 \
+    mirror server1:/data/s1 server2:/data/s2
+----
++
+- Support for Replica/Mirror 3 Volume
++
+----
+kadalu volume create PROD/vol1 \
+    mirror server1:/data/s1 server2:/data/s2 server2:/data/s3
+----
++
+- Support for Distribute Volume
++
+----
+kadalu volume create PROD/vol1 \
+    server1:/data/s1 server2:/data/s2
+----
++
+- Support for creating Disperse Volume.
+- Support for creating Distributed * volume types (Distributed
+  Replica/Disperse/Mirror)
+- Support for Config backup - It is very important to keep backup of
+  Management configurations. Kadalu Storage provides config-snapshots.
++
+----
+kadalu config-snapshot create snap_20220921
+----
++
+- Support for Pool life cycle(Create/List/Delete) management.
+- Support for nodes life cycle(Add/List/Remove) management.
+- Support for Volumes life cycle(Create/List/Delete/Start/Stop)
+  management.
+- Support for User management.
+- Support for creating multiple API keys(or app passwords) to
+  integrate with external applications.
+- Support for template based Volfile generation.
+- Support for Volume Auto heal - If one Storage unit among the
+  Replica/Mirror group goes down, Volume will be still accessible. Any
+  data written will be synced automatically to the Storage unit when
+  it comes back online.
+- Support for CLI Script mode (`--mode=script`).
+- Support for CLI JSON output (`--json`).
+- Support for starting the previously started processes(Heal daemon,
+  Storage Units) automatically after reboot.
+- Support for serving Client Volfiles from Storage units.
+- Support for renaming a Pool.
++
+----
+kadalu pool rename dev1 dev2
+----
++
+- CORS headers added to ReST APIs to support static web apps.
+- Ubuntu 20.04 packages added.
+- Python SDK added.
++
+[source,python]
+----
+from kadalu_storage import StorageManager
+
+
+mgr = StorageManager("http://server1:3000")
+mgr.create_user("admin", "admin", "kadalu")
+mgr.user("admin").login(password="kadalu")
+mgr.create_pool("DEV")
+print(mgr.list_pools())
+mgr.user("admin").logout()
+----
++
+- Support for Volume options set/reset
+- Simple Quota support added.
+- Support for Volume option aliases to make it work with the GlusterFS
+  option names.
+- Support for importing a Volume by giving the same Volume ID. Or
+  while migrating the disks from old nodes to new nodes, recreate the
+  Volume using the same Volume ID and same disks.
+- Support for persisting the login session.
+- Support for detecting Manager and agent instances automatically
+  based on the first command run (User create).
+- Support for Arm64 packages.
