@@ -4,7 +4,7 @@ require "moana_types"
 
 module Datastore
   def enable_service(pool_id, node_id, service)
-    query = insert_query("services", %w[pool_id node_id name unit])
+    query = insert_query("services", %w[pool_id node_id name unit], replace: true)
     connection.exec(query, pool_id, node_id, service.id, service.to_json)
   end
 

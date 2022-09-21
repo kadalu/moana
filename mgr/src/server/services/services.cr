@@ -45,7 +45,9 @@ abstract class Service
 
   def running?
     pid = File.read(pid_file).strip.to_i
-    Process.exists?(pid)
+    # exists? returns true even for Zombie processes. /proc/<pid>/cmdline
+    # will be empty if it is zombie process.
+    Process.exists?(pid) && File.read("/proc/#{pid}/cmdline") != ""
   rescue File::NotFoundError
     false
   end
