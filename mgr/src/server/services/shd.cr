@@ -16,11 +16,11 @@ class ShdService < Service
 
     @path = "glusterfs"
     @id = "shd.#{volume_name}"
-    @pid_file = "/var/run/kadalu/#{@id}.pid"
+    @pid_file = "/run/kadalu/#{@id}.pid"
     @args = [
       "--volfile-id", "shd/#{volume_name}",
       "-p", @pid_file,
-      "-S", "/var/run/kadalu/#{@id}.socket",
+      "-S", "/run/kadalu/#{@id}.socket",
       "-l", "/var/log/kadalu/shd/#{@id}.log",
       "--xlator-option",
       "*replicate*.node-uuid=#{node_id}",

@@ -124,7 +124,7 @@ def handle_node_volume_start_stop(data, action)
   unless services[GlobalConfig.local_node.id]?.nil?
     # TODO: Hard coded path change?
     Dir.mkdir_p("/var/log/kadalu")
-    Dir.mkdir_p("/var/run/kadalu")
+    Dir.mkdir_p("/run/kadalu")
     services[GlobalConfig.local_node.id].each do |service|
       svc = Service.from_json(service.to_json)
       if action == "start"
@@ -195,7 +195,7 @@ def handle_volume_create(data, stopped = false)
   unless services[GlobalConfig.local_node.id]?.nil?
     # TODO: Hard coded path change?
     Dir.mkdir_p("/var/log/kadalu")
-    Dir.mkdir_p("/var/run/kadalu")
+    Dir.mkdir_p("/run/kadalu")
     services[GlobalConfig.local_node.id].each do |service|
       svc = Service.from_json(service.to_json)
       svc.start

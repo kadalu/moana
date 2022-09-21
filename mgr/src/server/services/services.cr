@@ -55,6 +55,9 @@ abstract class Service
   def start
     return if running?
 
+    # Create PID file directory if not exists
+    Dir.mkdir_p(Path[pid_file].parent)
+
     @proc = Process.new(path, args)
     File.write(pid_file, "#{@proc.not_nil!.pid}") if @create_pid_file
     if @wait
