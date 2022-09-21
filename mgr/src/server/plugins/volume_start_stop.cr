@@ -17,7 +17,6 @@ node_action ACTION_VOLUME_STOP do |data, _env|
   handle_node_volume_start_stop(data, "stop")
 end
 
-# ameba:disable Metrics/CyclomaticComplexity
 def volume_start_stop(env, action)
   pool_name = env.params.url["pool_name"]
   volume_name = env.params.url["volume_name"]
@@ -37,7 +36,6 @@ def volume_start_stop(env, action)
     return {"error": "Volume doesn't exists"}.to_json
   end
 
-  return volume.to_json if action == "start" && volume.state == "Started"
   return volume.to_json if action == "stop" && volume.state == "Stopped"
 
   nodes = participating_nodes(pool_name, volume)
@@ -73,8 +71,10 @@ def volume_start_stop(env, action)
     end
   end
 
-  volume.state = action == "start" ? "Started" : "Stopped"
-  Datastore.update_volume_state(volume.id, volume.state)
+  if volume.state != action
+    volume.state = action == "start" ? "Started" : "Stopped"
+    Datastore.update_volume_state(volume.id, volume.state)
+  end
 
   volume.to_json
 end
