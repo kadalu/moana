@@ -15,6 +15,13 @@ command "node.add", "Add a node to Kadalu Storage pool" do |parser, args|
   end
 end
 
+command "node.create", "Add a node to Kadalu Storage pool (alias to node add)" do |parser, args|
+  parser.banner = "Usage: kadalu node create POOL/NAME [arguments]"
+  parser.on("--endpoint", "Node endpoint. Default is http://<nodename>:3000") do |endpoint|
+    args.node_args.endpoint = endpoint
+  end
+end
+
 def pool_and_node_name(value)
   parts = value.split("/")
   return {parts[0], parts[1]} if parts.size == 2
@@ -22,7 +29,7 @@ def pool_and_node_name(value)
   {parts[0], ""}
 end
 
-handler "node.add" do |args|
+def node_add_handler(args)
   args.pool_name, name = pool_and_node_name(args.pos_args.size < 1 ? "" : args.pos_args[0])
   if args.pool_name == ""
     STDERR.puts "Pool name is required."
@@ -42,6 +49,14 @@ handler "node.add" do |args|
     puts "Node #{name} added to #{args.pool_name}"
     puts "ID: #{node.id}"
   end
+end
+
+handler "node.add" do |args|
+  node_add_handler(args)
+end
+
+handler "node.create" do |args|
+  node_add_handler(args)
 end
 
 command "node.list", "Nodes list of a Kadalu Storage pool" do |parser, args|
@@ -89,13 +104,25 @@ command "node.remove", "Delete the Kadalu Storage Node" do |parser, _|
   parser.banner = "Usage: kadalu node remove POOL/NODENAME [arguments]"
 end
 
-handler "node.remove" do |args|
+command "node.delete", "Delete the Kadalu Storage Node (alias to node remove)" do |parser, _|
+  parser.banner = "Usage: kadalu node delete POOL/NODENAME [arguments]"
+end
+
+def node_remove_handler(args)
   args.pool_name, node_name = pool_and_node_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
-  next unless (args.script_mode || yes("Are you sure you want to remove the node from the pool?"))
+  return unless (args.script_mode || yes("Are you sure you want to remove the node from the pool?"))
 
   api_call(args, "Failed to remove the node") do |client|
     client.pool(args.pool_name).node(node_name).delete
     handle_json_output(nil, args)
     puts "Node #{node_name} removed from the pool"
   end
+end
+
+handler "node.remove" do |args|
+  node_remove_handler(args)
+end
+
+handler "node.delete" do |args|
+  node_remove_handler(args)
 end
