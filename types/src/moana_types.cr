@@ -147,7 +147,11 @@ module MoanaTypes
 
     def type
       dist_grp = @distribute_groups[0]
-      @distribute_groups.size > 1 ? "Distributed #{dist_grp.type}" : dist_grp.type
+      if @distribute_groups.size > 1 && dist_grp.type != "Distribute"
+        "Distributed #{dist_grp.type}"
+      else
+        dist_grp.type
+      end
     end
 
     def arbiter?
