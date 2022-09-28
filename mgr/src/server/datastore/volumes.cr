@@ -287,51 +287,35 @@ module Datastore
     connection.scalar(query, name, pool_id).as(Int64) > 0
   end
 
-  def node_part_of_other_volume?(pool_id, vol_id)
-    query = "DROP table if exists t1"
-    connection.exec(query)
+  def node_part_of_other_volume?(pool_id, volume_id)
+    query = "SELECT DISTINCT node_id FROM storage_units WHERE volume_id = ?"
+    node_ids = connection.query_all(query, volume_id, as: String)
 
-    query = "DROP table if exists t2"
-    connection.exec(query)
+    node_ids_arg = node_ids.map do |node_id|
+      "?"
+    end
 
-    query = "CREATE TABLE if not exists t1 as select pools.id as pool_id, nodes.id as node_id from pools inner join nodes where nodes.pool_id = pools.id"
-    connection.exec(query)
-
-    query = "CREATE TABLE if not exists t2 as select t1.pool_id as pool_id, t1.node_id as node_id, volumes.id as vol_id from t1 inner join volumes where volumes.pool_id = t1.pool_id"
-    connection.exec(query)
-
-    query = "select count(distinct(node_id)) from t2 where pool_id = ? and vol_id != ?"
-    connection.scalar(query, pool_id, vol_id).as(Int64) > 0
+    query = "SELECT COUNT(id) FROM storage_units WHERE pool_id = ? AND volume_id != ? AND node_id IN (#{node_ids_arg.join(",")})"
+    connection.scalar(query, args: [pool_id, volume_id] + node_ids).as(Int64) > 0
   end
 
-  def list_of_nodes_part_of_curr_volume(pool_id, vol_id)
-    query = "select distinct(node_id) from t2 where pool_id = ? and vol_id = ?"
-    res = connection.query_all(query, pool_id, vol_id, as: String)
-
-    query = "DROP table if exists t1"
-    connection.exec(query)
-
-    query = "DROP table if exists t2"
-    connection.exec(query)
-
-    return res
+  def list_of_nodes_part_of_curr_volume(pool_id, volume_id)
+    query = "SELECT DISTINCT node_id FROM storage_units WHERE pool_id = ? AND volume_id = ?"
+    connection.query_all(query, pool_id, volume_id, as: String)
   end
 
-  def update_volume_to_new_pool(new_volname, pool_id, vol_id)
-    puts "#{new_volname}, #{pool_id}, #{vol_id}"
+  def update_volume_to_new_pool(new_volname, pool_id, volume_id)
     query = "UPDATE volumes SET name = ?, pool_id = ? WHERE id = ?"
-    connection.exec(query, new_volname, pool_id, vol_id)
+    connection.exec(query, new_volname, pool_id, volume_id)
   end
 
-  # Change vol_id to volume_id later
-  def update_dist_grps_to_new_pool(pool_id, vol_id)
+  def update_dist_grps_to_new_pool(pool_id, volume_id)
     query = "UPDATE distribute_groups SET pool_id = ? WHERE volume_id = ?"
-    connection.exec(query, pool_id, vol_id)
+    connection.exec(query, pool_id, volume_id)
   end
 
-  def update_storage_units_to_new_pool(pool_id, vol_id)
-    # Here node_id is not mandtory since vol_id is sufficient, can be removed after review.
+  def update_storage_units_to_new_pool(pool_id, volume_id)
     query = "UPDATE storage_units SET pool_id = ? WHERE volume_id = ?"
-    connection.exec(query, pool_id, vol_id)
+    connection.exec(query, pool_id, volume_id)
   end
 end
