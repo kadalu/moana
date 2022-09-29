@@ -9,6 +9,80 @@ export default class StorageManager {
         this.token = "";
     }
 
+    async httpPost(urlPath, body) {
+        const response = await fetch(
+            `${this.url}${urlPath}`,
+            {
+                method: "POST",
+                headers: {
+                    ...this.authHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            }
+        );
+
+        if (response.status == 401 || response.status == 403) {
+            throw new StorageManagerAuthError((await response.json()).error);
+        }
+
+        const data = await response.json();
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        return data;
+    }
+
+    async httpGet(urlPath) {
+        const response = await fetch(
+            `${this.url}${urlPath}`,
+            {
+                headers: {
+                    ...this.authHeaders(),
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        if (response.status == 401 || response.status == 403) {
+            throw new StorageManagerAuthError((await response.json()).error);
+        }
+
+        const data = await response.json();
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        return data;
+    }
+
+    async httpDelete(urlPath) {
+        const response = await fetch(
+            `${this.url}${urlPath}`,
+            {
+                method: "DELETE",
+                headers: {
+                    ...this.authHeaders(),
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        if (response.status == 401 || response.status == 403) {
+            throw new StorageManagerAuthError((await response.json()).error);
+        }
+
+        if (response.status !== 204) {
+            const data = await response.json();
+            if (data.error) {
+                throw new Error(data.error);
+            }
+        }
+
+        return;
+    }
+
     static fromToken(url, user_id, api_key_id, token) {
         const mgr = new StorageManager(url);
         mgr.user_id = user_id;
@@ -30,23 +104,9 @@ export default class StorageManager {
     }
 
     async generateApiKey(username, password) {
-        var response = await fetch(
-            `${this.url}/api/v1/users/${username}/api-keys`,
-            {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({password: password})
-            }
-        );
-
-        const data = await response.json();
-        if (data.error) {
-            throw new Error(data.error);
-        }
-
-        return data;
+        return await this.httpPost(
+            `/api/v1/users/${username}/api-keys`, {password: password}
+        )
     }
 
     static async login(url, username, password) {
@@ -63,19 +123,8 @@ export default class StorageManager {
         if (this.api_key_id == "") {
             return;
         }
-        const response = await fetch(
-            `${this.url}/api/v1/api-keys/${this.api_key_id}`,
-            {
-                method: "DELETE",
-                headers: {
-                    ...this.authHeaders()
-                }
-            }
-        );
 
-        if (response.status != 204) {
-            throw new Error((await response.json()).error);
-        }
+        await this.httpDelete(`/api/v1/api-keys/${this.api_key_id}`)
         this.api_key_id = '';
         this.user_id = '';
         this.token = '';

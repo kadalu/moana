@@ -1,5 +1,5 @@
-import StorageManagerAuthError from './helpers';
 import Volume from './volumes';
+import Node from './nodes';
 
 export default class Pool {
     constructor(mgr, name) {
@@ -8,60 +8,41 @@ export default class Pool {
     }
 
     static async create(mgr, name) {
-        const response = await fetch(
-            `${mgr.url}/api/v1/pools`,
-            {
-                method: "POST",
-                headers: {
-                    ...mgr.authHeaders(),
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({name: name})
-            }
-        );
-        const data = await response.json();
-        if (data.error) {
-            throw new Error(data.error);
-        }
-
-        return data;
+        return await mgr.httpPost('/api/v1/pools', {name: name})
     }
 
     static async list(mgr) {
-        const response = await fetch(
-            mgr.url + '/api/v1/pools',
-            {
-                headers: {
-                    ...mgr.authHeaders()
-                }
-            }
-        );
-
-        return await response.json();
+        return await mgr.httpGet('/api/v1/pools')
     }
 
-    async listVolumes(state) {
+    async listVolumes(state=false) {
         return await Volume.list(this.mgr, this.name, state);
     }
 
     async delete() {
-        const response = await fetch(
-            `${this.mgr.url}/api/v1/pools/${this.name}`,
-            {
-                method: "DELETE",
-                headers: {
-                    ...this.mgr.authHeaders()
-                }
-            }
-        );
-
-        if (response.status != 204) {
-            throw new Error((await response.json()).error);
-        }
-        return;
+        return await mgr.httpDelete(`/api/v1/pools/${this.name}`)
     }
 
     volume(name) {
         return new Volume(this.mgr, this.name, name);
+    }
+
+    node(name) {
+        return new Node(this.mgr, this.name, name);
+    }
+
+    async addNode(name, endpoint="") {
+        return await Node.add(this.mgr, this.name, name, endpoint);
+    }
+
+    async listNodes(state=false) {
+        return await Node.list(this.mgr, this.name, state);
+    }
+
+    async rename(newName) {
+        return this.mgr.httpPost(
+            `/api/v1/pools/${this.name}/rename`,
+            {new_pool_name: newName}
+        )
     }
 }
