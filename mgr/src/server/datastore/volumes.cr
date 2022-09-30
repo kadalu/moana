@@ -291,7 +291,7 @@ module Datastore
     query = "SELECT DISTINCT node_id FROM storage_units WHERE volume_id = ?"
     node_ids = connection.query_all(query, volume_id, as: String)
 
-    node_ids_arg = node_ids.map do |node_id|
+    node_ids_arg = node_ids.map do |_|
       "?"
     end
 
