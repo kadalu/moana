@@ -1,4 +1,5 @@
 require "json"
+require "db"
 
 module MoanaTypes
   struct Info
@@ -21,8 +22,9 @@ module MoanaTypes
 
   struct Pool
     include JSON::Serializable
+    include DB::Serializable
 
-    property id = "", name = "", nodes = [] of Node
+    property id = "", name = "", volumes_count = 0, nodes_count = 0
 
     def initialize(@id : String, @name : String)
     end
