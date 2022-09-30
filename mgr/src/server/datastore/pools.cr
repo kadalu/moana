@@ -5,18 +5,7 @@ require "db"
 
 require "../conf"
 
-# WORKDIR/
-#   - pools/
-#       - mypool/
-#           - info
 module Datastore
-  struct PoolView
-    include DB::Serializable
-
-    # TODO: Add all node fields
-    property id = "", name = "", node_id = "", node_name = "", node_endpoint = ""
-  end
-
   def belongs_to_a_pool?
     pool_name = ""
 
@@ -32,58 +21,35 @@ module Datastore
     pool_name != ""
   end
 
+  private def pool_query_group_by
+    " GROUP BY pools.id, pools.name "
+  end
+
   private def pool_query
     # TODO: Add all node fields
     "SELECT pools.id AS id,
             pools.name AS name,
-            nodes.id AS node_id,
-            nodes.name AS node_name,
-            nodes.endpoint AS node_endpoint
+            COUNT(nodes.id) AS nodes_count,
+            COUNT(volumes.id) AS volumes_count
      FROM pools
      LEFT OUTER JOIN nodes ON pools.id = nodes.pool_id
+     LEFT OUTER JOIN volumes ON pools.id = volumes.pool_id
      "
   end
 
   private def pool_query_order_by
-    " ORDER BY pools.created_on DESC, nodes.created_on DESC "
-  end
-
-  private def group_pools(pools)
-    grouped_data = pools.group_by do |rec|
-      [rec.id, rec.name]
-    end
-
-    grouped_data.map do |_, rows|
-      pool = MoanaTypes::Pool.new
-      pool.id = rows[0].id
-      pool.name = rows[0].name
-
-      # Left outer Join, Node details may be nil if
-      # no nodes joined the Pool
-      rows = rows.select { |row| !row.node_id.nil? }
-
-      pool.nodes = rows.map do |row|
-        node = MoanaTypes::Node.new
-        node.id = row.node_id
-        node.name = row.node_name
-        node.endpoint = row.node_endpoint
-
-        node
-      end
-
-      pool
-    end
+    " ORDER BY pools.created_on DESC "
   end
 
   def list_pools
-    group_pools(connection.query_all(pool_query + pool_query_order_by, as: PoolView))
+    connection.query_all(pool_query + pool_query_group_by + pool_query_order_by, as: MoanaTypes::Pool)
   end
 
   def list_pools(user_id)
     pool_ids = viewable_pool_ids(user_id)
     return [] of MoanaTypes::Pool if pool_ids.size == 0
 
-    pools = group_pools(connection.query_all(pool_query + pool_query_order_by, as: PoolView))
+    pools = connection.query_all(pool_query + pool_query_group_by + pool_query_order_by, as: MoanaTypes::Pool)
 
     return pools if pool_ids.includes?("all")
 
@@ -100,10 +66,10 @@ module Datastore
   end
 
   def get_pool(pool_name)
-    pools = group_pools(connection.query_all(
-      pool_query + " WHERE pools.name = ? " + pool_query_order_by,
+    pools = connection.query_all(
+      pool_query + " WHERE pools.name = ? " + pool_query_group_by + pool_query_order_by,
       pool_name,
-      as: PoolView))
+      as: MoanaTypes::Pool)
 
     pools.size > 0 ? pools[0] : nil
   end
