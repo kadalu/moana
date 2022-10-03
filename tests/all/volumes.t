@@ -252,13 +252,11 @@ TEST 0, "kadalu volume rename DEV/vol20b DEV2/vol20b"
 
 puts TEST "kadalu node list"
 
-# Rename volume back to DEV for successful completion of node delete below
-TEST 0, "kadalu volume rename DEV2/vol20b DEV/vol20b"
-puts TEST "kadalu node list"
+TEST "kadalu volume delete DEV2/vol20b --mode=script"
 
 nodes.each do |node|
   USE_NODE nodes[0]
-  puts TEST "kadalu node remove DEV/#{node} --mode=script"
+  puts TEST "kadalu node remove DEV2/#{node} --mode=script"
 end
 
 puts TEST "kadalu user logout"

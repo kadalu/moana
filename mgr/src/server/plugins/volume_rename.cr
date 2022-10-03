@@ -33,19 +33,14 @@ post "/api/v1/pools/:pool_name/volumes/:volume_name/rename" do |env|
     halt(env, status_code: 400, response: ({"error": "Volume should be stopped before renaming."}.to_json))
   end
 
-  transfer_volume = pool_name != new_pool_name ? true : false
+  transfer_volume = pool_name != new_pool_name
   if transfer_volume
     if Datastore.node_part_of_other_volume?(pool.id, volume.id)
       halt(env, status_code: 400, response: ({"error": "Node(s) are part of other volume(s) in the current pool."}.to_json))
     end
 
-    # Get List of nodes which are part of this volume, which needs to be updated to new pool.
-    node_id_list = Datastore.list_of_nodes_part_of_curr_volume(pool.id, volume.id)
-
     # Update pool_name in .info file at every local_data_nodes
-    puts "here above participating nodes"
     nodes = participating_nodes(pool_name, volume)
-    puts "nodes: #{nodes}"
     resp = dispatch_action(
       ACTION_NODE_POOL_RENAME,
       pool_name,
@@ -59,10 +54,10 @@ post "/api/v1/pools/:pool_name/volumes/:volume_name/rename" do |env|
 
     # TODO: Find cmd to pass node_id & update in DB as arr to avoid for loop
     Datastore.update_volume_to_new_pool(new_volname, new_pool.id, volume.id)
-    Datastore.update_dist_grps_to_new_pool(new_pool.id, volume.id)
-    Datastore.update_storage_units_to_new_pool(new_pool.id, volume.id)
-    node_id_list.each do |node_id|
-      Datastore.update_node_to_new_pool(node_id, new_pool.id)
+
+    # TOOD: Good First Taks: Move node update step under 'update_volume_to_new_pool'
+    nodes.each do |node|
+      Datastore.update_node_to_new_pool(node.id, new_pool.id)
     end
   end
 

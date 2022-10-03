@@ -299,23 +299,22 @@ module Datastore
     connection.scalar(query, args: [pool_id, volume_id] + node_ids).as(Int64) > 0
   end
 
-  def list_of_nodes_part_of_curr_volume(pool_id, volume_id)
-    query = "SELECT DISTINCT node_id FROM storage_units WHERE pool_id = ? AND volume_id = ?"
-    connection.query_all(query, pool_id, volume_id, as: String)
-  end
-
   def update_volume_to_new_pool(new_volname, pool_id, volume_id)
-    query = "UPDATE volumes SET name = ?, pool_id = ? WHERE id = ?"
-    connection.exec(query, new_volname, pool_id, volume_id)
-  end
+    volume_update_query = update_query("volumes", ["name", "pool_id"], where: " id = ?")
 
-  def update_dist_grps_to_new_pool(pool_id, volume_id)
-    query = "UPDATE distribute_groups SET pool_id = ? WHERE volume_id = ?"
-    connection.exec(query, pool_id, volume_id)
-  end
+    dist_grps_update_query = update_query("distribute_groups", ["pool_id"], where: " volume_id = ?")
 
-  def update_storage_units_to_new_pool(pool_id, volume_id)
-    query = "UPDATE storage_units SET pool_id = ? WHERE volume_id = ?"
-    connection.exec(query, pool_id, volume_id)
+    storage_units_update_query = update_query("storage_units", ["pool_id"], where: " volume_id = ?")
+
+    connection.transaction do |tx|
+      conn = tx.connection
+
+      conn.exec(
+        volume_update_query, new_volname, pool_id, volume_id)
+      conn.exec(
+        dist_grps_update_query, pool_id, volume_id)
+      conn.exec(
+        storage_units_update_query, pool_id, volume_id)
+    end
   end
 end
