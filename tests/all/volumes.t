@@ -40,6 +40,8 @@ nodes.each do |node|
   TEST "mkdir -p /exports/vol12"
   TEST "mkdir -p /exports/vol14"
   TEST "mkdir -p /exports/vol19"
+  TEST "mkdir -p /exports/vol20a"
+  TEST "mkdir -p /exports/vol20b"
 end
 
 USE_NODE nodes[0]
@@ -238,9 +240,23 @@ puts TEST "kadalu config-snapshot list"
 TEST "kadalu config-snapshot delete snap2 --mode=script"
 puts TEST "kadalu config-snapshot list"
 
+# Tests for renaming of volume
+USE_NODE nodes[0]
+TEST "kadalu volume create DEV/vol20a server1:/exports/vol20a/s1 --no-start"
+TEST "kadalu volume create DEV/vol20b server1:/exports/vol20b/s1 server2:/exports/vol20b/s2 server3:/exports/vol20b/s3 --no-start"
+puts TEST "kadalu pool create DEV2"
+TEST 1, "kadalu volume rename DEV/vol20b DEV2/vol20b"
+
+TEST "kadalu volume delete DEV/vol20a --mode=script"
+TEST 0, "kadalu volume rename DEV/vol20b DEV2/vol20b"
+
+puts TEST "kadalu node list"
+
+TEST "kadalu volume delete DEV2/vol20b --mode=script"
+
 nodes.each do |node|
   USE_NODE nodes[0]
-  puts TEST "kadalu node remove DEV/#{node} --mode=script"
+  puts TEST "kadalu node remove DEV2/#{node} --mode=script"
 end
 
 puts TEST "kadalu user logout"

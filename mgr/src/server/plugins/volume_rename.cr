@@ -19,19 +19,49 @@ post "/api/v1/pools/:pool_name/volumes/:volume_name/rename" do |env|
     halt(env, status_code: 400, response: ({"error": "Volume does not exist."}.to_json))
   end
 
-  if new_pool_name != pool_name
-    halt(env, status_code: 400, response: ({"error": "Volume rename outside the pool #{pool_name} is not supported."}.to_json))
+  new_pool = Datastore.get_pool(new_pool_name)
+
+  if new_pool.nil?
+    halt(env, status_code: 400, response: ({"error": "Target Pool #{new_pool_name} does not exist."}.to_json))
   end
 
-  if volume_name == new_volname
-    halt(env, status_code: 400, response: ({"error": "Existing & New volname are the same."}.to_json))
+  if Datastore.volume_name_exists_by_pool_id?(new_volname, new_pool.id)
+    halt(env, status_code: 400, response: ({"error": "Volume #{new_volname} already exists in target Pool #{new_pool_name}"}.to_json))
   end
 
   if volume.state == "Started"
     halt(env, status_code: 400, response: ({"error": "Volume should be stopped before renaming."}.to_json))
   end
 
-  Datastore.rename_volume(pool.id, volume.id, new_volname)
+  transfer_volume = pool_name != new_pool_name
+  if transfer_volume
+    if Datastore.node_part_of_other_volume?(pool.id, volume.id)
+      halt(env, status_code: 400, response: ({"error": "Node(s) are part of other volume(s) in the current pool."}.to_json))
+    end
+
+    # Update pool_name in .info file at every local_data_nodes
+    nodes = participating_nodes(pool_name, volume)
+    resp = dispatch_action(
+      ACTION_NODE_POOL_RENAME,
+      pool_name,
+      nodes,
+      {"new_pool_name": new_pool_name, "old_pool_name": pool_name}.to_json,
+    )
+
+    if !resp.ok
+      halt(env, status_code: 400, response: ({"error": "Failed to rename volume"}.to_json))
+    end
+
+    # TODO: Find cmd to pass node_id & update in DB as arr to avoid for loop
+    Datastore.update_volume_to_new_pool(new_volname, new_pool.id, volume.id)
+
+    # TOOD: Good First Taks: Move node update step under 'update_volume_to_new_pool'
+    nodes.each do |node|
+      Datastore.update_node_to_new_pool(node.id, new_pool.id)
+    end
+  end
+
+  Datastore.rename_volume(pool.id, volume.id, new_volname) unless transfer_volume
 
   volume.name = new_volname
 

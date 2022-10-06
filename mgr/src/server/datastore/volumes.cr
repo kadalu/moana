@@ -281,4 +281,40 @@ module Datastore
     query = "UPDATE volumes SET name = ? WHERE pool_id = ? AND id = ?"
     connection.exec(query, new_volname, pool_id, volume_id)
   end
+
+  def volume_name_exists_by_pool_id?(name, pool_id)
+    query = "SELECT COUNT(name) FROM volumes WHERE name = ? and pool_id = ?"
+    connection.scalar(query, name, pool_id).as(Int64) > 0
+  end
+
+  def node_part_of_other_volume?(pool_id, volume_id)
+    query = "SELECT DISTINCT node_id FROM storage_units WHERE volume_id = ?"
+    node_ids = connection.query_all(query, volume_id, as: String)
+
+    node_ids_arg = node_ids.map do |_|
+      "?"
+    end
+
+    query = "SELECT COUNT(id) FROM storage_units WHERE pool_id = ? AND volume_id != ? AND node_id IN (#{node_ids_arg.join(",")})"
+    connection.scalar(query, args: [pool_id, volume_id] + node_ids).as(Int64) > 0
+  end
+
+  def update_volume_to_new_pool(new_volname, pool_id, volume_id)
+    volume_update_query = update_query("volumes", ["name", "pool_id"], where: " id = ?")
+
+    dist_grps_update_query = update_query("distribute_groups", ["pool_id"], where: " volume_id = ?")
+
+    storage_units_update_query = update_query("storage_units", ["pool_id"], where: " volume_id = ?")
+
+    connection.transaction do |tx|
+      conn = tx.connection
+
+      conn.exec(
+        volume_update_query, new_volname, pool_id, volume_id)
+      conn.exec(
+        dist_grps_update_query, pool_id, volume_id)
+      conn.exec(
+        storage_units_update_query, pool_id, volume_id)
+    end
+  end
 end
