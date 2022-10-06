@@ -74,6 +74,23 @@ module Datastore
     pools.size > 0 ? pools[0] : nil
   end
 
+  def get_pool(user_id, pool_name)
+    pool_ids = viewable_pool_ids(user_id)
+    return nil if pool_ids.size == 0
+
+    pools = connection.query_all(
+      pool_query + " WHERE pools.name = ? " + pool_query_group_by + pool_query_order_by,
+      pool_name,
+      as: MoanaTypes::Pool)
+
+    if pools.size > 0
+      return pools[0] if pool_ids.includes?("all")
+      return pools[0] if pool_ids.includes?(pools[0].id)
+    end
+
+    nil
+  end
+
   def create_pool(pool_name)
     pool_id = UUID.random.to_s
     query = insert_query("pools", %w[id name])
