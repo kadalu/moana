@@ -42,6 +42,11 @@ get "/api/v1/pools" do |env|
   Datastore.list_pools(env.user_id).to_json
 end
 
+get "/api/v1/pools/:pool_name" do |env|
+  pool_name = env.params.url["pool_name"]
+  Datastore.get_pool(env.user_id, pool_name).to_json
+end
+
 delete "/api/v1/pools/:pool_name" do |env|
   pool_name = env.params.url["pool_name"]
 

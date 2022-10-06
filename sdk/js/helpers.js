@@ -1,5 +1,6 @@
-class StorageManagerAuthError extends Error {
-    constructor(message, options) {
-        super(message, options);
+export default class StorageManagerAuthError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = this.constructor.name;
     }
 }

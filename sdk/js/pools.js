@@ -19,8 +19,12 @@ export default class Pool {
         return await Volume.list(this.mgr, this.name, state);
     }
 
+    async get() {
+        return await this.mgr.httpGet(`/api/v1/pools/${this.name}`)
+    }
+
     async delete() {
-        return await mgr.httpDelete(`/api/v1/pools/${this.name}`)
+        return await this.mgr.httpDelete(`/api/v1/pools/${this.name}`)
     }
 
     volume(name) {
