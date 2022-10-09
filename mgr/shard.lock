@@ -10,7 +10,7 @@ shards:
 
   exception_page:
     git: https://github.com/crystal-loot/exception_page.git
-    version: 0.2.2
+    version: 0.3.0
 
   kadalu_storage_manager:
     path: ../sdk/crystal
@@ -18,7 +18,7 @@ shards:
 
   kemal:
     git: https://github.com/kemalcr/kemal.git
-    version: 1.2.0
+    version: 1.2.0+git.commit.c8f857dff35a07eacfc3f4d924d2bc056ca31aa7
 
   moana_types:
     path: ../types
