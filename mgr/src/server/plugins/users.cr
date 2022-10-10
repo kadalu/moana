@@ -93,6 +93,14 @@ get "/api/v1/users" do |env|
   Datastore.list_users.to_json
 end
 
+get "/api/v1/user-exists" do |env|
+  if Datastore.zero_users?
+    halt(env, status_code: 204, response: "{}")
+  end
+
+  "{}"
+end
+
 # Get User
 get "/api/v1/users/:username" do |env|
   username = env.params.url["username"]
