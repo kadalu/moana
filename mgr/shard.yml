@@ -19,7 +19,6 @@ dependencies:
 
   kemal:
     github: kemalcr/kemal
-    branch: master
 
   moana_types:
     path: ../types
