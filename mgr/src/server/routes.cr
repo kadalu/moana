@@ -83,7 +83,7 @@ class AuthHandler < Kemal::Handler
   # Login is always done unauthorized.
   # Node internal API handles authentication differently.
   exclude ["/api/v1/users", "/api/v1/users/:username/api-keys", "/_api/v1/:action"], "POST"
-  exclude ["/ping", "/api/v1"], "GET"
+  exclude ["/ping", "/api/v1", "/api/v1/user-exists"], "GET"
   exclude ["/*"], "OPTIONS"
 
   def call(env)
