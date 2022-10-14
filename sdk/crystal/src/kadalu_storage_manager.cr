@@ -61,6 +61,10 @@ module StorageManager
       User.create(self, username, name, password)
     end
 
+    def has_users?
+      User.has_users?(self)
+    end
+
     def list_users
       User.list(self)
     end

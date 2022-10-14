@@ -163,5 +163,15 @@ module StorageManager
         client.token = ""
       end
     end
+
+    def self.has_users?(client : Client)
+      url = "#{client.url}/api/v1/user-exists"
+      response = StorageManager.http_get(
+        url,
+        headers: client.auth_header
+      )
+
+      response.status_code == 200
+    end
   end
 end

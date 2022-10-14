@@ -17,6 +17,12 @@ class User:
         return response_object_or_error("User", resp, 200)
 
     @classmethod
+    def has_users(cls, mgr):
+        # noqa # pylint: disable=missing-function-docstring
+        resp = mgr.http_get(mgr.url + "/api/v1/user-exists")
+        return resp.status == 200
+
+    @classmethod
     def create(cls, mgr, username, name, password):
         # noqa # pylint: disable=missing-function-docstring
         resp = mgr.http_post(f"{mgr.url}/api/v1/users",
