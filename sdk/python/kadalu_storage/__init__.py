@@ -138,6 +138,25 @@ class StorageManager(StorageManagerBase):
         """
         return User.create(self, username, name, password)
 
+    def has_users(self):
+        """
+        == Zero users in the instance
+
+        Check if no users created
+
+        Example:
+
+        [source,python]
+        ----
+        from kadalu_storage import StorageManager
+
+        mgr = StorageManager("http://localhost:3000")
+
+        print(mgr.has_users())
+        ----
+        """
+        return User.has_users(self)
+
     def user(self, username):
         """
         == User instance

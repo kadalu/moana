@@ -1,5 +1,6 @@
 import StorageManagerAuthError from './helpers';
 import Pool from './pools';
+import User from './users';
 
 export default class StorageManager {
     constructor(url) {
@@ -34,7 +35,7 @@ export default class StorageManager {
         return data;
     }
 
-    async httpGet(urlPath) {
+    async httpGet(urlPath, existsCheck=false) {
         const response = await fetch(
             `${this.url}${urlPath}`,
             {
@@ -47,6 +48,10 @@ export default class StorageManager {
 
         if (response.status == 401 || response.status == 403) {
             throw new StorageManagerAuthError((await response.json()).error);
+        }
+
+        if (existsCheck) {
+            return response.status == 200 ? true : false;
         }
 
         const data = await response.json();
@@ -142,5 +147,17 @@ export default class StorageManager {
 
     async createPool(name) {
         return await Pool.create(this, name);
+    }
+
+    async createUser(username, password, fullName="") {
+        return await User.create(this, username, password, fullName);
+    }
+
+    async hasUsers() {
+        return await User.hasUsers()
+    }
+
+    user(username) {
+        return new User(this, username)
     }
 }
