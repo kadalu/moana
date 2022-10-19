@@ -123,7 +123,7 @@ export default class StorageManager {
 
         return mgr;
     }
-    
+
     async logout() {
         if (this.api_key_id == "") {
             return;
@@ -154,7 +154,7 @@ export default class StorageManager {
     }
 
     async hasUsers() {
-        return await User.hasUsers()
+        return await User.hasUsers(this)
     }
 
     user(username) {
