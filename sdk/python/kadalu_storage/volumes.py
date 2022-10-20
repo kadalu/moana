@@ -18,11 +18,22 @@ class Volume:
         return response_object_or_error("Volume", resp, 200)
 
     @classmethod
-    def create(cls, mgr, pool_name, volume_name, _distribute_groups):
+    def create(cls, mgr, pool_name, volume_name, distribute_groups, options=None):
         # noqa # pylint: disable=missing-function-docstring
-        # TODO: Implimentation pending
-        resp = mgr.http_post(f"{mgr.url}/api/v1/pools/{pool_name}/volumes",
-                         {"name": volume_name})
+        # noqa # pylint: disable=too-many-arguments
+        options = {} if options is None else options
+        resp = mgr.http_post(
+            f"{mgr.url}/api/v1/pools/{pool_name}/volumes",
+            {
+                "name": volume_name,
+                "distribute_groups": distribute_groups,
+                "no_start": options.get("no_start", False),
+                "volume_id": options.get("volume_id", ""),
+                "auto_create_pool": options.get("auto_create_pool", False),
+                "auto_add_nodes": options.get("auto_add_nodes", False),
+                "options": options.get("options", {})
+            }
+        )
         return response_object_or_error("Volume", resp, 201)
 
     def start(self):

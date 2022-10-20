@@ -102,7 +102,7 @@ class Pool:
         """
         return Volume.list(self.mgr, self.name)
 
-    def create_volume(self, volume_name, storage_units, replica=1):
+    def create_volume(self, volume_name, distribute_groups, options=None):
         """
         == Create a Kadalu Storage Volume
 
@@ -118,12 +118,16 @@ class Pool:
 
         mgr.pool("DEV").create_volume(
             "vol1",
-            [
-              "server1.example.com:/exports/vol1/s1/storage",
-              "server2.example.com:/exports/vol1/s2/storage",
-              "server3.example.com:/exports/vol1/s3/storage"
-            ],
-            replica=3
+            "distribute_groups": [
+              {
+               "replica_count": 3,
+               "storage_units": [
+                  {"node": "server1.example.com", "path": "/exports/vol1/s1/storage"},
+                  {"node": "server2.example.com", "path": "/exports/vol1/s2/storage"},
+                  {"node": "server3.example.com", "path": "/exports/vol1/s3/storage"}
+                ]
+              }
+            ]
         )
         ----
         """
@@ -131,8 +135,8 @@ class Pool:
             self.mgr,
             self.name,
             volume_name,
-            storage_units,
-            replica=replica
+            distribute_groups,
+            options
         )
 
     def volume(self, volume_name):
