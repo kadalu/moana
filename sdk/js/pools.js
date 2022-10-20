@@ -49,4 +49,8 @@ export default class Pool {
             {new_pool_name: newName}
         )
     }
+
+    async createVolume(name, distribute_groups, opts) {
+        return await Volume.create(this.mgr, this.name, name, distribute_groups, opts);
+    }
 }
