@@ -72,6 +72,7 @@ module CLI
           if subcmds
             # Add auto help message when subcommands exists
             parser_1.banner = "Usage: kadalu #{name} [subcommand] [arguments]"
+            parsed.cmd = name
             subcmds.each do |s_name, s_cmd|
               parser_1.on(s_name, s_cmd.help) do
                 # Auto help message if message not provided while defining the handler
@@ -110,8 +111,10 @@ module CLI
     # Try execute only if handler is defined
     if Commands.handlers[parsed.cmd]?
       Commands.handlers[parsed.cmd].call(parsed)
+    elsif parsed.cmd != "" && Commands.commands[parsed.cmd]?
+      parser.parse([parsed.cmd, "-h"])
     elsif parsed.cmd == ""
-      puts parser
+      puts parser.show_help_message
       exit 0
     else
       STDERR.puts "Unknown command \"#{args.join(" ")}\""
