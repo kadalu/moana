@@ -275,6 +275,10 @@ module MountKadalu
 
     add_option(mount_path)
 
+    kadalu_log_mntpath = mount_path.lstrip("/").rstrip("/").gsub("/", "-") + ".log"
+
+    add_option("--log-file", "/var/log/kadalu/#{kadalu_log_mntpath}") if @@options["--log-file"]?.nil?
+
     # TODO: Handle Updatedb settings
 
     puts "Executing the following command to mount the Kadalu Storage Volume"
@@ -289,7 +293,7 @@ module MountKadalu
     # 'stderr', so no need to point them to logfile.
     unless rc == 0
       STDERR.puts err.strip
-      command_error "Mounting glusterfs on #{mount_path} failed."
+      command_error "Mounting Kadalu Storage Volume on #{mount_path} failed."
     end
 
     # TODO: Mount path inode check
