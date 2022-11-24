@@ -178,10 +178,10 @@ module MountKadalu
     # TODO: Validate Hostname
     # TODO: Handle Backup Volfile servers
     if volfile_path == ""
-      add_option("--volfile-id", "client-#{pool_name}-#{volume_name}") if @@options["--volfile-id"]?.nil?
+      add_option("--volfile-id", "#{volume_name}") if @@options["--volfile-id"]?.nil?
     else
       if volume_name != "" && @@options["--volfile-id"]?.nil?
-        add_option("--volfile-id", "client-#{pool_name}-#{volume_name}")
+        add_option("--volfile-id", "#{volume_name}")
       end
     end
 
