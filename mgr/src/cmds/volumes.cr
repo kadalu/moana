@@ -5,7 +5,7 @@ require "./gluster_volume_parser"
 struct VolumeArgs
   property status = false, detail = false, name = "", volume_id = "", no_start = false,
     auto_create_pool = false, auto_add_nodes = false,
-    node_maps = Hash(String, String).new
+    node_maps = Hash(String, String).new, volfiles_separator = " "
 end
 
 class Args
@@ -123,10 +123,21 @@ command "volume.list", "Volumes list of a Kadalu Storage pool" do |parser, args|
   parser.on("--detail", "Show detailed volume info") do
     args.volume_args.detail = true
   end
+  parser.on("-s SEP", "--volfiles-seperator=SEP", "Separator for Volfile List (Default is space)") do |sep|
+    args.volume_args.volfiles_separator = sep
+  end
 end
 
-def volume_detail(volume, status = false)
+def volume_detail(volume, args)
+  status = args.volume_args.status
   health = volume.state == "Started" && status ? "#{volume.state} (#{volume.metrics.health})" : volume.state
+
+  volfile_servers = [] of String
+  volume.distribute_groups.each do |dist_grp|
+    dist_grp.storage_units.each do |storage_unit|
+      volfile_servers << "#{storage_unit.node.name}:#{storage_unit.port}"
+    end
+  end
 
   puts "Name                    : #{volume.pool.name}/#{volume.name}"
   puts "Type                    : #{volume.type}"
@@ -136,6 +147,7 @@ def volume_detail(volume, status = false)
   puts "Inodes                  : #{(volume.metrics.inodes_used_count + volume.metrics.inodes_free_count).humanize}"
   puts "Utilization             : #{volume.metrics.size_used_bytes.humanize_bytes}/#{(volume.metrics.size_used_bytes + volume.metrics.size_free_bytes).humanize_bytes}" if status
   puts "Utilization (Inodes)    : #{volume.metrics.inodes_used_count.humanize}/#{(volume.metrics.inodes_used_count + volume.metrics.inodes_free_count).humanize}" if status
+  puts "Volfile Servers         : #{volfile_servers.join(args.volume_args.volfiles_separator)}"
   puts "Options                 :#{volume.options.size > 0 ? "" : " -"}"
 
   volume.options.each do |k, v|
@@ -180,7 +192,7 @@ handler "volume.list" do |args|
 
     if args.volume_args.detail
       volumes.each do |volume|
-        volume_detail(volume, args.volume_args.status)
+        volume_detail(volume, args)
       end
 
       next
