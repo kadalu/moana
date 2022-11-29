@@ -58,7 +58,8 @@ handler "user.create" do |args|
 
     handle_json_output(user, args)
 
-    puts "User #{user.username} created successfully. Run `kadalu user login #{user.username}` to login"
+    puts "User #{user.username} created successfully."
+    puts "Run `kadalu user login #{user.username}` to login"
   end
 end
 
@@ -86,7 +87,9 @@ handler "user.login" do |args|
 
     handle_json_output(api_key, args)
 
-    puts "Login successful. Details saved in `#{token_file}`. Delete this file or run `kadalu user logout` command to delete the session."
+    puts "Login successful. Details saved in `#{token_file}`."
+    puts "Delete this file or run `kadalu user logout`"
+    puts "command to delete the session."
   end
 end
 
