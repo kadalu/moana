@@ -168,7 +168,7 @@ puts TEST "ls /var/lib/kadalu/volfiles"
 
 # Mount the Volume
 TEST "mkdir -p /mnt/vol_volfile"
-TEST "glusterfs -s server1:5007 --volfile-id client-DEV-vol_volfile -l/tmp/volspec.log /mnt/vol_volfile"
+TEST "glusterfs -s server1:5007 --volfile-id vol_volfile -l/tmp/volspec.log /mnt/vol_volfile"
 puts TEST "df /mnt/vol_volfile"
 
 # Use mount command (Different options)
@@ -199,7 +199,7 @@ puts TEST "df /mnt/vol_volfile_5"
 
 # Using Volfile Path option
 TEST "mkdir -p /mnt/vol_volfile_6"
-puts TEST "mount -t kadalu /var/lib/kadalu/volfiles/client-DEV-vol_volfile.vol /mnt/vol_volfile_6"
+puts TEST "mount -t kadalu /var/lib/kadalu/volfiles/vol_volfile.vol /mnt/vol_volfile_6"
 puts TEST "df /mnt/vol_volfile_6"
 
 TEST "umount /mnt/vol_volfile_*"

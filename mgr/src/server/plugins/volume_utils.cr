@@ -284,7 +284,7 @@ def services_and_volfiles(req)
       # Store Client Volfile
       if client_volfiles[storage_unit.node.id]?.nil?
         volfiles[storage_unit.node.id] << MoanaTypes::Volfile.new(
-          "client-#{req.pool.name}-#{req.name}", client_volfile_content
+          "#{req.name}", client_volfile_content
         )
         client_volfiles[storage_unit.node.id] = true
       end
