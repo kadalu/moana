@@ -39,4 +39,13 @@ module Datastore
     query = "DELETE FROM ports WHERE pool_id = ? AND node_id = ? AND updated_on < datetime('now', '-5 minutes')"
     connection.exec(query, pool_id, node_id)
   end
+
+  def delete_reserved_volume_ports(pool_id : String, distribute_groups : Array)
+    distribute_groups.each do |dist_grp|
+      dist_grp.storage_units.each do |storage_unit|
+        query = "DELETE FROM ports WHERE pool_id = ? AND node_id = ? AND port = ?"
+        connection.exec(query, pool_id, storage_unit.node.id, storage_unit.port)
+      end
+    end
+  end
 end

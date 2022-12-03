@@ -21,6 +21,7 @@ delete "/api/v1/pools/:pool_name/volumes/:volume_name" do |env|
     halt(env, status_code: 400, response: ({"error": "Volume should be stopped before deleting."}.to_json))
   end
 
+  Datastore.delete_reserved_volume_ports(pool.id, volume.distribute_groups)
   Datastore.delete_volume(pool.id, volume.id)
 
   env.response.status_code = 204
