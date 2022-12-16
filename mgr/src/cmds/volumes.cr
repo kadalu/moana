@@ -342,7 +342,7 @@ handler "volume.expand" do |args|
     puts "hello"
 
     api_call(args, "Failed to Expand Volume") do |client|
-      volume = client.pool(args.pool_name).expand_volume(req)
+      volume = client.pool(args.pool_name).volume(volume_name).expand(req)
 
       handle_json_output(volume, args)
 

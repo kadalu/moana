@@ -193,7 +193,7 @@ module StorageManager
 
       puts volume.to_json
 
-      response = MoanaClient.http_put(
+      response = StorageManager.http_put(
         url,
         volume.to_json,
         headers: @client.auth_header
@@ -201,7 +201,7 @@ module StorageManager
       if response.status_code == 201
         MoanaTypes::Volume.from_json(response.body)
       else
-        MoanaClient.error_response(response)
+        StorageManager.error_response(response)
       end
     end
   end

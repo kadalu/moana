@@ -6,7 +6,8 @@ require "../datastore/*"
 require "./ping"
 require "./volume_utils.cr"
 
-ACTION_RESTART_SHD_SERVICE = "restart_shd_service"
+ACTION_RESTART_SHD_SERVICE      = "restart_shd_service"
+ACTION_START_FIX_LAYOUT_SERVICE = "start_fix_layout_service"
 
 node_action ACTION_VALIDATE_VOLUME_CREATE do |data, _env|
   req = MoanaTypes::Volume.from_json(data)
@@ -24,6 +25,10 @@ end
 
 node_action ACTION_RESTART_SHD_SERVICE do |data, _env|
   restart_shd_service(data)
+end
+
+node_action ACTION_START_FIX_LAYOUT_SERVICE do |data, _env|
+  start_fix_layout_service(data)
 end
 
 put "/api/v1/pools/:pool_name/volumes" do |env|
@@ -123,7 +128,7 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
 
         node = MoanaTypes::Node.from_json(resp.node_responses[n.name].response)
         node.endpoint = endpoint
-        Datastore.create_node(pool.not_nil!.id, node.id, n.name, endpoint, node.token)
+        Datastore.create_node(pool.not_nil!.id, node.id, n.name, endpoint, node.token, invite.mgr_token)
       end
 
       if node.nil?
@@ -234,29 +239,30 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
     halt(env, status_code: 400, response: node_errors("Failed to expand Volume", resp.node_responses).to_json)
   end
 
-  # Save Services details... Causing exception of unique constraint failed
-  services.each do |node_id, svcs|
-    svcs.each do |svc|
-      # Enable each Services
-      begin
-        puts "in enable service"
-        Datastore.enable_service(pool.not_nil!.id, node_id, svc)
-      rescue ex : Exception
-        # Avoid adding same service into DB
+  # # Move to end, after fix-layout
+  # # Save Services details... Causing exception of unique constraint failed
+  # services.each do |node_id, svcs|
+  #   svcs.each do |svc|
+  #     # Enable each Services
+  #     begin
+  #       puts "in enable service"
+  #       Datastore.enable_service(pool.not_nil!.id, node_id, svc)
+  #     rescue ex : Exception
+  #       # Avoid adding same service into DB
 
-        puts "in execption"
+  #       puts "in execption"
 
-        # update servcice in DB
-        # Write a node action to call svc.restart
+  #       # update servcice in DB
+  #       # Write a node action to call svc.restart
 
-        # puts "after restarting shd"
+  #       # puts "after restarting shd"
 
-        Datastore.update_service(pool.not_nil!.id, node_id, svc)
+  #       Datastore.update_service(pool.not_nil!.id, node_id, svc)
 
-        puts "after updating service in DB"
-      end
-    end
-  end
+  #       puts "after updating service in DB"
+  #     end
+  #   end
+  # end
 
   storage_units = Hash(String, Hash(String, MoanaTypes::StorageUnit)).new
   resp.node_responses.each do |node, node_resp|
@@ -298,6 +304,45 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
 
   puts "after halt"
   puts resp.node_responses
+
+  # Add only the first node for fix-layout service
+  services = add_fix_layout_service(services, req, nodes[0].id)
+  first_node = [] of MoanaTypes::Node
+  first_node.push(nodes[0])
+  resp = dispatch_action(
+    ACTION_START_FIX_LAYOUT_SERVICE,
+    pool_name,
+    first_node,
+    {services, volfiles, req}.to_json
+  )
+
+  if !resp.ok
+    halt(env, status_code: 400, response: node_errors("Failed to start fix-layout service", resp.node_responses).to_json)
+  end
+
+  # Save Services details... Causing exception of unique constraint failed
+  services.each do |node_id, svcs|
+    svcs.each do |svc|
+      # Enable each Services
+      begin
+        puts "in enable service"
+        Datastore.enable_service(pool.not_nil!.id, node_id, svc)
+      rescue ex : Exception
+        # Avoid adding same service into DB
+
+        puts "in execption"
+
+        # update servcice in DB
+        # Write a node action to call svc.restart
+
+        # puts "after restarting shd"
+
+        Datastore.update_service(pool.not_nil!.id, node_id, svc)
+
+        puts "after updating service in DB"
+      end
+    end
+  end
 
   env.response.status_code = 201
   req.to_json

@@ -320,6 +320,28 @@ def services_and_volfiles(req)
   {services, volfiles}
 end
 
+def add_fix_layout_service(services, req, node_id)
+  service = FixLayoutService.new(req.name, node_id)
+  services[node_id] << service.unit
+
+  services
+end
+
+def start_fix_layout_service(data)
+  services, _, _ = VolumeRequestToNode.from_json(data)
+
+  unless services[GlobalConfig.local_node.id]?.nil?
+    services[GlobalConfig.local_node.id].each do |service|
+      svc = Service.from_json(service.to_json)
+      if svc.name == "fixlayoutservice"
+        svc.start
+      end
+    end
+  end
+
+  NodeResponse.new(true, "")
+end
+
 def set_default_storage_unit_metrics(storage_unit)
   storage_unit.metrics.health = "Down"
 end
