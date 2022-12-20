@@ -14,7 +14,7 @@ jobs:
   # TODO: Add unit test as well here
   tests:
     name: Kadalu Storage Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - name: Install Crystal
@@ -24,6 +24,9 @@ jobs:
         run: make fmt-check
       - name: Lint
         run: make lint
+      - name: Test Volgen
+        run: |
+          cd volgen && shards install && crystal spec
       - name: Install Binnacle
         run: |
           curl -L https://github.com/kadalu/binnacle/releases/latest/download/binnacle -o binnacle

@@ -1,45 +1,45 @@
-volume gvol1-distribute-0-client-1
+volume vol1-distribute-1-client-1
     type protocol/client
-    option remote-subvolume /bricks/gvol1/b2
-    option remote-host node2.kadalu
-    option remote-port 49254
+    option remote-subvolume /mnt/disk2
+    option remote-host kadalu-dev
+    option remote-port 49253
 end-volume
 
 
-volume gvol1-distribute-0-client-0
+volume vol1-distribute-0-client-0
     type protocol/client
-    option remote-subvolume /bricks/gvol1/b1
-    option remote-host node1.kadalu
-    option remote-port 49254
+    option remote-subvolume /mnt/disk1
+    option remote-host kadalu-dev
+    option remote-port 49252
 end-volume
 
 
-volume gvol1-distribute-0
+volume vol1-distribute
     type cluster/distribute
-    subvolumes gvol1-distribute-0-client-0 gvol1-distribute-0-client-1
+    subvolumes vol1-distribute-0-client-0 vol1-distribute-1-client-1
 end-volume
 
 
-volume gvol1-utime
+volume vol1-utime
     type features/utime
-    subvolumes gvol1-distribute-0
+    subvolumes vol1-distribute
 end-volume
 
 
-volume gvol1-write-behind
+volume vol1-write-behind
     type performance/write-behind
-    subvolumes gvol1-utime
+    subvolumes vol1-utime
 end-volume
 
 
-volume gvol1
+volume vol1
     type debug/io-stats
-    subvolumes gvol1-write-behind
+    subvolumes vol1-write-behind
 end-volume
 
 
 volume meta-autoload
     type meta
-    subvolumes gvol1
+    subvolumes vol1
 end-volume
 

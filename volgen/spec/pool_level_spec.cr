@@ -11,7 +11,7 @@ describe Volfile do
     end
 
     shd_tmpl = File.read("./spec/shd_template.yaml")
-    content = Volfile.cluster_level("shd", shd_tmpl, volumes)
+    content = Volfile.pool_level("shd", shd_tmpl, volumes)
     content.should eq(File.read("./spec/shd.vol"))
   end
 end

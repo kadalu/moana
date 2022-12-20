@@ -4,6 +4,10 @@ version: 0.1.0
 authors:
   - Kadalu Technologies Private Limited <hello@kadalu.tech>
 
+dependencies:
+  db:
+    github: crystal-lang/crystal-db
+
 description: |
   Kadalu Storage Manager Types
 

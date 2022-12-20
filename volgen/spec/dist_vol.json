@@ -1,50 +1,176 @@
 {
-  "replica_count":1,
-  "disperse_count":1,
-  "id":"4f6a45c5-587b-4e60-9071-5222aa52d1a8",
-  "name":"gvol1",
-  "state":"Started",
-  "type":"Distribute",
-  "brick_fs":"dir",
-  "fs_opts":"",
-  "options":{},
-  "distribute_groups":[
-    {
-      "replica_count":0,
-      "disperse_count":1,
-      "type":"Distribute",
-      "storage_units":[
+    "id": "08ba3ead-cf09-48cc-8ce5-5c32dfa26fc2",
+    "name": "vol1",
+    "state": "Started",
+    "pool": {
+        "id": "9ea3b45f-3c1e-4c4a-ac20-df4c3edec66a",
+        "name": "dev",
+        "volumes_count": 0,
+        "nodes_count": 0
+    },
+    "distribute_groups": [
         {
-          "port":49254,
-          "id":"34260614-5b5a-4c5f-9cbd-a5c84cc4ebed",
-          "path":"/bricks/gvol1/b1",
-          "device":"-",
-          "node":{
-            "id":"8df0c1cd-9ac3-4343-89da-bfefb32493a1",
-            "hostname":"node1.kadalu",
-            "endpoint":"http://node1.kadalu:3001",
-            "cluster_id":"",
-            "token":""
-          },
-          "state":"-",
-          "type":""
+            "storage_units": [
+                {
+                    "id": "c5b3d093-aa7b-4de2-8de7-2aecb33dd3a7",
+                    "port": 49252,
+                    "path": "/mnt/disk1",
+                    "node": {
+                        "id": "7b2e34c2-cf6d-407f-be6e-03c63ef92528",
+                        "name": "kadalu-dev",
+                        "state": "",
+                        "endpoint": "http://kadalu-dev:3000",
+                        "addresses": [],
+                        "token": "",
+                        "pool": {
+                            "id": "",
+                            "name": "",
+                            "volumes_count": 0,
+                            "nodes_count": 0
+                        }
+                    },
+                    "type": "",
+                    "fs": "",
+                    "metrics": {
+                        "size_bytes": 932820811776,
+                        "inodes_count": 61022208,
+                        "size_used_bytes": 0,
+                        "size_free_bytes": 0,
+                        "inodes_used_count": 0,
+                        "inodes_free_count": 0,
+                        "health": ""
+                    },
+                    "heal_metrics": {
+                        "heal_status": "Not Connected",
+                        "heal_total": -1,
+                        "heal_pending_count": -1,
+                        "heal_split_brain_count": -1,
+                        "heal_possibly_healing_count": -1,
+                        "heal_pending_files": []
+                    },
+                    "service": {
+                        "id": "",
+                        "name": "",
+                        "args": [],
+                        "pid_file": "",
+                        "path": "",
+                        "metrics": {
+                            "size_bytes": 0,
+                            "inodes_count": 0,
+                            "size_used_bytes": 0,
+                            "size_free_bytes": 0,
+                            "inodes_used_count": 0,
+                            "inodes_free_count": 0,
+                            "health": ""
+                        },
+                        "wait": true,
+                        "create_pid_file": true
+                    }
+                }
+            ],
+            "replica_count": 0,
+            "arbiter_count": 0,
+            "disperse_count": 0,
+            "redundancy_count": 0,
+            "replica_keyword": "",
+            "metrics": {
+                "size_bytes": 932820811776,
+                "inodes_count": 61022208,
+                "size_used_bytes": 0,
+                "size_free_bytes": 0,
+                "inodes_used_count": 0,
+                "inodes_free_count": 0,
+                "health": ""
+            }
         },
         {
-          "port":49254,
-          "id":"33767a12-a97c-44d7-8013-c3099517e7ca",
-          "path":"/bricks/gvol1/b2",
-          "device":"-",
-          "node":{
-            "id":"aff618f6-ff29-48d5-a815-fc8050abd2b7",
-            "hostname":"node2.kadalu",
-            "endpoint":"http://node2.kadalu:3001",
-            "cluster_id":"",
-            "token":""
-          },
-          "state":"-",
-          "type":""
+            "storage_units": [
+                {
+                    "id": "54543cf3-2daa-4e67-96b4-e8b2bdff8256",
+                    "port": 49253,
+                    "path": "/mnt/disk2",
+                    "node": {
+                        "id": "7b2e34c2-cf6d-407f-be6e-03c63ef92528",
+                        "name": "kadalu-dev",
+                        "state": "",
+                        "endpoint": "http://kadalu-dev:3000",
+                        "addresses": [],
+                        "token": "59c99e24-1c6b-4320-9975-45b6554a77d4",
+                        "pool": {
+                            "id": "9ea3b45f-3c1e-4c4a-ac20-df4c3edec66a",
+                            "name": "dev",
+                            "volumes_count": 0,
+                            "nodes_count": 0
+                        }
+                    },
+                    "type": "",
+                    "fs": "overlay",
+                    "metrics": {
+                        "size_bytes": 932820811776,
+                        "inodes_count": 61022208,
+                        "size_used_bytes": 79029346304,
+                        "size_free_bytes": 853791465472,
+                        "inodes_used_count": 1730355,
+                        "inodes_free_count": 59291853,
+                        "health": ""
+                    },
+                    "heal_metrics": {
+                        "heal_status": "Not Connected",
+                        "heal_total": -1,
+                        "heal_pending_count": -1,
+                        "heal_split_brain_count": -1,
+                        "heal_possibly_healing_count": -1,
+                        "heal_pending_files": []
+                    },
+                    "service": {
+                        "id": "",
+                        "name": "",
+                        "args": [],
+                        "pid_file": "",
+                        "path": "",
+                        "metrics": {
+                            "size_bytes": 0,
+                            "inodes_count": 0,
+                            "size_used_bytes": 0,
+                            "size_free_bytes": 0,
+                            "inodes_used_count": 0,
+                            "inodes_free_count": 0,
+                            "health": ""
+                        },
+                        "wait": true,
+                        "create_pid_file": true
+                    }
+                }
+            ],
+            "replica_count": 0,
+            "arbiter_count": 0,
+            "disperse_count": 0,
+            "redundancy_count": 0,
+            "replica_keyword": "",
+            "metrics": {
+                "size_bytes": 932820811776,
+                "inodes_count": 61022208,
+                "size_used_bytes": 79029346304,
+                "size_free_bytes": 853791465472,
+                "inodes_used_count": 1730355,
+                "inodes_free_count": 59291853,
+                "health": "Down"
+            }
         }
-      ]
-    }
-  ]
+    ],
+    "no_start": false,
+    "volume_id": "",
+    "auto_create_pool": false,
+    "auto_add_nodes": false,
+    "options": {},
+    "metrics": {
+        "size_bytes": 0,
+        "inodes_count": 0,
+        "size_used_bytes": 0,
+        "size_free_bytes": 0,
+        "inodes_used_count": 0,
+        "inodes_free_count": 0,
+        "health": ""
+    },
+    "snapshot_plugin": ""
 }
