@@ -92,7 +92,11 @@ abstract class Service
   end
 
   def signal(sig)
-    Process.signal(sig, pid)
+    begin
+      Process.signal(sig, pid)
+    rescue RuntimeError
+      # TODO: Handle specific error "No such process"
+    end
   end
 
   def save(node)

@@ -321,25 +321,13 @@ end
 
 handler "volume.expand" do |args|
   begin
-    # Handle Gluster Volume import
-    command_error "Pool name is required" if args.pos_args.size == 0
+    command_error "Pool/Volname is required" if args.pos_args.size == 0
+    args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
 
-    pool_name, volume_name = pool_and_volume_name(args.pos_args[0])
-    if volume_name == "-"
-      import_data = from_gluster_volumes_xml(pool_name, STDIN.gets_to_end, args)
-      # TODO: Handle if the input contains more than one Volume
-      # TODO: Handle if no Volumes provided
-      req = VolumeRequestParser.parse(import_data[0].cli_args)
-      req.volume_id = import_data[0].volume_id
-      # TODO: How to use import_data[0].options
-    else
-      req = VolumeRequestParser.parse(args.pos_args)
-    end
+    req = VolumeRequestParser.parse(args.pos_args)
 
     req.auto_add_nodes = args.volume_args.auto_add_nodes
     args.pool_name = req.pool.name
-
-    puts "hello"
 
     api_call(args, "Failed to Expand Volume") do |client|
       volume = client.pool(args.pool_name).volume(volume_name).expand(req)

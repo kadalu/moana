@@ -6,29 +6,13 @@ require "../datastore/*"
 require "./ping"
 require "./volume_utils.cr"
 
-ACTION_RESTART_SHD_SERVICE      = "restart_shd_service"
-ACTION_START_FIX_LAYOUT_SERVICE = "start_fix_layout_service"
+ACTION_RESTART_SHD_SERVICE_AND_SIGHUP_PROCESSES = "restart_shd_service_and_sighup_processes"
 
-node_action ACTION_VALIDATE_VOLUME_CREATE do |data, _env|
-  req = MoanaTypes::Volume.from_json(data)
-  puts data, req
-  validate_volume_create(req)
-end
-
-node_action ACTION_VOLUME_CREATE do |data, _env|
-  handle_volume_create(data, stopped: false)
-end
-
-node_action ACTION_VOLUME_CREATE_STOPPED do |data, _env|
-  handle_volume_create(data, stopped: true)
-end
-
-node_action ACTION_RESTART_SHD_SERVICE do |data, _env|
-  restart_shd_service(data)
-end
-
-node_action ACTION_START_FIX_LAYOUT_SERVICE do |data, _env|
-  start_fix_layout_service(data)
+node_action ACTION_RESTART_SHD_SERVICE_AND_SIGHUP_PROCESSES do |data, _env|
+  services, volfiles, _ = VolumeRequestToNode.from_json(data)
+  save_volfiles(volfiles)
+  sighup_processes(services)
+  restart_shd_service(services)
 end
 
 put "/api/v1/pools/:pool_name/volumes" do |env|
@@ -39,29 +23,16 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
   # TODO: Validate if env.request.body.nil?
   req = MoanaTypes::Volume.from_json(env.request.body.not_nil!)
 
-  puts "in volume_expand", req
-
   volume = Datastore.get_volume(pool_name, req.name)
-  puts volume
   if volume.nil?
     halt(env, status_code: 400, response: ({"error": "The Volume (#{req.name}) doesn't exists"}.to_json))
   end
 
   pool = Datastore.get_pool(pool_name)
-  if pool.nil?
-    halt(env, status_code: 400, response: ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
-  end
 
-  # req.id = req.volume_id == "" ? UUID.random.to_s : req.volume_id
-
-  puts "volId:", volume.not_nil!.id
   req.id = volume.not_nil!.id
 
-  # Checks for types, replica counts etc
-  puts "type", volume.not_nil!.type, req.type
-  puts "grp_size", volume.not_nil!.distribute_groups.size, req.distribute_groups.size
-  # puts "replica count", volume.not_nil!.replica_count, req.replica_count
-
+  # Checks for types & storage unit coun mismatch
   if volume.not_nil!.type != req.type
     halt(env, status_code: 403, response: ({"error": "Volume type mismatch"}.to_json))
   end
@@ -82,17 +53,6 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
     end
   end
 
-  # if req.volume_id != "" && !valid_uuid?(req.volume_id)
-  #   halt(env, status_code: 400, response: ({"error": "Volume ID does not match UUID format"}.to_json))
-  # end
-
-  # # To avoid creating existing volume with volume-id option
-  # if req.volume_id != "" && Datastore.volume_exists_by_id?(pool.not_nil!.id, req.id)
-  #   halt(env, status_code: 400, response: ({"error": "Volume already exists with the given ID"}.to_json))
-  # end
-
-  # TODO: Validate the request, dist count, storage_units count etc [done]
-
   nodes = [] of MoanaTypes::Node
 
   # Validate if the nodes are part of the Pool
@@ -102,7 +62,6 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
   invalid_reason = ""
   participating_nodes(pool_name, req).each do |n|
     node = Datastore.get_node(pool_name, n.name)
-    puts n.name
     if node.nil?
       if req.auto_add_nodes
         endpoint = node_endpoint(n.name)
@@ -146,19 +105,13 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
     halt(env, status_code: 400, response: ({"error": invalid_reason}.to_json))
   end
 
-  puts nodes
-
   node_details_add_to_volume(req, nodes)
-
-  puts "after node_details_add_to_volume"
 
   # Validate if all the nodes are reachable.
   resp = dispatch_action(ACTION_PING, pool_name, nodes, "")
   if !resp.ok
     halt(env, status_code: 400, response: node_errors("Not all participant nodes are reachable", resp.node_responses).to_json)
   end
-
-  puts "after ping"
 
   # If User specified the Port in the request then validate if
   # the port is already used.
@@ -218,8 +171,13 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
     halt(env, status_code: 400, response: ({"error": "No free Port available in #{no_port_storage_node}"}).to_json)
   end
 
+  # Updating the DB before confirming of completion of all checks during,
+  # volume expansion might be troublesome to delete data from DB if the action fails.
+  # So combine existing & new vol_data required by volfile, services generation & volume create only.
+  rollback_volume = combine_req_and_volume(req, volume)
+
   # Generate Services and Volfiles if Volume to be started
-  services, volfiles = services_and_volfiles(req)
+  services, volfiles = services_and_volfiles(rollback_volume)
 
   action = ACTION_VOLUME_CREATE
   req.state = volume.state
@@ -227,7 +185,6 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
     action = ACTION_VOLUME_CREATE_STOPPED
   end
 
-  # Volume create action {req, services, volfiles}
   resp = dispatch_action(
     action,
     pool_name,
@@ -238,31 +195,6 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
   if !resp.ok
     halt(env, status_code: 400, response: node_errors("Failed to expand Volume", resp.node_responses).to_json)
   end
-
-  # # Move to end, after fix-layout
-  # # Save Services details... Causing exception of unique constraint failed
-  # services.each do |node_id, svcs|
-  #   svcs.each do |svc|
-  #     # Enable each Services
-  #     begin
-  #       puts "in enable service"
-  #       Datastore.enable_service(pool.not_nil!.id, node_id, svc)
-  #     rescue ex : Exception
-  #       # Avoid adding same service into DB
-
-  #       puts "in execption"
-
-  #       # update servcice in DB
-  #       # Write a node action to call svc.restart
-
-  #       # puts "after restarting shd"
-
-  #       Datastore.update_service(pool.not_nil!.id, node_id, svc)
-
-  #       puts "after updating service in DB"
-  #     end
-  #   end
-  # end
 
   storage_units = Hash(String, Hash(String, MoanaTypes::StorageUnit)).new
   resp.node_responses.each do |node, node_resp|
@@ -279,67 +211,32 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
 
   set_volume_metrics(req)
 
-  puts "type", req.type
-  puts "last expand"
-  puts req
-  puts req.to_json
-
-  # Save Volume info
-  Datastore.update_volume(pool.not_nil!.id, req, volume.not_nil!.distribute_groups.size)
-
-  puts "sending restart req"
-
+  # Below node action is to be run in all nodes of expanded volume.
+  # After expansion of volume, volfiles will be changed with newer storage_units,
+  # Send new volfiles to save in all nodes & notify the glusterfsd process about,
+  # reloaded volfiles through sighup. Finally restart SHD process if exists.
+  nodes_part_of_pre_expand_volume = participating_nodes(pool_name, volume)
   resp = dispatch_action(
-    ACTION_RESTART_SHD_SERVICE,
+    ACTION_RESTART_SHD_SERVICE_AND_SIGHUP_PROCESSES,
     pool_name,
-    nodes,
-    {services, volfiles, req}.to_json
+    nodes_part_of_pre_expand_volume.concat(nodes),
+    {services, volfiles, rollback_volume}.to_json
   )
-
-  puts "getting response"
 
   if !resp.ok
     halt(env, status_code: 400, response: node_errors("Failed to restart SHD service", resp.node_responses).to_json)
   end
 
-  puts "after halt"
-  puts resp.node_responses
+  # Save Volume info
+  Datastore.update_volume(pool.not_nil!.id, req, volume.not_nil!.distribute_groups.size)
 
-  # Add only the first node for fix-layout service
-  services = add_fix_layout_service(services, req, nodes[0].id)
-  first_node = [] of MoanaTypes::Node
-  first_node.push(nodes[0])
-  resp = dispatch_action(
-    ACTION_START_FIX_LAYOUT_SERVICE,
-    pool_name,
-    first_node,
-    {services, volfiles, req}.to_json
-  )
-
-  if !resp.ok
-    halt(env, status_code: 400, response: node_errors("Failed to start fix-layout service", resp.node_responses).to_json)
-  end
-
-  # Save Services details... Causing exception of unique constraint failed
+  # Save Services details. If service already exist, update with newer details
   services.each do |node_id, svcs|
     svcs.each do |svc|
-      # Enable each Services
       begin
-        puts "in enable service"
         Datastore.enable_service(pool.not_nil!.id, node_id, svc)
       rescue ex : Exception
-        # Avoid adding same service into DB
-
-        puts "in execption"
-
-        # update servcice in DB
-        # Write a node action to call svc.restart
-
-        # puts "after restarting shd"
-
         Datastore.update_service(pool.not_nil!.id, node_id, svc)
-
-        puts "after updating service in DB"
       end
     end
   end

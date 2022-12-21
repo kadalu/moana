@@ -191,8 +191,6 @@ module StorageManager
     def expand(volume : MoanaTypes::Volume)
       url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes"
 
-      puts volume.to_json
-
       response = StorageManager.http_put(
         url,
         volume.to_json,

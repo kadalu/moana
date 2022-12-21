@@ -6,23 +6,6 @@ require "../datastore/*"
 require "./ping"
 require "./volume_utils.cr"
 
-ACTION_VALIDATE_VOLUME_CREATE = "validate_volume_create"
-ACTION_VOLUME_CREATE          = "volume_create"
-ACTION_VOLUME_CREATE_STOPPED  = "volume_create_stopped"
-
-node_action ACTION_VALIDATE_VOLUME_CREATE do |data, _env|
-  req = MoanaTypes::Volume.from_json(data)
-  validate_volume_create(req)
-end
-
-node_action ACTION_VOLUME_CREATE do |data, _env|
-  handle_volume_create(data, stopped: false)
-end
-
-node_action ACTION_VOLUME_CREATE_STOPPED do |data, _env|
-  handle_volume_create(data, stopped: true)
-end
-
 post "/api/v1/pools/:pool_name/volumes" do |env|
   pool_name = env.params.url["pool_name"]
 
