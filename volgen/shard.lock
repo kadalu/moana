@@ -1,8 +1,8 @@
 version: 2.0
 shards:
-  ameba:
-    git: https://github.com/crystal-ameba/ameba.git
-    version: 0.13.4
+  db:
+    git: https://github.com/crystal-lang/crystal-db.git
+    version: 0.11.0
 
   moana_types:
     path: ../types

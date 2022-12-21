@@ -295,13 +295,17 @@ class Volfile
       end
     end
 
+    is_distribute_type = volume.distribute_groups[0].type == "Distribute"
+
     volume.distribute_groups.each_with_index do |dist_grp, grp_idx|
       grp_vars = Volfile.distribute_group_variables(volume, dist_grp, 0, grp_idx)
-      sgraph = Volfile.new(name, volfile_tmpl.distribute_group[0], grp_vars, opts)
+      unless is_distribute_type
+        sgraph = Volfile.new(name, volfile_tmpl.distribute_group[0], grp_vars, opts)
 
-      volfile_tmpl.distribute_group[1..-1].each do |dist_grp_tmpl|
-        if Volfile.include_when?(dist_grp_tmpl, grp_vars)
-          sgraph.add(Volfile.new(name, dist_grp_tmpl, grp_vars, opts))
+        volfile_tmpl.distribute_group[1..-1].each do |dist_grp_tmpl|
+          if Volfile.include_when?(dist_grp_tmpl, grp_vars)
+            sgraph.add(Volfile.new(name, dist_grp_tmpl, grp_vars, opts))
+          end
         end
       end
 
@@ -315,10 +319,14 @@ class Volfile
           end
         end
 
-        sgraph.add(bgraph, sibling: true)
+        if is_distribute_type
+          graph.add(bgraph, sibling: true)
+        else
+          sgraph.not_nil!.add(bgraph, sibling: true)
+        end
       end
 
-      graph.add(sgraph, sibling: true)
+      graph.add(sgraph.not_nil!, sibling: true) unless is_distribute_type
     end
 
     graph.volgen.reverse!.join("\n")

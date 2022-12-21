@@ -8,12 +8,12 @@
   "brick_fs":"dir",
   "fs_opts":"",
   "options":{},
-  "subvols":[
+  "distribute_groups":[
     {
       "replica_count":3,
       "disperse_count":1,
       "type":"Replicate",
-      "bricks":[
+      "storage_units":[
         {
           "port":49254,
           "id":"34260614-5b5a-4c5f-9cbd-a5c84cc4ebed",
@@ -21,7 +21,7 @@
           "device":"-",
           "node":{
             "id":"8df0c1cd-9ac3-4343-89da-bfefb32493a1",
-            "hostname":"node1.kadalu",
+            "name":"node1.kadalu",
             "endpoint":"http://node1.kadalu:3001",
             "cluster_id":"",
             "token":""
@@ -36,7 +36,7 @@
           "device":"-",
           "node":{
             "id":"aff618f6-ff29-48d5-a815-fc8050abd2b7",
-            "hostname":"node2.kadalu",
+            "name":"node2.kadalu",
             "endpoint":"http://node2.kadalu:3001",
             "cluster_id":"",
             "token":""
@@ -51,7 +51,7 @@
           "device":"-",
           "node":{
             "id":"8df0c1cd-9ac3-4343-89da-bfefb32493a2",
-            "hostname":"node3.kadalu",
+            "name":"node3.kadalu",
             "endpoint":"http://node3.kadalu:3001",
             "cluster_id":"",
             "token":""
@@ -65,7 +65,7 @@
       "replica_count":3,
       "disperse_count":1,
       "type":"Replicate",
-      "bricks":[
+      "storage_units":[
         {
           "port":49254,
           "id":"34260614-5b5a-4c5f-9cbd-a5c84cc4ebe4",
@@ -73,7 +73,7 @@
           "device":"-",
           "node":{
             "id":"8df0c1cd-9ac3-4343-89da-bfefb32493a2",
-            "hostname":"node4.kadalu",
+            "name":"node4.kadalu",
             "endpoint":"http://node4.kadalu:3001",
             "cluster_id":"",
             "token":""
@@ -88,7 +88,7 @@
           "device":"-",
           "node":{
             "id":"aff618f6-ff29-48d5-a815-fc8050abd2b8",
-            "hostname":"node5.kadalu",
+            "name":"node5.kadalu",
             "endpoint":"http://node5.kadalu:3001",
             "cluster_id":"",
             "token":""
@@ -103,7 +103,7 @@
           "device":"-",
           "node":{
             "id":"8df0c1cd-9ac3-4343-89da-bfefb32493a4",
-            "hostname":"node6.kadalu",
+            "name":"node6.kadalu",
             "endpoint":"http://node6.kadalu:3001",
             "cluster_id":"",
             "token":""
