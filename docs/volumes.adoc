@@ -65,7 +65,7 @@ ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
 
 - By default, volumes are started on create. Use `--no-start` to override this behavior.
 - If the Storage unit path is not a mounted directory then use `--allow-root-partition` option (Not yet implemented). This is not an optimal setup since the Kadalu Volume can fill up the root partition or other applications can fill up Kadalu Volume.
-- To import a Volume, Use `--volume-id` option to set the Same Volume ID to the imported Volume (Not yet implemented).
+- To import a Volume, Use `--volume-id` option to set the Same Volume ID to the imported Volume. If required Volume ID to be reused is not saved, it can be found in server volfile or at storage unit path as extended attribute in hexadecimal format.
 +
 [source,console]
 ----
