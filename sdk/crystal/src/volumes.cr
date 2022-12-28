@@ -187,5 +187,20 @@ module StorageManager
         StorageManager.error_response(response)
       end
     end
+
+    def expand(volume : MoanaTypes::Volume)
+      url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes"
+
+      response = StorageManager.http_put(
+        url,
+        volume.to_json,
+        headers: @client.auth_header
+      )
+      if response.status_code == 201
+        MoanaTypes::Volume.from_json(response.body)
+      else
+        StorageManager.error_response(response)
+      end
+    end
   end
 end

@@ -13,6 +13,11 @@ module Datastore
     connection.exec(query, pool_id, node_id, service.id)
   end
 
+  def update_service(pool_id, node_id, service)
+    query = update_query("services", %w[unit], where: "pool_id = ? AND node_id = ? AND name = ?")
+    connection.exec(query, service.to_json, pool_id, node_id, service.id)
+  end
+
   def list_services(pool_id, node_id)
     query = "select unit FROM services WHERE pool_id = ? AND node_id = ?"
     units = connection.query_all(query, pool_id, node_id, as: String)

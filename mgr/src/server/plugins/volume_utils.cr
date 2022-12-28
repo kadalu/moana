@@ -14,6 +14,24 @@ TEST_XATTR_VALUE = "testvalue"
 VOLUME_ID_XATTR_NAME = "trusted.glusterfs.volume-id"
 
 alias VolumeRequestToNode = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, Array(MoanaTypes::Volfile)), MoanaTypes::Volume)
+alias ServiceRequestToNode = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)))
+
+ACTION_VALIDATE_VOLUME_CREATE = "validate_volume_create"
+ACTION_VOLUME_CREATE          = "volume_create"
+ACTION_VOLUME_CREATE_STOPPED  = "volume_create_stopped"
+
+node_action ACTION_VALIDATE_VOLUME_CREATE do |data, _env|
+  req = MoanaTypes::Volume.from_json(data)
+  validate_volume_create(req)
+end
+
+node_action ACTION_VOLUME_CREATE do |data, _env|
+  handle_volume_create(data, stopped: false)
+end
+
+node_action ACTION_VOLUME_CREATE_STOPPED do |data, _env|
+  handle_volume_create(data, stopped: true)
+end
 
 def volfile_get(name)
   # TODO: Add logic to read from the Templates directory
@@ -111,6 +129,19 @@ def validate_volume_create(req)
   NodeResponse.new(true, "")
 end
 
+def restart_shd_service(services)
+  unless services[GlobalConfig.local_node.id]?.nil?
+    services[GlobalConfig.local_node.id].each do |service|
+      svc = Service.from_json(service.to_json)
+      if svc.name == "shdservice"
+        svc.restart
+      end
+    end
+  end
+
+  NodeResponse.new(true, "")
+end
+
 def handle_node_volume_start_stop(data, action)
   services, volfiles, _ = VolumeRequestToNode.from_json(data)
 
@@ -185,12 +216,7 @@ def handle_volume_create(data, stopped = false)
     end
   end
 
-  unless volfiles[GlobalConfig.local_node.id]?.nil?
-    Dir.mkdir_p(Path.new(GlobalConfig.workdir, "volfiles"))
-    volfiles[GlobalConfig.local_node.id].each do |volfile|
-      File.write(Path.new(GlobalConfig.workdir, "volfiles", "#{volfile.name}.vol"), volfile.content)
-    end
-  end
+  save_volfiles(volfiles)
 
   unless services[GlobalConfig.local_node.id]?.nil?
     # TODO: Hard coded path change?
@@ -415,4 +441,41 @@ def set_volume_metrics(volume)
   volume.metrics.inodes_used_count = inodes_used_count
   volume.metrics.inodes_free_count = inodes_free_count
   volume.metrics.inodes_count = inodes_used_count + inodes_free_count
+end
+
+def save_volfiles(volfiles)
+  unless volfiles[GlobalConfig.local_node.id]?.nil?
+    Dir.mkdir_p(Path.new(GlobalConfig.workdir, "volfiles"))
+    volfiles[GlobalConfig.local_node.id].each do |volfile|
+      File.write(Path.new(GlobalConfig.workdir, "volfiles", "#{volfile.name}.vol"), volfile.content)
+    end
+  end
+end
+
+def sighup_processes(services)
+  # Send SIGHUP to all the processes (Storage Unit and SHD processes)
+  unless services[GlobalConfig.local_node.id]?.nil?
+    services[GlobalConfig.local_node.id].each do |service|
+      svc = Service.from_json(service.to_json)
+      svc.signal(Signal::HUP)
+    end
+  end
+end
+
+def combine_req_and_volume(req, volume)
+  rollback_volume = MoanaTypes::Volume.new
+
+  rollback_volume.id = volume.id
+  rollback_volume.name = volume.name
+  rollback_volume.state = volume.state
+  rollback_volume.pool = volume.pool
+  rollback_volume.volume_id = volume.volume_id
+
+  combined_volume_options = volume.options.merge(req.options).compact
+  rollback_volume.options = combined_volume_options
+
+  rollback_volume.distribute_groups.concat(volume.distribute_groups)
+  rollback_volume.distribute_groups.concat(req.distribute_groups)
+
+  rollback_volume
 end

@@ -307,3 +307,39 @@ handler "volume.rename" do |args|
     puts "Volume #{args.pool_name}/#{volume_name} renamed to #{new_pool_name}/#{new_volname} successfully!"
   end
 end
+
+command "volume.expand", "Kadalu Storage Volume Expand" do |parser, args|
+  parser.banner = "Usage: kadalu volume expand POOL/VOLNAME TYPE STORAGE_UNITS [arguments]"
+  parser.on("--auto-add-nodes", "Automatically add nodes to the Pool") do
+    args.volume_args.auto_add_nodes = true
+  end
+  parser.on("--node-map=NODEMAP", "Provide Node mapping while importing. Example: --node-map=\"server1.example.com=node1.example.com\"") do |node|
+    old_name, new_name = node.split("=")
+    args.volume_args.node_maps[old_name] = new_name
+  end
+end
+
+handler "volume.expand" do |args|
+  begin
+    command_error "Pool/Volname is required" if args.pos_args.size == 0
+    args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
+
+    req = VolumeRequestParser.parse(args.pos_args)
+
+    req.auto_add_nodes = args.volume_args.auto_add_nodes
+    args.pool_name = req.pool.name
+
+    api_call(args, "Failed to Expand Volume") do |client|
+      volume = client.pool(args.pool_name).volume(volume_name).expand(req)
+
+      handle_json_output(volume, args)
+
+      puts "Volume #{req.name} expanded successfully"
+      puts "ID: #{volume.id}"
+    end
+  rescue ex : InvalidVolumeRequest
+    STDERR.puts "Volume expand failed"
+    STDERR.puts ex
+    exit 1
+  end
+end

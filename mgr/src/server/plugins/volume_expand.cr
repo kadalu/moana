@@ -6,7 +6,16 @@ require "../datastore/*"
 require "./ping"
 require "./volume_utils.cr"
 
-post "/api/v1/pools/:pool_name/volumes" do |env|
+ACTION_RESTART_SHD_SERVICE_AND_SIGHUP_PROCESSES = "restart_shd_service_and_sighup_processes"
+
+node_action ACTION_RESTART_SHD_SERVICE_AND_SIGHUP_PROCESSES do |data, _env|
+  services, volfiles, _ = VolumeRequestToNode.from_json(data)
+  save_volfiles(volfiles)
+  sighup_processes(services)
+  restart_shd_service(services)
+end
+
+put "/api/v1/pools/:pool_name/volumes" do |env|
   pool_name = env.params.url["pool_name"]
 
   next forbidden(env) unless Datastore.maintainer?(env.user_id, pool_name)
@@ -15,36 +24,34 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
   req = MoanaTypes::Volume.from_json(env.request.body.not_nil!)
 
   volume = Datastore.get_volume(pool_name, req.name)
-  unless volume.nil?
-    halt(env, status_code: 400, response: ({"error": "Volume already exists"}.to_json))
+  if volume.nil?
+    halt(env, status_code: 400, response: ({"error": "The Volume (#{req.name}) doesn't exists"}.to_json))
   end
 
   pool = Datastore.get_pool(pool_name)
-  if pool.nil?
-    unless req.auto_create_pool
-      halt(env, status_code: 400, response: ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
+
+  req.id = volume.not_nil!.id
+
+  # Checks for types & storage unit coun mismatch
+  if volume.not_nil!.type != req.type
+    halt(env, status_code: 403, response: ({"error": "Volume type mismatch"}.to_json))
+  end
+
+  if (volume.not_nil!.distribute_groups.size % req.distribute_groups.size) != 0
+    halt(env, status_code: 403, response: ({"error": "Distribute group mismatch"}.to_json))
+  end
+
+  req.distribute_groups.each do |dist_grp_req|
+    volume.not_nil!.distribute_groups.each do |dist_grp_vol|
+      if dist_grp_req.replica_count != dist_grp_vol.replica_count
+        halt(env, status_code: 403, response: ({"error": "Replica count mismatch"}.to_json))
+      elsif dist_grp_req.disperse_count != dist_grp_vol.disperse_count
+        halt(env, status_code: 403, response: ({"error": "Disperse count mismatch"}.to_json))
+      elsif dist_grp_req.redundancy_count != dist_grp_vol.redundancy_count
+        halt(env, status_code: 403, response: ({"error": "Redundancy count mismatch"}.to_json))
+      end
     end
-
-    # If the user is not global maintainer, can't create a Pool
-    unless Datastore.maintainer?(env.user_id)
-      halt(env, status_code: 403, response: ({"error": "Forbidden"}.to_json))
-    end
-
-    pool = create_pool(pool_name)
   end
-
-  req.id = req.volume_id == "" ? UUID.random.to_s : req.volume_id
-
-  if req.volume_id != "" && !valid_uuid?(req.volume_id)
-    halt(env, status_code: 400, response: ({"error": "Volume ID does not match UUID format"}.to_json))
-  end
-
-  # To avoid creating existing volume with volume-id option
-  if req.volume_id != "" && Datastore.volume_exists_by_id?(pool.not_nil!.id, req.id)
-    halt(env, status_code: 400, response: ({"error": "Volume already exists with the given ID"}.to_json))
-  end
-
-  # TODO: Validate the request, dist count, storage_units count etc
 
   nodes = [] of MoanaTypes::Node
 
@@ -128,7 +135,7 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
   )
 
   if !resp.ok
-    halt(env, status_code: 400, response: node_errors("Invalid Volume create request", resp.node_responses).to_json)
+    halt(env, status_code: 400, response: node_errors("Invalid Volume expand request", resp.node_responses).to_json)
   end
 
   # Update Free Ports and reserve it
@@ -164,17 +171,20 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
     halt(env, status_code: 400, response: ({"error": "No free Port available in #{no_port_storage_node}"}).to_json)
   end
 
+  # Updating the DB before confirming of completion of all checks during,
+  # volume expansion might be troublesome to delete data from DB if the action fails.
+  # So combine existing & new vol_data required by volfile, services generation & volume create only.
+  rollback_volume = combine_req_and_volume(req, volume)
+
   # Generate Services and Volfiles if Volume to be started
-  services, volfiles = services_and_volfiles(req)
+  services, volfiles = services_and_volfiles(rollback_volume)
 
   action = ACTION_VOLUME_CREATE
-  req.state = "Started"
-  if req.no_start
+  req.state = volume.state
+  if volume.state != "Started"
     action = ACTION_VOLUME_CREATE_STOPPED
-    req.state = "Created"
   end
 
-  # Volume create action {req, services, volfiles}
   resp = dispatch_action(
     action,
     pool_name,
@@ -183,15 +193,7 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
   )
 
   if !resp.ok
-    halt(env, status_code: 400, response: node_errors("Failed to create Volume", resp.node_responses).to_json)
-  end
-
-  # Save Services details
-  services.each do |node_id, svcs|
-    svcs.each do |svc|
-      # Enable each Services
-      Datastore.enable_service(pool.not_nil!.id, node_id, svc)
-    end
+    halt(env, status_code: 400, response: node_errors("Failed to expand Volume", resp.node_responses).to_json)
   end
 
   storage_units = Hash(String, Hash(String, MoanaTypes::StorageUnit)).new
@@ -209,8 +211,35 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
 
   set_volume_metrics(req)
 
+  # Below node action is to be run in all nodes of expanded volume.
+  # After expansion of volume, volfiles will be changed with newer storage_units,
+  # Send new volfiles to save in all nodes & notify the glusterfsd process about,
+  # reloaded volfiles through sighup. Finally restart SHD process if exists.
+  nodes_part_of_pre_expand_volume = participating_nodes(pool_name, volume)
+  resp = dispatch_action(
+    ACTION_RESTART_SHD_SERVICE_AND_SIGHUP_PROCESSES,
+    pool_name,
+    nodes_part_of_pre_expand_volume.concat(nodes),
+    {services, volfiles, rollback_volume}.to_json
+  )
+
+  if !resp.ok
+    halt(env, status_code: 400, response: node_errors("Failed to restart SHD service", resp.node_responses).to_json)
+  end
+
   # Save Volume info
-  Datastore.create_volume(pool.not_nil!.id, req)
+  Datastore.update_volume(pool.not_nil!.id, req, volume.not_nil!.distribute_groups.size)
+
+  # Save Services details. If service already exist, update with newer details
+  services.each do |node_id, svcs|
+    svcs.each do |svc|
+      begin
+        Datastore.enable_service(pool.not_nil!.id, node_id, svc)
+      rescue ex : Exception
+        Datastore.update_service(pool.not_nil!.id, node_id, svc)
+      end
+    end
+  end
 
   env.response.status_code = 201
   req.to_json

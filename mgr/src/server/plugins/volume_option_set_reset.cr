@@ -11,21 +11,8 @@ ACTION_VOLUME_OPTION_CHANGE = "volume_option_change"
 node_action ACTION_VOLUME_OPTION_CHANGE do |data, _env|
   services, volfiles, _ = VolumeRequestToNode.from_json(data)
 
-  # Save all newly generated Volfiles
-  if !volfiles[GlobalConfig.local_node.id]?.nil?
-    Dir.mkdir_p(Path.new(GlobalConfig.workdir, "volfiles"))
-    volfiles[GlobalConfig.local_node.id].each do |volfile|
-      File.write(Path.new(GlobalConfig.workdir, "volfiles", "#{volfile.name}.vol"), volfile.content)
-    end
-  end
-
-  # Send SIGHUP to all the processes (Storage Unit and SHD processes)
-  unless services[GlobalConfig.local_node.id]?.nil?
-    services[GlobalConfig.local_node.id].each do |service|
-      svc = Service.from_json(service.to_json)
-      svc.signal(Signal::HUP)
-    end
-  end
+  save_volfiles(volfiles)
+  sighup_processes(services)
 
   NodeResponse.new(true, "")
 end
