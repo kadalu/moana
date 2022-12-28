@@ -9,3 +9,5 @@
     - title: Pools
     - title: Volumes
     - title: FAQs
+  tutorials:
+    - title: Cron-based config backup

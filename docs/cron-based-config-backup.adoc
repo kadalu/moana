@@ -1,0 +1,66 @@
+= Cron-based Kadalu Storage configurations backup
+
+Kadalu Storage manager node contains all the cluster configuration data. All other nodes of the Cluster are agent nodes that interact with the Manager node. Downtime of Manager node has no impact on mounted Volumes/IO. But not possible to change the Volume configurations or create or manage new Volumes. Even though it is not critical for the Volume availability, it is very important to backup the Cluster configurations frequently for disaster management and recovery.
+
+link:config-snapshots.adoc[Config Snapshots] feature allows Admins to backup the configurations and restore in case of disaster.
+
+Login to the Manager node (Run `kadalu info` to know which node is Manager node) and schedule hourly jobs (or as needed) to backup and upload the configuration data to your backup node or S3. Reduce the backup interval when required.
+
+Use a predictable name when rolling backup is required. The below example shows hourly backup. On each day, it replaces the same hour backup of the previous day.
+
+----
+name=`date +%H`
+kadalu config-snapshot create hourly-${name} --overwrite
+cd /var/lib/kadalu/config-snapshots && tar cvzf hourly-${name}.tar.gz hourly-${name}/
+kadalu config-snapshot delete hourly-${name}
+----
+
+Upload the backup to the remote server,
+
+----
+scp /var/lib/kadalu/config-snapshots/hourly-${name}.tar.gz remote@backup_server:/backups/
+----
+
+Or upload the backup to S3
+
+----
+aws s3 cp /var/lib/kadalu/config-snapshots/hourly-${name}.tar.gz s3://mybucket/${name}.tar.gz
+----
+
+For daily backups, use `name=`date +%d``.
+
+If the Storage manager node goes down and if it needs a new replacement node, then restore the Kadalu Storage configuration data from the latest available backup.
+
+Download the latest available backup and run the following example commands.
+
+----
+cd /root/backups
+tar xvfz hourly-19.tar.gz
+kadalu config-snapshot restore hourly-19 --from-dir=/root/backups
+----
+
+Example shell script (`kadalu_backup_script.sh`),
+
+[source,bash]
+----
+#!/bin/bash -x
+
+set -e
+
+name=`date +%H`
+kadalu config-snapshot create hourly-${name} --overwrite
+cd /var/lib/kadalu/config-snapshots && tar cvzf hourly-${name}.tar.gz hourly-${name}/
+kadalu config-snapshot delete hourly-${name}
+aws s3 cp /var/lib/kadalu/config-snapshots/hourly-${name}.tar.gz s3://mybucket/${name}.tar.gz
+----
+
+----
+$ chmod +x kadalu_backup_script.sh
+----
+
+Login to the manager node and edit the crontab by running `crontab -e` and add the following line.
+
+[source,crontab]
+----
+0 0 * * * /path/to/kadalu_backup_script.sh
+----
