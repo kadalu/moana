@@ -28,7 +28,7 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
     halt(env, status_code: 400, response: ({"error": "The Volume (#{req.name}) doesn't exists"}.to_json))
   end
 
-  pool = Datastore.get_pool(pool_name)
+  pool = volume.not_nil!.pool
 
   req.id = volume.not_nil!.id
 
@@ -211,15 +211,19 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
 
   set_volume_metrics(req)
 
+  existing_nodes = participating_nodes(pool_name, volume)
+
+  # Remove duplicated node objects to avoid multiple node_actions to same node.
+  all_unique_nodes = (existing_nodes + nodes).uniq(&.id)
+
   # Below node action is to be run in all nodes of expanded volume.
   # After expansion of volume, volfiles will be changed with newer storage_units,
   # Send new volfiles to save in all nodes & notify the glusterfsd process about,
   # reloaded volfiles through sighup. Finally restart SHD process if exists.
-  nodes_part_of_pre_expand_volume = participating_nodes(pool_name, volume)
   resp = dispatch_action(
     ACTION_RESTART_SHD_SERVICE_AND_SIGHUP_PROCESSES,
     pool_name,
-    nodes_part_of_pre_expand_volume.concat(nodes),
+    all_unique_nodes,
     {services, volfiles, rollback_volume}.to_json
   )
 
@@ -241,6 +245,8 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
     end
   end
 
-  env.response.status_code = 201
-  req.to_json
+  env.response.status_code = 200
+
+  updated_volume = Datastore.get_volume(pool_name, req.name)
+  updated_volume.to_json
 end

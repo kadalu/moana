@@ -196,7 +196,7 @@ module StorageManager
         volume.to_json,
         headers: @client.auth_header
       )
-      if response.status_code == 201
+      if response.status_code == 200
         MoanaTypes::Volume.from_json(response.body)
       else
         StorageManager.error_response(response)
