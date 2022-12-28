@@ -9,5 +9,6 @@
     - title: Pools
     - title: Volumes
     - title: FAQs
-  tutorials:
+- section: Tutorials
+  chapters:
     - title: Cron-based config backup
