@@ -64,6 +64,11 @@ module Action
           node.id == "" ? node.name : node.id,
           NodeResponse.new(false, {"error": "Node is not reachable"}.to_json)
         )
+      rescue Socket::Addrinfo::Error
+        resp.set_node_response(
+          node.id == "" ? node.name : node.id,
+          NodeResponse.new(false, {"error": "Hostname lookup failed for node #{node.name}"}.to_json)
+        )
       end
     end
 
