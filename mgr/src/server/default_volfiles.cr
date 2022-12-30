@@ -34,6 +34,8 @@ volume:
     type: meta
   - type: debug/io-stats
     name: "{{ volume.name }}"
+    options:
+      volume-id: "{{ volume.id }}"
   - type: "performance/write-behind"
     name: "{{ volume.name }}-write-behind"
   - type: "features/utime"
