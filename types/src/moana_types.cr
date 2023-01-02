@@ -240,4 +240,23 @@ module MoanaTypes
     def initialize
     end
   end
+
+  struct MigrateDataRebalanceStatus
+    include JSON::Serializable
+
+    property complete = false, progress = 0, scanned_bytes = 0_i64,
+      total_bytes = 0_i64, duration_seconds = 0, estimate_seconds = 0
+
+    def initialize
+    end
+  end
+
+  struct FixLayoutRebalanceStatus
+    include JSON::Serializable
+
+    property complete = false, total_dirs = 0, duration_seconds = 0
+
+    def initialize
+    end
+  end
 end
