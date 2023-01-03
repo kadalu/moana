@@ -7,12 +7,17 @@ require "./ping"
 require "./volume_utils.cr"
 
 ACTION_RESTART_SHD_SERVICE_AND_SIGHUP_PROCESSES = "restart_shd_service_and_sighup_processes"
+ACTION_START_FIX_LAYOUT_SERVICE                 = "start_fix_layout_service"
 
 node_action ACTION_RESTART_SHD_SERVICE_AND_SIGHUP_PROCESSES do |data, _env|
   services, volfiles, _ = VolumeRequestToNode.from_json(data)
   save_volfiles(volfiles)
   sighup_processes(services)
   restart_shd_service(services)
+end
+
+node_action ACTION_START_FIX_LAYOUT_SERVICE do |data, _env|
+  start_fix_layout_service(data)
 end
 
 put "/api/v1/pools/:pool_name/volumes" do |env|
@@ -162,6 +167,22 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
   )
 
   api_exception(!resp.ok, node_errors("Failed to restart SHD service", resp.node_responses).to_json)
+
+  # Add only the first node for fix-layout service
+  services = add_fix_layout_service(services, pool.not_nil!.name, req.name, nodes[0],
+    volume.not_nil!.distribute_groups[0].storage_units[0])
+  first_node = [] of MoanaTypes::Node
+  first_node.push(nodes[0])
+  resp = dispatch_action(
+    ACTION_START_FIX_LAYOUT_SERVICE,
+    pool_name,
+    first_node,
+    {services, volfiles, req}.to_json
+  )
+
+  if !resp.ok
+    halt(env, status_code: 400, response: node_errors("Failed to start fix-layout service", resp.node_responses).to_json)
+  end
 
   # Save Volume info
   Datastore.update_volume(pool.not_nil!.id, req, volume.not_nil!.distribute_groups.size)

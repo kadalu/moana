@@ -518,3 +518,32 @@ def validate_and_add_nodes(pool, req)
 
   nodes
 end
+
+def add_fix_layout_service(services, pool_name, volume_name, node, storage_unit)
+  # ports = Datastore.reserved_ports(pool_id, node.id)
+
+  # volfile_servers = [] of String
+  # ports.each do |port|
+  #   volfile_servers.push("#{node_name}:#{port}")
+  # end
+
+  service = FixLayoutService.new(pool_name, volume_name, storage_unit)
+  services[node.id] << service.unit
+
+  services
+end
+
+def start_fix_layout_service(data)
+  services, _, _ = VolumeRequestToNode.from_json(data)
+
+  unless services[GlobalConfig.local_node.id]?.nil?
+    services[GlobalConfig.local_node.id].each do |service|
+      svc = Service.from_json(service.to_json)
+      if svc.name == "fixlayoutservice"
+        svc.start
+      end
+    end
+  end
+
+  NodeResponse.new(true, "")
+end
