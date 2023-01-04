@@ -22,9 +22,8 @@ get "/api/v1/pools/:pool_name/volumes/:volume_name/volfiles/:volfile_name" do |e
   storage_unit = env.params.query["storage_unit"]?
 
   volume = Datastore.get_volume(pool_name, volume_name)
-  unless volume
-    halt(env, status_code: 400, response: ({"error": "Invalid Volume name"}.to_json))
-  end
+  api_exception(volume.nil?, ({"error": "Invalid Volume name"}.to_json))
+  volume = volume.not_nil!
 
   tmpl = volfile_get(volfile_name)
   content = if storage_unit

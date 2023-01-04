@@ -41,6 +41,17 @@ def internal_api_or_ping?(path)
   path.starts_with?("/_api") || path == "/ping"
 end
 
+class ApiExceptionHandler < Kemal::Handler
+  def call(env)
+    call_next env
+  rescue ex : ApiException
+    env.response.content_type = "application/json"
+    env.response.status_code = ex.status_code
+    env.response.print ex.response
+    env.response.close
+  end
+end
+
 class MgrRequestsProxyHandler < Kemal::Handler
   def call(env)
     # No proxy required if

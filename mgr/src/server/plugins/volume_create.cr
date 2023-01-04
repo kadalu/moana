@@ -9,102 +9,45 @@ require "./volume_utils.cr"
 post "/api/v1/pools/:pool_name/volumes" do |env|
   pool_name = env.params.url["pool_name"]
 
-  next forbidden(env) unless Datastore.maintainer?(env.user_id, pool_name)
+  forbidden_api_exception(!Datastore.maintainer?(env.user_id, pool_name))
 
   # TODO: Validate if env.request.body.nil?
   req = MoanaTypes::Volume.from_json(env.request.body.not_nil!)
 
   volume = Datastore.get_volume(pool_name, req.name)
-  unless volume.nil?
-    halt(env, status_code: 400, response: ({"error": "Volume already exists"}.to_json))
-  end
+  api_exception(!volume.nil?, ({"error": "Volume already exists"}.to_json))
 
   pool = Datastore.get_pool(pool_name)
   if pool.nil?
-    unless req.auto_create_pool
-      halt(env, status_code: 400, response: ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
-    end
+    api_exception(!req.auto_create_pool, ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
 
     # If the user is not global maintainer, can't create a Pool
-    unless Datastore.maintainer?(env.user_id)
-      halt(env, status_code: 403, response: ({"error": "Forbidden"}.to_json))
-    end
+    forbidden_api_exception(!Datastore.maintainer?(env.user_id))
 
     pool = create_pool(pool_name)
   end
 
   req.id = req.volume_id == "" ? UUID.random.to_s : req.volume_id
 
-  if req.volume_id != "" && !valid_uuid?(req.volume_id)
-    halt(env, status_code: 400, response: ({"error": "Volume ID does not match UUID format"}.to_json))
-  end
+  api_exception(
+    req.volume_id != "" && !valid_uuid?(req.volume_id),
+    ({"error": "Volume ID does not match UUID format"}.to_json)
+  )
 
   # To avoid creating existing volume with volume-id option
-  if req.volume_id != "" && Datastore.volume_exists_by_id?(pool.not_nil!.id, req.id)
-    halt(env, status_code: 400, response: ({"error": "Volume already exists with the given ID"}.to_json))
-  end
+  api_exception(
+    req.volume_id != "" && Datastore.volume_exists_by_id?(pool.not_nil!.id, req.id),
+    ({"error": "Volume already exists with the given ID"}.to_json)
+  )
 
   # TODO: Validate the request, dist count, storage_units count etc
 
-  nodes = [] of MoanaTypes::Node
-
-  # Validate if the nodes are part of the Pool
-  # Also fetch the full node details
-  invalid_node = false
-  invalid_node_name = ""
-  invalid_reason = ""
-  participating_nodes(pool_name, req).each do |n|
-    node = Datastore.get_node(pool_name, n.name)
-    if node.nil?
-      if req.auto_add_nodes
-        endpoint = node_endpoint(n.name)
-        invite = node_invite(pool_name, n.name, endpoint)
-
-        participating_node = MoanaTypes::Node.new
-        participating_node.endpoint = endpoint
-        participating_node.name = n.name
-
-        resp = dispatch_action(
-          ACTION_NODE_INVITE_ACCEPT,
-          pool_name,
-          [participating_node],
-          invite.to_json
-        )
-
-        if !resp.ok
-          invalid_reason = resp.node_responses[n.name].response
-          invalid_node = true
-          invalid_node_name = n.name
-          break
-        end
-
-        node = MoanaTypes::Node.from_json(resp.node_responses[n.name].response)
-        node.endpoint = endpoint
-        Datastore.create_node(pool.not_nil!.id, node.id, n.name, endpoint, node.token, invite.mgr_token)
-      end
-
-      if node.nil?
-        invalid_node = true
-        invalid_node_name = n.name
-        break
-      end
-    end
-
-    nodes << node
-  end
-
-  if invalid_node
-    invalid_reason = invalid_reason == "" ? "Node #{invalid_node_name} is not part of the Pool" : invalid_reason
-    halt(env, status_code: 400, response: ({"error": invalid_reason}.to_json))
-  end
-
+  nodes = validate_and_add_nodes(pool.not_nil!, req)
   node_details_add_to_volume(req, nodes)
 
   # Validate if all the nodes are reachable.
   resp = dispatch_action(ACTION_PING, pool_name, nodes, "")
-  if !resp.ok
-    halt(env, status_code: 400, response: node_errors("Not all participant nodes are reachable", resp.node_responses).to_json)
-  end
+  api_exception(!resp.ok, node_errors("Not all participant nodes are reachable", resp.node_responses).to_json)
 
   # If User specified the Port in the request then validate if
   # the port is already used.
@@ -113,8 +56,7 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
       next if storage_unit.port == 0
 
       unless Datastore.port_available?(pool.not_nil!.id, storage_unit.node.id, storage_unit.port)
-        # TODO: Move this halt out of the loop
-        halt(env, status_code: 400, response: ({"error": "Port is already used(#{storage_unit.node.name}:#{storage_unit.port})"}).to_json)
+        api_exception(true, ({"error": "Port is already used(#{storage_unit.node.name}:#{storage_unit.port})"}).to_json)
       end
     end
   end
@@ -127,15 +69,11 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
     req.to_json
   )
 
-  if !resp.ok
-    halt(env, status_code: 400, response: node_errors("Invalid Volume create request", resp.node_responses).to_json)
-  end
+  api_exception(!resp.ok, node_errors("Invalid Volume create request", resp.node_responses).to_json)
 
   # Update Free Ports and reserve it
   # Also generate Brick ID
   # TODO: Update Brick type
-  no_port_available = false
-  no_port_storage_node = ""
   req.distribute_groups.each do |dist_grp|
     dist_grp.storage_units.each do |storage_unit|
       storage_unit.id = UUID.random.to_s
@@ -146,22 +84,10 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
       end
 
       # No free port found
-      if storage_unit.port == 0
-        # Using halt directly from here will not work. Since it adds `next`
-        # and it just breaks the Storage_unit loop
-        no_port_available = true
-        no_port_storage_node = storage_unit.node.name
-        break
-      end
+      api_exception(storage_unit.port == 0, ({"error": "No free Port available in #{storage_unit.node.name}"}).to_json)
 
       Datastore.reserve_port(pool.not_nil!.id, storage_unit.node.id, storage_unit.port)
     end
-
-    break if no_port_available
-  end
-
-  if no_port_available
-    halt(env, status_code: 400, response: ({"error": "No free Port available in #{no_port_storage_node}"}).to_json)
   end
 
   # Generate Services and Volfiles if Volume to be started
@@ -182,9 +108,7 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
     {services, volfiles, req}.to_json
   )
 
-  if !resp.ok
-    halt(env, status_code: 400, response: node_errors("Failed to create Volume", resp.node_responses).to_json)
-  end
+  api_exception(!resp.ok, node_errors("Failed to create Volume", resp.node_responses).to_json)
 
   # Save Services details
   services.each do |node_id, svcs|

@@ -89,21 +89,17 @@ post "/api/v1/pools/:pool_name/volumes/:volume_name/heal/start" do |env|
   pool_name = env.params.url["pool_name"]
   volume_name = env.params.url["volume_name"]
 
-  next forbidden(env) unless Datastore.maintainer?(env.user_id, pool_name)
+  forbidden_api_exception(!Datastore.maintainer?(env.user_id, pool_name))
 
   pool = Datastore.get_pool(pool_name)
-  if pool.nil?
-    halt(env, status_code: 400, response: ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
-  end
+  api_exception(pool.nil?, ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
 
   volume = Datastore.get_volume(pool_name, volume_name)
-  if volume.nil?
-    halt(env, status_code: 400, response: ({"error": "The Volume(#{volume_name}) doesn't exists"}.to_json))
-  end
+  api_exception(volume.nil?, ({"error": "The Volume(#{volume_name}) doesn't exists"}.to_json))
 
-  if !volume.replicate_family?
-    halt(env, status_code: 400, response: ({"error": "Cannot heal Volume(#{volume_name}). It is non replicated or dispersed"}.to_json))
-  end
+  volume = volume.not_nil!
+
+  api_exception(!volume.replicate_family?, ({"error": "Cannot heal Volume(#{volume_name}). It is non replicated or dispersed"}.to_json))
 
   client_volfile = "/var/lib/kadalu/volfiles/client-dev-#{volume_name}.vol"
 
@@ -117,9 +113,7 @@ post "/api/v1/pools/:pool_name/volumes/:volume_name/heal/start" do |env|
 
   rc, output, err = execute(glfsheal_path, ["vol1", "--xml", "volfile-path", client_volfile])
 
-  if rc < 0
-    halt(env, status_code: 400, response: ({"error": err}.to_json))
-  end
+  api_exception(rc < 0, ({"error": err}.to_json))
 
   document = XML.parse(output)
 
@@ -134,21 +128,20 @@ get "/api/v1/pools/:pool_name/volumes/:volume_name/heal" do |env|
   pool_name = env.params.url["pool_name"]
   volume_name = env.params.url["volume_name"]
 
-  next forbidden(env) unless Datastore.maintainer?(env.user_id, pool_name)
+  forbidden_api_exception(!Datastore.maintainer?(env.user_id, pool_name))
 
   pool = Datastore.get_pool(pool_name)
-  if pool.nil?
-    halt(env, status_code: 400, response: ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
-  end
+  api_exception(pool.nil?, ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
 
   volume = Datastore.get_volume(pool_name, volume_name)
-  if volume.nil?
-    halt(env, status_code: 400, response: ({"error": "The Volume(#{volume_name}) doesn't exists"}.to_json))
-  end
+  api_exception(volume.nil?, ({"error": "The Volume(#{volume_name}) doesn't exists"}.to_json))
 
-  if !volume.replicate_family?
-    halt(env, status_code: 400, response: ({"error": "Cannot heal Volume(#{volume_name}). It is non replicated or dispersed"}.to_json))
-  end
+  volume = volume.not_nil!
+
+  api_exception(
+    !volume.replicate_family?,
+    ({"error": "Cannot heal Volume(#{volume_name}). It is non replicated or dispersed"}.to_json)
+  )
 
   client_volfile = "/var/lib/kadalu/volfiles/client-dev-#{volume_name}.vol"
 
@@ -162,9 +155,7 @@ get "/api/v1/pools/:pool_name/volumes/:volume_name/heal" do |env|
 
   rc, output, err = execute(glfsheal_path, ["vol1", "info-summary", "--xml", "volfile-path", client_volfile])
 
-  if rc < 0
-    halt(env, status_code: 400, response: ({"error": err}.to_json))
-  end
+  api_exception(rc < 0, ({"error": err}.to_json))
 
   document = XML.parse(output)
 
