@@ -21,20 +21,15 @@ def volume_start_stop(env, action)
   pool_name = env.params.url["pool_name"]
   volume_name = env.params.url["volume_name"]
 
-  return forbidden(env) unless Datastore.maintainer?(env.user_id, pool_name, volume_name)
+  forbidden_api_exception(!Datastore.maintainer?(env.user_id, pool_name, volume_name))
 
   pool = Datastore.get_pool(pool_name)
-  if pool.nil?
-    env.response.status_code = 400
-    return {"error": "The Pool(#{pool_name}) doesn't exists"}.to_json
-  end
+  api_exception(pool.nil?, {"error": "The Pool(#{pool_name}) doesn't exists"}.to_json)
+  pool = pool.not_nil!
 
   volume = Datastore.get_volume(pool_name, volume_name)
-
-  if volume.nil?
-    env.response.status_code = 400
-    return {"error": "Volume doesn't exists"}.to_json
-  end
+  api_exception(volume.nil?, {"error": "Volume doesn't exists"}.to_json)
+  volume = volume.not_nil!
 
   return volume.to_json if action == "stop" && volume.state == "Stopped"
 
@@ -53,10 +48,7 @@ def volume_start_stop(env, action)
     {services, volfiles, volume}.to_json
   )
 
-  if !resp.ok
-    env.response.status_code = 400
-    return node_errors("Failed to #{action} the Volume", resp.node_responses).to_json
-  end
+  api_exception(!resp.ok, node_errors("Failed to #{action} the Volume", resp.node_responses).to_json)
 
   # Save Services details
   services.each do |node_id, svcs|

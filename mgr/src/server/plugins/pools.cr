@@ -15,20 +15,14 @@ end
 post "/api/v1/pools" do |env|
   name = env.params.json["name"].as(String)
 
-  if Datastore.agent?
-    # TODO: Reroute request to the Storage Manager
-    halt(env, status_code: 400, response: ({"error": "Agent doesn't handle requests"}.to_json))
-  end
+  # TODO: Reroute request to the Storage Manager
+  api_exception(Datastore.agent?, ({"error": "Agent doesn't handle requests"}.to_json))
 
-  unless Datastore.maintainer?(env.user_id, "all")
-    halt(env, status_code: 403, response: ({"error": "Forbidden"}.to_json))
-  end
+  forbidden_api_exception(!Datastore.maintainer?(env.user_id, "all"))
 
   pool = Datastore.get_pool(name)
 
-  unless pool.nil?
-    halt(env, status_code: 400, response: ({"error": "Pool already exists"}.to_json))
-  end
+  api_exception(!pool.nil?, ({"error": "Pool already exists"}.to_json))
 
   # TODO: Pool name validations
   env.response.status_code = 201
@@ -50,16 +44,13 @@ end
 delete "/api/v1/pools/:pool_name" do |env|
   pool_name = env.params.url["pool_name"]
 
-  next forbidden(env) unless Datastore.admin?(env.user_id, pool_name)
+  forbidden_api_exception(!Datastore.admin?(env.user_id, pool_name))
 
   pool = Datastore.get_pool(pool_name)
-  if pool.nil?
-    halt(env, status_code: 400, response: ({"error": "Pool does not exist"}.to_json))
-  end
+  api_exception(pool.nil?, ({"error": "Pool does not exist"}.to_json))
+  pool = pool.not_nil!
 
-  if Datastore.nodes_in_pool?(pool.id)
-    halt(env, status_code: 400, response: ({"error": "One or more nodes are part of this pool"}.to_json))
-  end
+  api_exception(Datastore.nodes_in_pool?(pool.id), ({"error": "One or more nodes are part of this pool"}.to_json))
 
   Datastore.delete_pool(pool.id)
 
@@ -70,16 +61,13 @@ post "/api/v1/pools/:pool_name/rename" do |env|
   name = env.params.url["pool_name"].as(String)
   new_pool_name = env.params.json["new_pool_name"].as(String)
 
-  next forbidden(env) unless Datastore.admin?(env.user_id, name)
+  forbidden_api_exception(!Datastore.admin?(env.user_id, name))
 
   pool = Datastore.get_pool(name)
-  if pool.nil?
-    halt(env, status_code: 400, response: ({"error": "Pool does not exist"}.to_json))
-  end
+  api_exception(pool.nil?, ({"error": "Pool does not exist"}.to_json))
+  pool = pool.not_nil!
 
-  if name == new_pool_name
-    halt(env, status_code: 400, response: ({"error": "Existing & New pool names are the same!"}.to_json))
-  end
+  api_exception(name == new_pool_name, ({"error": "Existing & New pool names are the same!"}.to_json))
 
   Datastore.rename_pool_name(pool.id, new_pool_name)
 

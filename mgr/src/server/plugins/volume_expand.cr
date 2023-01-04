@@ -18,100 +18,52 @@ end
 put "/api/v1/pools/:pool_name/volumes" do |env|
   pool_name = env.params.url["pool_name"]
 
-  next forbidden(env) unless Datastore.maintainer?(env.user_id, pool_name)
+  forbidden_api_exception(!Datastore.maintainer?(env.user_id, pool_name))
 
   # TODO: Validate if env.request.body.nil?
   req = MoanaTypes::Volume.from_json(env.request.body.not_nil!)
 
   volume = Datastore.get_volume(pool_name, req.name)
-  if volume.nil?
-    halt(env, status_code: 400, response: ({"error": "The Volume (#{req.name}) doesn't exists"}.to_json))
-  end
+  api_exception(volume.nil?, ({"error": "The Volume (#{req.name}) doesn't exists"}.to_json))
 
-  pool = volume.not_nil!.pool
+  volume = volume.not_nil!
+  pool = volume.pool
 
   req.id = volume.not_nil!.id
 
   # Checks for types & storage unit coun mismatch
-  if volume.not_nil!.type != req.type
-    halt(env, status_code: 403, response: ({"error": "Volume type mismatch"}.to_json))
-  end
+  api_exception(volume.not_nil!.type != req.type, ({"error": "Volume type mismatch"}.to_json))
 
-  if (volume.not_nil!.distribute_groups.size % req.distribute_groups.size) != 0
-    halt(env, status_code: 403, response: ({"error": "Distribute group mismatch"}.to_json))
-  end
+  api_exception(
+    (volume.not_nil!.distribute_groups.size % req.distribute_groups.size) != 0,
+    ({"error": "Distribute group mismatch"}.to_json)
+  )
 
   req.distribute_groups.each do |dist_grp_req|
     volume.not_nil!.distribute_groups.each do |dist_grp_vol|
-      if dist_grp_req.replica_count != dist_grp_vol.replica_count
-        halt(env, status_code: 403, response: ({"error": "Replica count mismatch"}.to_json))
-      elsif dist_grp_req.disperse_count != dist_grp_vol.disperse_count
-        halt(env, status_code: 403, response: ({"error": "Disperse count mismatch"}.to_json))
-      elsif dist_grp_req.redundancy_count != dist_grp_vol.redundancy_count
-        halt(env, status_code: 403, response: ({"error": "Redundancy count mismatch"}.to_json))
-      end
+      api_exception(
+        dist_grp_req.replica_count != dist_grp_vol.replica_count,
+        ({"error": "Replica count mismatch"}.to_json)
+      )
+
+      api_exception(
+        dist_grp_req.disperse_count != dist_grp_vol.disperse_count,
+        ({"error": "Disperse count mismatch"}.to_json)
+      )
+
+      api_exception(
+        dist_grp_req.redundancy_count != dist_grp_vol.redundancy_count,
+        ({"error": "Redundancy count mismatch"}.to_json)
+      )
     end
   end
 
-  nodes = [] of MoanaTypes::Node
-
-  # Validate if the nodes are part of the Pool
-  # Also fetch the full node details
-  invalid_node = false
-  invalid_node_name = ""
-  invalid_reason = ""
-  participating_nodes(pool_name, req).each do |n|
-    node = Datastore.get_node(pool_name, n.name)
-    if node.nil?
-      if req.auto_add_nodes
-        endpoint = node_endpoint(n.name)
-        invite = node_invite(pool_name, n.name, endpoint)
-
-        participating_node = MoanaTypes::Node.new
-        participating_node.endpoint = endpoint
-        participating_node.name = n.name
-
-        resp = dispatch_action(
-          ACTION_NODE_INVITE_ACCEPT,
-          pool_name,
-          [participating_node],
-          invite.to_json
-        )
-
-        if !resp.ok
-          invalid_reason = resp.node_responses[n.name].response
-          invalid_node = true
-          invalid_node_name = n.name
-          break
-        end
-
-        node = MoanaTypes::Node.from_json(resp.node_responses[n.name].response)
-        node.endpoint = endpoint
-        Datastore.create_node(pool.not_nil!.id, node.id, n.name, endpoint, node.token, invite.mgr_token)
-      end
-
-      if node.nil?
-        invalid_node = true
-        invalid_node_name = n.name
-        break
-      end
-    end
-
-    nodes << node
-  end
-
-  if invalid_node
-    invalid_reason = invalid_reason == "" ? "Node #{invalid_node_name} is not part of the Pool" : invalid_reason
-    halt(env, status_code: 400, response: ({"error": invalid_reason}.to_json))
-  end
-
+  nodes = validate_and_add_nodes(pool.not_nil!, req)
   node_details_add_to_volume(req, nodes)
 
   # Validate if all the nodes are reachable.
   resp = dispatch_action(ACTION_PING, pool_name, nodes, "")
-  if !resp.ok
-    halt(env, status_code: 400, response: node_errors("Not all participant nodes are reachable", resp.node_responses).to_json)
-  end
+  api_exception(!resp.ok, node_errors("Not all participant nodes are reachable", resp.node_responses).to_json)
 
   # If User specified the Port in the request then validate if
   # the port is already used.
@@ -119,10 +71,10 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
     dist_grp.storage_units.each do |storage_unit|
       next if storage_unit.port == 0
 
-      unless Datastore.port_available?(pool.not_nil!.id, storage_unit.node.id, storage_unit.port)
-        # TODO: Move this halt out of the loop
-        halt(env, status_code: 400, response: ({"error": "Port is already used(#{storage_unit.node.name}:#{storage_unit.port})"}).to_json)
-      end
+      api_exception(
+        !Datastore.port_available?(pool.not_nil!.id, storage_unit.node.id, storage_unit.port),
+        ({"error": "Port is already used(#{storage_unit.node.name}:#{storage_unit.port})"}).to_json
+      )
     end
   end
 
@@ -134,15 +86,11 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
     req.to_json
   )
 
-  if !resp.ok
-    halt(env, status_code: 400, response: node_errors("Invalid Volume expand request", resp.node_responses).to_json)
-  end
+  api_exception(!resp.ok, node_errors("Invalid Volume expand request", resp.node_responses).to_json)
 
   # Update Free Ports and reserve it
   # Also generate Brick ID
   # TODO: Update Brick type
-  no_port_available = false
-  no_port_storage_node = ""
   req.distribute_groups.each do |dist_grp|
     dist_grp.storage_units.each do |storage_unit|
       storage_unit.id = UUID.random.to_s
@@ -153,28 +101,16 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
       end
 
       # No free port found
-      if storage_unit.port == 0
-        # Using halt directly from here will not work. Since it adds `next`
-        # and it just breaks the Storage_unit loop
-        no_port_available = true
-        no_port_storage_node = storage_unit.node.name
-        break
-      end
+      api_exception(storage_unit.port == 0, ({"error": "No free Port available in #{storage_unit.node.name}"}).to_json)
 
       Datastore.reserve_port(pool.not_nil!.id, storage_unit.node.id, storage_unit.port)
     end
-
-    break if no_port_available
-  end
-
-  if no_port_available
-    halt(env, status_code: 400, response: ({"error": "No free Port available in #{no_port_storage_node}"}).to_json)
   end
 
   # Updating the DB before confirming of completion of all checks during,
   # volume expansion might be troublesome to delete data from DB if the action fails.
   # So combine existing & new vol_data required by volfile, services generation & volume create only.
-  rollback_volume = combine_req_and_volume(req, volume)
+  rollback_volume = combine_req_and_volume(req, volume.not_nil!)
 
   # Generate Services and Volfiles if Volume to be started
   services, volfiles = services_and_volfiles(rollback_volume)
@@ -192,9 +128,7 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
     {services, volfiles, req}.to_json
   )
 
-  if !resp.ok
-    halt(env, status_code: 400, response: node_errors("Failed to expand Volume", resp.node_responses).to_json)
-  end
+  api_exception(!resp.ok, node_errors("Failed to expand Volume", resp.node_responses).to_json)
 
   storage_units = Hash(String, Hash(String, MoanaTypes::StorageUnit)).new
   resp.node_responses.each do |node, node_resp|
@@ -227,9 +161,7 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
     {services, volfiles, rollback_volume}.to_json
   )
 
-  if !resp.ok
-    halt(env, status_code: 400, response: node_errors("Failed to restart SHD service", resp.node_responses).to_json)
-  end
+  api_exception(!resp.ok, node_errors("Failed to restart SHD service", resp.node_responses).to_json)
 
   # Save Volume info
   Datastore.update_volume(pool.not_nil!.id, req, volume.not_nil!.distribute_groups.size)

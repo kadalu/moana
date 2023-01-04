@@ -479,3 +479,42 @@ def combine_req_and_volume(req, volume)
 
   rollback_volume
 end
+
+# Validate if the nodes are part of the Pool
+# Also fetch the full node details
+def validate_and_add_nodes(pool, req)
+  nodes = [] of MoanaTypes::Node
+
+  participating_nodes(pool.name, req).each do |n|
+    node = Datastore.get_node(pool.name, n.name)
+    if node.nil?
+      if req.auto_add_nodes
+        endpoint = node_endpoint(n.name)
+        invite = node_invite(pool.name, n.name, endpoint)
+
+        participating_node = MoanaTypes::Node.new
+        participating_node.endpoint = endpoint
+        participating_node.name = n.name
+
+        resp = dispatch_action(
+          ACTION_NODE_INVITE_ACCEPT,
+          pool.name,
+          [participating_node],
+          invite.to_json
+        )
+
+        api_exception(!resp.ok, ({"error": resp.node_responses[n.name].response}.to_json))
+
+        node = MoanaTypes::Node.from_json(resp.node_responses[n.name].response)
+        node.endpoint = endpoint
+        Datastore.create_node(pool.id, node.id, n.name, endpoint, node.token, invite.mgr_token)
+      end
+
+      api_exception(node.nil?, ({"error": "Node #{n.name} is not part of the Pool"}.to_json))
+    end
+
+    nodes << node unless node.nil?
+  end
+
+  nodes
+end

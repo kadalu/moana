@@ -9,16 +9,12 @@ require "./volume_utils.cr"
 post "/api/v1/config-snapshots" do |env|
   data = MoanaTypes::ConfigSnapshot.from_json(env.request.body.not_nil!)
   snap_name = data.name
-  if snap_name.strip == ""
-    halt(env, status_code: 400, response: ({"error": "Invalid Snapshot name"}.to_json))
-  end
+  api_exception(snap_name.strip == "", ({"error": "Invalid Snapshot name"}.to_json))
 
   snap_dir = "#{GlobalConfig.workdir}/config-snapshots" + "/#{snap_name}"
 
   if Dir.exists?(snap_dir)
-    unless data.overwrite
-      halt(env, status_code: 400, response: ({"error": "Snapshot already exists"}.to_json))
-    end
+    api_exception(!data.overwrite, ({"error": "Snapshot already exists"}.to_json))
 
     # Delete the current Snapshot directory if overwrite=true
     FileUtils.rm_rf(snap_dir)
@@ -45,9 +41,7 @@ delete "/api/v1/config-snapshots/:snap_name" do |env|
 
   snap_dir = "#{GlobalConfig.workdir}/config-snapshots" + "/#{snap_name}"
 
-  unless Dir.exists?(snap_dir)
-    halt(env, status_code: 400, response: ({"error": "Snapshot doesn't exists"}.to_json))
-  end
+  api_exception(!Dir.exists?(snap_dir), ({"error": "Snapshot doesn't exists"}.to_json))
 
   FileUtils.rm_rf(snap_dir)
 
@@ -67,9 +61,7 @@ get "/api/v1/config-snapshots/:snap_name" do |env|
 
   snap = Datastore.get_config_snapshot(snap_name)
 
-  if snap.nil?
-    halt(env, status_code: 400, response: ({"error": "Snapshot #{snap_name} does not exist"}.to_json))
-  end
+  api_exception(snap.nil?, ({"error": "Snapshot #{snap_name} does not exist"}.to_json))
 
   env.response.status_code = 200
 

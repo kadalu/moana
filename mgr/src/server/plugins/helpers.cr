@@ -4,6 +4,23 @@ require "kemal"
 
 require "../actions"
 
+# Custom API exception
+class ApiException < Exception
+  getter status_code = 200, response = ""
+
+  def initialize(@status_code, @response)
+    super "#{@status_code} - #{@response}"
+  end
+end
+
+def api_exception(condition, response, status_code = 400)
+  raise ApiException.new(status_code, response) if condition
+end
+
+def forbidden_api_exception(condition)
+  api_exception(condition, ({"error": "Forbidden. Insufficient permissions"}).to_json, 403)
+end
+
 def handle_node_action(env)
   action = env.params.url["action"]
   req = env.params.json["data"].as(String)

@@ -8,9 +8,7 @@ post "/api/v1/users" do |env|
   username = env.params.json["username"].as(String)
   password = env.params.json["password"].as(String)
 
-  if Datastore.user_exists?(username)
-    halt(env, status_code: 400, response: ({"error": "User already exists"}).to_json)
-  end
+  api_exception(Datastore.user_exists?(username), ({"error": "User already exists"}).to_json)
 
   # TODO: Validate Username and Name
   env.response.status_code = 201
@@ -24,17 +22,20 @@ post "/api/v1/users/:username/password" do |env|
 
   user = Datastore.get_user(username)
 
-  if user.nil?
-    halt(env, status_code: 400, response: ({"error": "User doesn't exists"}).to_json)
-  end
+  api_exception(user.nil?, ({"error": "User doesn't exists"}).to_json)
+  user = user.not_nil!
 
-  if user.id != env.user_id
-    halt(env, status_code: 403, response: ({"error": "Updating password of other users not allowed."}).to_json)
-  end
+  api_exception(
+    user.id != env.user_id,
+    ({"error": "Updating password of other users not allowed."}).to_json,
+    403
+  )
 
-  unless Datastore.valid_user?(user.id, old_password)
-    halt(env, status_code: 403, response: ({"error": "Invalid username or password"}).to_json)
-  end
+  api_exception(
+    !Datastore.valid_user?(user.id, old_password),
+    ({"error": "Invalid username or password"}).to_json,
+    403
+  )
 
   Datastore.set_user_password(user.id, new_password)
   user.to_json
@@ -45,15 +46,16 @@ delete "/api/v1/users/:username" do |env|
   username = env.params.url["username"]
 
   user = Datastore.get_user(username)
-  if user.nil?
-    halt(env, status_code: 400, response: ({"error": "User does not exists"}).to_json)
-  end
+  api_exception(user.nil?, ({"error": "User does not exists"}).to_json)
+  user = user.not_nil!
 
   # Allow delete only if the logged in user is super admin
   # (Admin for all pools) or self user.
-  if user.id != env.user_id && !Datastore.admin?(env.user_id)
-    halt(env, status_code: 403, response: ({"error": "Forbidden to delete #{username}"}).to_json)
-  end
+  api_exception(
+    user.id != env.user_id && !Datastore.admin?(env.user_id),
+    ({"error": "Forbidden to delete #{username}"}).to_json,
+    403
+  )
 
   Datastore.delete_user(user.id)
   env.response.status_code = 204
@@ -86,9 +88,7 @@ end
 
 # Users list
 get "/api/v1/users" do |env|
-  unless Datastore.admin?(env.user_id)
-    halt(env, status_code: 403, response: ({"error": "Forbidden"}).to_json)
-  end
+  forbidden_api_exception(!Datastore.admin?(env.user_id))
 
   Datastore.list_users.to_json
 end
@@ -104,9 +104,7 @@ end
 # Get User
 get "/api/v1/users/:username" do |env|
   username = env.params.url["username"]
-  if !Datastore.admin?(env.user_id) && env.user_id != username
-    halt(env, status_code: 403, response: ({"error": "Forbidden"}).to_json)
-  end
+  forbidden_api_exception(!Datastore.admin?(env.user_id) && env.user_id != username)
 
   Datastore.get_user(username).to_json
 end
@@ -124,9 +122,7 @@ end
 # Get Pool users
 get "/api/v1/pools/:pool_name/users" do |env|
   pool_name = env.params.url["pool_name"]
-  if !Datastore.admin?(env.user_id, pool_name)
-    halt(env, status_code: 403, response: ({"error": "Forbidden"}).to_json)
-  end
+  forbidden_api_exception(!Datastore.admin?(env.user_id, pool_name))
 
   Datastore.list_users(pool_name).to_json
 end
@@ -135,9 +131,7 @@ end
 get "/api/v1/pools/:pool_name/volumes/:volume_name/users" do |env|
   pool_name = env.params.url["pool_name"]
   volume_name = env.params.url["volume_name"]
-  if !Datastore.admin?(env.user_id, pool_name, volume_name)
-    halt(env, status_code: 403, response: ({"error": "Forbidden"}).to_json)
-  end
+  forbidden_api_exception(!Datastore.admin?(env.user_id, pool_name, volume_name))
 
   Datastore.list_users(pool_name, volume_name).to_json
 end
@@ -147,14 +141,14 @@ post "/api/v1/users/:username/api-keys" do |env|
   password = env.params.json["password"].as(String)
 
   user = Datastore.get_user(username)
+  api_exception(user.nil?, ({"error": "User doesn't exists"}).to_json)
+  user = user.not_nil!
 
-  if user.nil?
-    halt(env, status_code: 400, response: ({"error": "User doesn't exists"}).to_json)
-  end
-
-  unless Datastore.valid_user?(user.id, password)
-    halt(env, status_code: 403, response: ({"error": "Invalid username or password"}).to_json)
-  end
+  api_exception(
+    !Datastore.valid_user?(user.id, password),
+    ({"error": "Invalid username or password"}).to_json,
+    403
+  )
 
   env.response.status_code = 201
   name = "Login"

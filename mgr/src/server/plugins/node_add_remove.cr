@@ -113,20 +113,17 @@ post "/api/v1/pools/:pool_name/nodes" do |env|
   pool_name = env.params.url["pool_name"]
   node_name = env.params.json["name"].as(String)
 
-  next forbidden(env) unless Datastore.maintainer?(env.user_id, pool_name)
+  forbidden_api_exception(!Datastore.maintainer?(env.user_id, pool_name))
 
   endpoint = node_endpoint(node_name, env.params.json.fetch("endpoint", "").as(String))
 
   pool = Datastore.get_pool(pool_name)
-  if pool.nil?
-    halt(env, status_code: 400, response: ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
-  end
+  api_exception(pool.nil?, ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
+  pool = pool.not_nil!
 
   node = Datastore.get_node(pool_name, node_name)
 
-  if !node.nil?
-    halt(env, status_code: 400, response: ({"error": "Node is already part of the Pool"}.to_json))
-  end
+  api_exception(!node.nil?, ({"error": "Node is already part of the Pool"}.to_json))
 
   invite = node_invite(pool_name, node_name, endpoint)
 
@@ -141,9 +138,7 @@ post "/api/v1/pools/:pool_name/nodes" do |env|
     invite.to_json
   )
 
-  if !resp.ok
-    halt(env, status_code: 400, response: resp.node_responses[node_name].response)
-  end
+  api_exception(!resp.ok, resp.node_responses[node_name].response)
 
   node = MoanaTypes::Node.from_json(resp.node_responses[node_name].response)
   Datastore.create_node(pool.id, node.id, node_name, endpoint, node.token, invite.mgr_token)
@@ -164,18 +159,17 @@ delete "/api/v1/pools/:pool_name/nodes/:node_name" do |env|
   next forbidden(env) unless Datastore.maintainer?(env.user_id, pool_name)
 
   pool = Datastore.get_pool(pool_name)
-  if pool.nil?
-    halt(env, status_code: 400, response: ({"error": "Pool doesn't exists"}.to_json))
-  end
+  api_exception(pool.nil?, ({"error": "Pool doesn't exists"}.to_json))
+  pool = pool.not_nil!
 
   node = Datastore.get_node(pool_name, node_name)
-  if node.nil?
-    halt(env, status_code: 400, response: ({"error": "Node doesn't exists"}.to_json))
-  end
+  api_exception(node.nil?, ({"error": "Node doesn't exists"}.to_json))
+  node = node.not_nil!
 
-  if Datastore.storage_units_from_node?(pool.id, node.id)
-    halt(env, status_code: 400, response: ({"error": "Node is part of one or more Volumes"}.to_json))
-  end
+  api_exception(
+    Datastore.storage_units_from_node?(pool.id, node.id),
+    ({"error": "Node is part of one or more Volumes"}.to_json)
+  )
 
   invite = MoanaTypes::NodeRequest.new
   invite.endpoint = node.endpoint
@@ -190,9 +184,7 @@ delete "/api/v1/pools/:pool_name/nodes/:node_name" do |env|
     invite.to_json
   )
 
-  if !resp.ok
-    halt(env, status_code: 400, response: resp.node_responses[node.id].response)
-  end
+  api_exception(!resp.ok, resp.node_responses[node.id].response)
 
   Datastore.delete_node(pool.id, node.id)
 
