@@ -129,12 +129,14 @@ def validate_volume_create(req)
   NodeResponse.new(true, "")
 end
 
-def restart_shd_service(services)
+def restart_shd_service_and_start_fix_layout_service(services)
   unless services[GlobalConfig.local_node.id]?.nil?
     services[GlobalConfig.local_node.id].each do |service|
       svc = Service.from_json(service.to_json)
       if svc.name == "shdservice"
         svc.restart
+      elsif svc.name == "fixlayoutservice"
+        svc.start
       end
     end
   end
@@ -457,7 +459,7 @@ def sighup_processes(services)
   unless services[GlobalConfig.local_node.id]?.nil?
     services[GlobalConfig.local_node.id].each do |service|
       svc = Service.from_json(service.to_json)
-      svc.signal(Signal::HUP)
+      svc.signal(Signal::HUP) if svc.running?
     end
   end
 end
@@ -517,4 +519,11 @@ def validate_and_add_nodes(pool, req)
   end
 
   nodes
+end
+
+def add_fix_layout_service(services, pool_name, volume_name, node, storage_unit)
+  service = FixLayoutService.new(pool_name, volume_name, storage_unit)
+  services[node.id] << service.unit
+
+  services
 end

@@ -6,13 +6,13 @@ require "../datastore/*"
 require "./ping"
 require "./volume_utils.cr"
 
-ACTION_RESTART_SHD_SERVICE_AND_SIGHUP_PROCESSES = "restart_shd_service_and_sighup_processes"
+ACTION_MANAGE_SERVICES = "manage_services"
 
-node_action ACTION_RESTART_SHD_SERVICE_AND_SIGHUP_PROCESSES do |data, _env|
+node_action ACTION_MANAGE_SERVICES do |data, _env|
   services, volfiles, _ = VolumeRequestToNode.from_json(data)
   save_volfiles(volfiles)
   sighup_processes(services)
-  restart_shd_service(services)
+  restart_shd_service_and_start_fix_layout_service(services)
 end
 
 put "/api/v1/pools/:pool_name/volumes" do |env|
@@ -145,6 +145,10 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
 
   set_volume_metrics(req)
 
+  # Add only the first node for fix-layout service
+  services = add_fix_layout_service(services, pool.not_nil!.name, req.name, nodes[0],
+    volume.not_nil!.distribute_groups[0].storage_units[0])
+
   existing_nodes = participating_nodes(pool_name, volume)
 
   # Remove duplicated node objects to avoid multiple node_actions to same node.
@@ -153,15 +157,16 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
   # Below node action is to be run in all nodes of expanded volume.
   # After expansion of volume, volfiles will be changed with newer storage_units,
   # Send new volfiles to save in all nodes & notify the glusterfsd process about,
-  # reloaded volfiles through sighup. Finally restart SHD process if exists.
+  # reloaded volfiles through sighup. Finally restart SHD process if exists &
+  # Run fix-layout service in the first node only.
   resp = dispatch_action(
-    ACTION_RESTART_SHD_SERVICE_AND_SIGHUP_PROCESSES,
+    ACTION_MANAGE_SERVICES,
     pool_name,
     all_unique_nodes,
     {services, volfiles, rollback_volume}.to_json
   )
 
-  api_exception(!resp.ok, node_errors("Failed to restart SHD service", resp.node_responses).to_json)
+  api_exception(!resp.ok, node_errors("Failed to restart SHD/start fix-layout service", resp.node_responses).to_json)
 
   # Save Volume info
   Datastore.update_volume(pool.not_nil!.id, req, volume.not_nil!.distribute_groups.size)
