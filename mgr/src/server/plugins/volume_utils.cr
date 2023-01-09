@@ -14,11 +14,13 @@ TEST_XATTR_VALUE = "testvalue"
 VOLUME_ID_XATTR_NAME = "trusted.glusterfs.volume-id"
 
 alias VolumeRequestToNode = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, Array(MoanaTypes::Volfile)), MoanaTypes::Volume)
+alias VolumeRequestToNodeWithAction = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, Array(MoanaTypes::Volfile)), MoanaTypes::Volume, String)
 alias ServiceRequestToNode = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)))
 
 ACTION_VALIDATE_VOLUME_CREATE = "validate_volume_create"
 ACTION_VOLUME_CREATE          = "volume_create"
 ACTION_VOLUME_CREATE_STOPPED  = "volume_create_stopped"
+ACTION_MANAGE_SERVICES        = "manage_services"
 
 node_action ACTION_VALIDATE_VOLUME_CREATE do |data, _env|
   req = MoanaTypes::Volume.from_json(data)
@@ -31,6 +33,13 @@ end
 
 node_action ACTION_VOLUME_CREATE_STOPPED do |data, _env|
   handle_volume_create(data, stopped: true)
+end
+
+node_action ACTION_MANAGE_SERVICES do |data, _env|
+  services, volfiles, rollback_volume, action = VolumeRequestToNodeWithAction.from_json(data)
+  save_volfiles(volfiles)
+  sighup_processes(services)
+  restart_shd_service_and_manage_rebalance_services(services, action)
 end
 
 def volfile_get(name)
@@ -129,14 +138,21 @@ def validate_volume_create(req)
   NodeResponse.new(true, "")
 end
 
-def restart_shd_service_and_start_fix_layout_service(services)
+def restart_shd_service_and_manage_rebalance_services(services, action = "start")
   unless services[GlobalConfig.local_node.id]?.nil?
     services[GlobalConfig.local_node.id].each do |service|
       svc = Service.from_json(service.to_json)
       if svc.name == "shdservice"
         svc.restart
-      elsif svc.name == "fixlayoutservice"
-        svc.start
+      elsif svc.name == "fixlayoutservice" || svc.name == "migratedataservice"
+        status_file_path = "/var/lib/kadalu/#{svc.id.gsub("/", "%2F")}.json"
+        FileUtils.rm(status_file_path) if File.exists?(status_file_path)
+        if action == "start"
+          svc.start
+        else
+          svc.stop
+        end
+
       end
     end
   end
@@ -527,3 +543,40 @@ def add_fix_layout_service(services, pool_name, volume_name, node, storage_unit)
 
   services
 end
+
+def add_migrate_data_service(services, pool_name, volume_name, node, storage_unit)
+  service = MigrateDataService.new(pool_name, volume_name, storage_unit)
+  services[node.id] << service.unit
+
+  services
+end
+
+def handle_volume_rebalance_start_stop(data, action)
+  services, volfiles, _ = VolumeRequestToNode.from_json(data)
+
+  if action == "start" && !volfiles[GlobalConfig.local_node.id]?.nil?
+    Dir.mkdir_p(Path.new(GlobalConfig.workdir, "volfiles"))
+    volfiles[GlobalConfig.local_node.id].each do |volfile|
+      File.write(Path.new(GlobalConfig.workdir, "volfiles", "#{volfile.name}.vol"), volfile.content)
+    end
+  end
+
+  unless services[GlobalConfig.local_node.id]?.nil?
+    # TODO: Hard coded path change?
+    Dir.mkdir_p("/var/log/kadalu")
+    Dir.mkdir_p("/run/kadalu")
+    services[GlobalConfig.local_node.id].each do |service|
+      svc = Service.from_json(service.to_json)
+      if svc.name == "migratedataservice"
+        if action == "start"
+          svc.start
+        else
+          svc.stop
+        end
+      end
+    end
+  end
+
+  NodeResponse.new(true, "")
+end
+

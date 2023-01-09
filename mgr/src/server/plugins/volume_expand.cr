@@ -151,6 +151,10 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
 
   existing_nodes = participating_nodes(pool_name, volume)
 
+  # Add only the first existing node for fix-layout service
+  services = add_fix_layout_service(services, pool.not_nil!.name, req.name, existing_nodes[0],
+    volume.not_nil!.distribute_groups[0].storage_units[0])
+
   # Remove duplicated node objects to avoid multiple node_actions to same node.
   all_unique_nodes = (existing_nodes + nodes).uniq(&.id)
 
@@ -163,7 +167,7 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
     ACTION_MANAGE_SERVICES,
     pool_name,
     all_unique_nodes,
-    {services, volfiles, rollback_volume}.to_json
+    {services, volfiles, rollback_volume, "start"}.to_json
   )
 
   api_exception(!resp.ok, node_errors("Failed to restart SHD/start fix-layout service", resp.node_responses).to_json)
