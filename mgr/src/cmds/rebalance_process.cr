@@ -139,6 +139,7 @@ class Rebalancer
 
         backend_full_path = Path.new(@backend_dir, rel_path)
         if File.directory?(backend_full_path)
+          entries = Dir.new(Path.new(@mount_dir, rel_path).to_s).entries
           @migrate_data_status.scanned_bytes += BLOCK_SIZE
           all_dirs << rel_path
           next
