@@ -46,7 +46,6 @@ nodes.each do |node|
   TEST "mkdir -p /exports/vol19"
   TEST "mkdir -p /exports/vol20a"
   TEST "mkdir -p /exports/vol20b"
-
 end
 
 USE_NODE nodes[0]
@@ -241,7 +240,13 @@ TEST "kadalu volume delete DEV/vol19 --mode=script"
 # Tests for volume expansion
 # Distribute
 TEST "kadalu volume create DEV/vol15 server1:/exports/vol15/s1 server2:/exports/vol15/s2 server3:/exports/vol15/s3"
+TEST "mkdir -p /mnt/vol15"
+puts TEST "kadalu mount DEV/vol15 /mnt/vol15"
+puts TEST "df /mnt/vol15"
+TEST "mkdir /mnt/vol15/d1 /mnt/vol15/d2 /mnt/vol15/d3"
+TEST "touch /mnt/vol15/d1/f{0..9}"
 TEST "kadalu volume expand DEV/vol15 server1:/exports/vol15/s1_e server2:/exports/vol15/s2_e server3:/exports/vol15/s3_e"
+
 TEST "kadalu volume stop DEV/vol15 --mode=script"
 TEST "kadalu volume delete DEV/vol15 --mode=script"
 

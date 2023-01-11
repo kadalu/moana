@@ -9,7 +9,7 @@ class MigrateDataService < Service
   def initialize(pool_name, volume_name, storage_unit)
     @create_pid_file = true
 
-    @path = Path[PROGRAM_NAME].expand.to_s
+    @path = PROGRAM_NAME == "kadalu" ? PROGRAM_NAME : Path[PROGRAM_NAME].expand.to_s
     @id = "rebalance-migrate-data-#{storage_unit.path}"
     @pid_file = "/run/kadalu/#{@id}.pid"
     @args = [
