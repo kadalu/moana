@@ -256,7 +256,7 @@ class Rebalancer
     # TODO: Handle errors
     execute("chattr", ["-i", @mount_dir])
 
-    FileUtils.rm_rf(@mount_dir)
+    FileUtils.rmdir(@mount_dir)
   end
 end
 
