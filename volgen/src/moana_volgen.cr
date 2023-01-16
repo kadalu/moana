@@ -177,6 +177,11 @@ class Volfile
     vars["distribute_group.index"] = "#{grp_idx}"
     vars["distribute_group.storage_unit_count"] = "#{dist_grp.storage_units.size}"
 
+    vars["distribute_group.redundancy_count"] = ""
+    if dist_grp.type.downcase == "disperse"
+      vars["distribute_group.redundancy_count"] = "#{dist_grp.redundancy_count}"
+    end
+
     # Afr records dirty flag details in xattr.
     # The name of the xattr is <volume-name>-client-<index>
     # These xattrs names are specified as afr-pending-xattr
