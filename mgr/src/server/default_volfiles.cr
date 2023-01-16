@@ -48,6 +48,7 @@ distribute_group:
     name: "{{ volume.name }}-{{ distribute_group.type }}-{{ distribute_group.index }}"
     options:
       afr-pending-xattr: "{{ distribute_group.afr-pending-xattr }}"
+      redundancy: "{{ distribute_group.redundancy_count }}"
 storage_unit:
   - type: "protocol/client"
     name: "{{ volume.name }}-{{ distribute_group.type }}-{{ distribute_group.index }}-client-{{ storage_unit.index }}"
