@@ -1,4 +1,5 @@
 require "xattr"
+require "file_utils"
 require "moana_types"
 
 require "./helpers"
@@ -247,6 +248,16 @@ class Rebalancer
     # TODO: Handle Mount failure and other errors
     execute("glusterfs", args)
   end
+
+  def umount
+    # TODO: Handle umount errors except mount not exists
+    execute("umount", [@mount_dir])
+
+    # TODO: Handle errors
+    execute("chattr", ["-i", @mount_dir])
+
+    FileUtils.rmdir(@mount_dir)
+  end
 end
 
 struct RebalanceArgs
@@ -295,6 +306,7 @@ handler "_rebalance" do |args|
     if do_rebalance
       reb.mount(args.rebalance_args.volfile_servers)
       reb.fix_layout
+      reb.umount
     else
       STDERR.puts "Status file of previous fix-layout exists. Please remove it to start fix-layout again"
     end
@@ -311,6 +323,7 @@ handler "_rebalance" do |args|
     if do_rebalance
       reb.mount(args.rebalance_args.volfile_servers)
       reb.migrate_data
+      reb.umount
     else
       STDERR.puts "Status file of previous migrate-data exists. Please remove it to start migrate-data again"
     end
