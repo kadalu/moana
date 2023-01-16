@@ -139,7 +139,9 @@ class Rebalancer
 
         backend_full_path = Path.new(@backend_dir, rel_path)
         if File.directory?(backend_full_path)
-          entries = Dir.new(Path.new(@mount_dir, rel_path).to_s).entries
+          # TODO: Fix ENOENT issue in mount and remove list entries for,
+          # Correct use of rebalance multiprocesses & improved time complexity.
+          _entries = Dir.new(Path.new(@mount_dir, rel_path).to_s).entries
           @migrate_data_status.scanned_bytes += BLOCK_SIZE
           all_dirs << rel_path
           next

@@ -1,3 +1,0 @@
-Lint/UselessAssign:
-  Excluded:
-    - mgr/src/cmds/rebalance_process.cr
