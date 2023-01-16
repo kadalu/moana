@@ -139,7 +139,6 @@ class Rebalancer
         next if @ignore_paths.includes?(rel_path.to_s)
 
         backend_full_path = Path.new(@backend_dir, rel_path)
-        # puts "backend_full_path: #{backend_full_path}"
         if File.directory?(backend_full_path)
           # TODO: Fix ENOENT issue in mount and remove list entries for,
           # Correct use of rebalance multiprocesses & improved time complexity.
@@ -160,51 +159,16 @@ class Rebalancer
           next
         end
 
-
-        # puts "@mount_dir: #{@mount_dir}"
-        # puts "rel_path: #{rel_path}"
-        # puts "mnt_full_path: #{mnt_full_path}"
-        # puts "mnt_full_path.to_s: #{mnt_full_path.to_s}"
-
-        # if File.exists?(mnt_full_path.to_s)
-        #   puts "The File #{mnt_full_path.to_s} exists"
-        # end
-
-        # puts "going to trigger"
-
         # Issue Trigger rebalance xattr
         begin
           XAttr.set(mnt_full_path.to_s, REBALANCE_XATTR, "1", no_follow: true)
-          # puts "setting xattr for: #{mnt_full_path.to_s}"
-        # rescue ex : IO::Error
-        #   # DHT raises EEXIST if rebalance is not required for a file
-        #   # If file is deleted in after directory listing and before calling this setxattr
-        #   if ex.os_error != Errno::EEXIST && ex.os_error != Errno::ENOENT
-        #     puts "error"
-        #     STDERR.puts "Failed to trigger rebalance. file=#{rel_path} Error=#{ex}"
-        #   end
-        rescue ex
-          puts "other err: #{ex.message}"
+        rescue ex : IO::Error
+          # DHT raises EEXIST if rebalance is not required for a file
+          # If file is deleted in after directory listing and before calling this setxattr
+          if ex.os_error != Errno::EEXIST && ex.os_error != Errno::ENOENT
+            STDERR.puts "Failed to trigger rebalance. file=#{rel_path} Error=#{ex}"
+          end
         end
-
-        # begin
-        #   puts XAttr.get(mnt_full_path.to_s, REBALANCE_XATTR, no_follow: true)
-        # rescue ex
-        #   puts ex.message
-        # end
-
-
-        # begin
-        #   XAttr.set(mnt_full_path.to_s, "name", "v")
-        # rescue ex
-        #   puts ex.message
-        # end
-
-        # begin
-        #   puts XAttr.get(mnt_full_path.to_s, "name")
-        # rescue ex
-        #   puts ex.message
-        # end
 
         # Increment if rebalance complete or rebalance not required
         # or if any other error.

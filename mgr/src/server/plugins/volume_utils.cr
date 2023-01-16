@@ -36,7 +36,7 @@ node_action ACTION_VOLUME_CREATE_STOPPED do |data, _env|
 end
 
 node_action ACTION_MANAGE_SERVICES do |data, _env|
-  services, volfiles, rollback_volume, action = VolumeRequestToNodeWithAction.from_json(data)
+  services, volfiles, _, action = VolumeRequestToNodeWithAction.from_json(data)
   save_volfiles(volfiles)
   sighup_processes(services)
   restart_shd_service_and_manage_rebalance_services(services, action)
@@ -152,7 +152,6 @@ def restart_shd_service_and_manage_rebalance_services(services, action = "start"
         else
           svc.stop
         end
-
       end
     end
   end
@@ -579,4 +578,3 @@ def handle_volume_rebalance_start_stop(data, action)
 
   NodeResponse.new(true, "")
 end
-

@@ -244,27 +244,228 @@ TEST "mkdir -p /mnt/vol15"
 puts TEST "kadalu mount DEV/vol15 /mnt/vol15"
 puts TEST "df /mnt/vol15"
 TEST "mkdir /mnt/vol15/d1 /mnt/vol15/d2 /mnt/vol15/d3"
-TEST "touch /mnt/vol15/d1/f{0..9}"
+TEST "touch /mnt/vol15/d1/f{1..9}"
+TEST "touch /mnt/vol15/d2/f{1..9}"
+TEST "touch /mnt/vol15/d3/f{1..9}"
 TEST "kadalu volume expand DEV/vol15 server1:/exports/vol15/s1_e server2:/exports/vol15/s2_e server3:/exports/vol15/s3_e"
 
+EQUAL "3", (TEST "ls /exports/vol15/s1_e/* -d | wc -l").strip, "Check for fix-layout in server1 s1 unit"
+USE_NODE nodes[1]
+EQUAL "3", (TEST "ls /exports/vol15/s2_e/* -d | wc -l").strip, "Check for fix-layout in server2 s2 unit"
+USE_NODE nodes[2]
+EQUAL "3", (TEST "ls /exports/vol15/s3_e/* -d | wc -l").strip, "Check for fix-layout in server3 s3 unit"
+
+USE_NODE nodes[0]
+TEST "kadalu volume rebalance-start DEV/vol15"
+TEST "sleep 3"
+
+EQUAL "3", (TEST "ls /exports/vol15/s1/d1/f3 /exports/vol15/s1/d2/f3 /exports/vol15/s1/d3/f3 | wc -l").strip, "Check for migrate-data in server1 s1 unit vol15"
+EQUAL "5", (TEST "ls /exports/vol15/s1_e/d1/f4 /exports/vol15/s1_e/d2/f1 /exports/vol15/s1_e/d2/f5 /exports/vol15/s1_e/d3/f1 /exports/vol15/s1_e/d3/f5 | wc -l").strip, "Check for migrate-data in server1 s1_e unit"
+
+USE_NODE nodes[1]
+EQUAL "3", (TEST "ls /exports/vol15/s2/d1/f2 /exports/vol15/s2/d2/f2 /exports/vol15/s2/d3/f2 | wc -l").strip, "Check for migrate-data in server2 s2 unit vol15"
+EQUAL "9", (TEST "ls /exports/vol15/s2_e/d1/f6 /exports/vol15/s2_e/d1/f7 /exports/vol15/s2_e/d1/f9 /exports/vol15/s2_e/d2/f6 /exports/vol15/s2_e/d2/f7 /exports/vol15/s2_e/d2/f9 /exports/vol15/s2_e/d3/f6 /exports/vol15/s2_e/d3/f7 /exports/vol15/s2_e/d3/f9 | wc -l
+").strip, "Check for migrate-data in server2 s2_e unit"
+
+USE_NODE nodes[2]
+EQUAL "3", (TEST "ls /exports/vol15/s3/d1/f8 /exports/vol15/s3/d2/f4 /exports/vol15/s3/d3/f4 | wc -l ").strip, "Check for migrate-data in server3 s3 unit vol15"
+EQUAL "4", (TEST "ls /exports/vol15/s3_e/d1/f1 /exports/vol15/s3_e/d1/f5 /exports/vol15/s3_e/d2/f8 /exports/vol15/s3_e/d3/f8 | wc -l").strip, "Check for migrate-data in server3 s3_e unit"
+
+USE_NODE nodes[0]
+TEST "umount /mnt/vol15"
+TEST "rmdir /mnt/vol15"
 TEST "kadalu volume stop DEV/vol15 --mode=script"
 TEST "kadalu volume delete DEV/vol15 --mode=script"
 
 # Replicate
 TEST "kadalu volume create DEV/vol16 replica server1:/exports/vol16/s1 server2:/exports/vol16/s2 server3:/exports/vol16/s3"
+TEST "mkdir -p /mnt/vol16"
+puts TEST "kadalu mount DEV/vol16 /mnt/vol16"
+puts TEST "df /mnt/vol16"
+TEST "mkdir /mnt/vol16/d1 /mnt/vol16/d2 /mnt/vol16/d3"
+TEST "touch /mnt/vol16/d1/f{1..9}"
+TEST "touch /mnt/vol16/d2/f{1..9}"
+TEST "touch /mnt/vol16/d3/f{1..9}"
+
 TEST "kadalu volume expand DEV/vol16 replica server1:/exports/vol16/s1_e server2:/exports/vol16/s2_e server3:/exports/vol16/s3_e"
+
+EQUAL "3", (TEST "ls /exports/vol16/s1_e/* -d | wc -l").strip, "Check for fix-layout in server1 s1 unit vol16"
+USE_NODE nodes[1]
+EQUAL "3", (TEST "ls /exports/vol16/s2_e/* -d | wc -l").strip, "Check for fix-layout in server2 s2 unit vol16"
+USE_NODE nodes[2]
+EQUAL "3", (TEST "ls /exports/vol16/s3_e/* -d | wc -l").strip, "Check for fix-layout in server3 s3 unit vol16"
+
+USE_NODE nodes[0]
+TEST "kadalu volume rebalance-start DEV/vol16"
+TEST "sleep 3"
+
+EQUAL "5", (TEST "ls /exports/vol16/s1/d1/ | wc -l").strip, "Check for migrate-data in server1 s1/d1 unit vol16"
+EQUAL "4", (TEST "ls /exports/vol16/s1/d2/ | wc -l").strip, "Check for migrate-data in server1 s1/d2 unit vol16"
+EQUAL "4", (TEST "ls /exports/vol16/s1/d3/ | wc -l").strip, "Check for migrate-data in server1 s1/d3 unit vol16"
+
+EQUAL "4", (TEST "ls /exports/vol16/s1_e/d1/ | wc -l").strip, "Check for migrate-data in server1 s1_e/d1 unit vol16"
+EQUAL "5", (TEST "ls /exports/vol16/s1_e/d2/ | wc -l").strip, "Check for migrate-data in server1 s1_e/d2 unit vol16"
+EQUAL "5", (TEST "ls /exports/vol16/s1_e/d3/ | wc -l").strip, "Check for migrate-data in server1 s1_e/d3 unit vol16"
+
+USE_NODE nodes[1]
+EQUAL "5", (TEST "ls /exports/vol16/s2/d1/ | wc -l").strip, "Check for migrate-data in server2 s2/d1 unit vol16"
+EQUAL "4", (TEST "ls /exports/vol16/s2/d2/ | wc -l").strip, "Check for migrate-data in server2 s2/d2 unit vol16"
+EQUAL "4", (TEST "ls /exports/vol16/s2/d3/ | wc -l").strip, "Check for migrate-data in server2 s2/d3 unit vol16"
+
+EQUAL "4", (TEST "ls /exports/vol16/s2_e/d1/ | wc -l").strip, "Check for migrate-data in server2 s2_e/d1 unit vol16"
+EQUAL "5", (TEST "ls /exports/vol16/s2_e/d2/ | wc -l").strip, "Check for migrate-data in server2 s2_e/d2 unit vol16"
+EQUAL "5", (TEST "ls /exports/vol16/s2_e/d3/ | wc -l").strip, "Check for migrate-data in server2 s2_e/d3 unit vol16"
+
+USE_NODE nodes[2]
+EQUAL "5", (TEST "ls /exports/vol16/s3/d1/ | wc -l").strip, "Check for migrate-data in server3 s3/d1 unit vol16"
+EQUAL "4", (TEST "ls /exports/vol16/s3/d2/ | wc -l").strip, "Check for migrate-data in server3 s3/d2 unit vol16"
+EQUAL "4", (TEST "ls /exports/vol16/s3/d3/ | wc -l").strip, "Check for migrate-data in server3 s3/d3 unit vol16"
+
+EQUAL "4", (TEST "ls /exports/vol16/s3_e/d1/ | wc -l").strip, "Check for migrate-data in server3 s3_e/d1 unit vol16"
+EQUAL "5", (TEST "ls /exports/vol16/s3_e/d2/ | wc -l").strip, "Check for migrate-data in server3 s3_e/d2 unit vol16"
+EQUAL "5", (TEST "ls /exports/vol16/s3_e/d3/ | wc -l").strip, "Check for migrate-data in server3 s3_e/d3 unit vol16"
+
+USE_NODE nodes[0]
+TEST "umount /mnt/vol16"
+TEST "rmdir /mnt/vol16"
+
 TEST "kadalu volume stop DEV/vol16 --mode=script"
 TEST "kadalu volume delete DEV/vol16 --mode=script"
 
 # Distributed Replicate
 TEST "kadalu volume create DEV/vol17 replica server1:/exports/vol17/s1 server2:/exports/vol17/s2 server3:/exports/vol17/s3 replica server1:/exports/vol17/s4 server2:/exports/vol17/s5 server3:/exports/vol17/s6"
+TEST "mkdir -p /mnt/vol17"
+puts TEST "kadalu mount DEV/vol17 /mnt/vol17"
+puts TEST "df /mnt/vol17"
+TEST "mkdir /mnt/vol17/d1 /mnt/vol17/d2 /mnt/vol17/d3"
+TEST "touch /mnt/vol17/d1/f{1..9}"
+TEST "touch /mnt/vol17/d2/f{1..9}"
+TEST "touch /mnt/vol17/d3/f{1..9}"
+
 TEST "kadalu volume expand DEV/vol17 replica server1:/exports/vol17/s1_e server2:/exports/vol17/s2_e server3:/exports/vol17/s3_e replica server1:/exports/vol17/s4_e server2:/exports/vol17/s5_e server3:/exports/vol17/s6_e"
+
+EQUAL "3", (TEST "ls /exports/vol17/s1_e/* -d | wc -l").strip, "Check for fix-layout in server1 s1 unit vol17"
+EQUAL "3", (TEST "ls /exports/vol17/s4_e/* -d | wc -l").strip, "Check for fix-layout in server1 s4 unit vol17"
+USE_NODE nodes[1]
+EQUAL "3", (TEST "ls /exports/vol17/s2_e/* -d | wc -l").strip, "Check for fix-layout in server2 s2 unit vol17"
+EQUAL "3", (TEST "ls /exports/vol17/s5_e/* -d | wc -l").strip, "Check for fix-layout in server2 s5 unit vol17"
+USE_NODE nodes[2]
+EQUAL "3", (TEST "ls /exports/vol17/s3_e/* -d | wc -l").strip, "Check for fix-layout in server3 s3 unit vol17"
+EQUAL "3", (TEST "ls /exports/vol17/s6_e/* -d | wc -l").strip, "Check for fix-layout in server3 s6 unit vol17"
+
+USE_NODE nodes[0]
+TEST "kadalu volume rebalance-start DEV/vol17"
+TEST "sleep 3"
+
+EQUAL "2", (TEST "ls /exports/vol17/s1/d1/ | wc -l").strip, "Check for migrate-data in server1 s1/d1 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s1/d2/ | wc -l").strip, "Check for migrate-data in server1 s1/d2 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s1/d3/ | wc -l").strip, "Check for migrate-data in server1 s1/d3 unit vol17"
+
+EQUAL "2", (TEST "ls /exports/vol17/s4/d1/ | wc -l").strip, "Check for migrate-data in server1 s4/d1 unit vol17"
+EQUAL "3", (TEST "ls /exports/vol17/s4/d2/ | wc -l").strip, "Check for migrate-data in server1 s4/d2 unit vol17"
+EQUAL "3", (TEST "ls /exports/vol17/s4/d3/ | wc -l").strip, "Check for migrate-data in server1 s4/d3 unit vol17"
+
+EQUAL "2", (TEST "ls /exports/vol17/s1_e/d1/ | wc -l").strip, "Check for migrate-data in server1 s1_e/d1 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s1_e/d2/ | wc -l").strip, "Check for migrate-data in server1 s1_e/d2 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s1_e/d3/ | wc -l").strip, "Check for migrate-data in server1 s1_e/d3 unit vol17"
+
+EQUAL "3", (TEST "ls /exports/vol17/s4_e/d1/ | wc -l").strip, "Check for migrate-data in server1 s4_e/d1 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s4_e/d2/ | wc -l").strip, "Check for migrate-data in server1 s4_e/d2 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s4_e/d3/ | wc -l").strip, "Check for migrate-data in server1 s4_e/d3 unit vol17"
+
+USE_NODE nodes[1]
+EQUAL "2", (TEST "ls /exports/vol17/s2/d1/ | wc -l").strip, "Check for migrate-data in server2 s2/d1 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s2/d2/ | wc -l").strip, "Check for migrate-data in server2 s2/d2 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s2/d3/ | wc -l").strip, "Check for migrate-data in server2 s2/d3 unit vol17"
+
+EQUAL "2", (TEST "ls /exports/vol17/s5/d1/ | wc -l").strip, "Check for migrate-data in server2 s5/d1 unit vol17"
+EQUAL "3", (TEST "ls /exports/vol17/s5/d2/ | wc -l").strip, "Check for migrate-data in server2 s5/d2 unit vol17"
+EQUAL "3", (TEST "ls /exports/vol17/s5/d3/ | wc -l").strip, "Check for migrate-data in server2 s5/d3 unit vol17"
+
+EQUAL "2", (TEST "ls /exports/vol17/s2_e/d1/ | wc -l").strip, "Check for migrate-data in server2 s2_e/d1 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s2_e/d2/ | wc -l").strip, "Check for migrate-data in server2 s2_e/d2 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s2_e/d3/ | wc -l").strip, "Check for migrate-data in server2 s2_e/d3 unit vol17"
+
+EQUAL "3", (TEST "ls /exports/vol17/s5_e/d1/ | wc -l").strip, "Check for migrate-data in server2 s5_e/d1 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s5_e/d2/ | wc -l").strip, "Check for migrate-data in server2 s5_e/d2 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s5_e/d3/ | wc -l").strip, "Check for migrate-data in server2 s5_e/d3 unit vol17"
+
+USE_NODE nodes[2]
+EQUAL "2", (TEST "ls /exports/vol17/s3/d1/ | wc -l").strip, "Check for migrate-data in server3 s3/d1 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s3/d2/ | wc -l").strip, "Check for migrate-data in server3 s3/d2 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s3/d3/ | wc -l").strip, "Check for migrate-data in server3 s3/d3 unit vol17"
+
+EQUAL "2", (TEST "ls /exports/vol17/s6/d1/ | wc -l").strip, "Check for migrate-data in server3 s6/d1 unit vol17"
+EQUAL "3", (TEST "ls /exports/vol17/s6/d2/ | wc -l").strip, "Check for migrate-data in server3 s6/d2 unit vol17"
+EQUAL "3", (TEST "ls /exports/vol17/s6/d3/ | wc -l").strip, "Check for migrate-data in server3 s6/d3 unit vol17"
+
+EQUAL "2", (TEST "ls /exports/vol17/s3_e/d1/ | wc -l").strip, "Check for migrate-data in server3 s3_e/d1 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s3_e/d2/ | wc -l").strip, "Check for migrate-data in server3 s3_e/d2 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s3_e/d3/ | wc -l").strip, "Check for migrate-data in server3 s3_e/d3 unit vol17"
+
+EQUAL "3", (TEST "ls /exports/vol17/s6_e/d1/ | wc -l").strip, "Check for migrate-data in server3 s6_e/d1 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s6_e/d2/ | wc -l").strip, "Check for migrate-data in server3 s6_e/d2 unit vol17"
+EQUAL "2", (TEST "ls /exports/vol17/s6_e/d3/ | wc -l").strip, "Check for migrate-data in server3 s6_e/d3 unit vol17"
+
+USE_NODE nodes[0]
+TEST "umount /mnt/vol17"
+TEST "rmdir /mnt/vol17"
+
 TEST "kadalu volume stop DEV/vol17 --mode=script"
 TEST "kadalu volume delete DEV/vol17 --mode=script"
 
 # Disperse
 TEST "kadalu volume create DEV/vol18 data server1:/exports/vol18/s1 server2:/exports/vol18/s2 redundancy server3:/exports/vol18/s3"
+TEST "mkdir -p /mnt/vol18"
+puts TEST "kadalu mount DEV/vol18 /mnt/vol18"
+puts TEST "df /mnt/vol18"
+TEST "mkdir /mnt/vol18/d1 /mnt/vol18/d2 /mnt/vol18/d3"
+TEST "touch /mnt/vol18/d1/f{1..9}"
+TEST "touch /mnt/vol18/d2/f{1..9}"
+TEST "touch /mnt/vol18/d3/f{1..9}"
+
 TEST "kadalu volume expand DEV/vol18 data server1:/exports/vol18/s1_e server2:/exports/vol18/s2_e redundancy server3:/exports/vol18/s3_e"
+
+EQUAL "3", (TEST "ls /exports/vol18/s1_e/* -d | wc -l").strip, "Check for fix-layout in server1 s1 unit vol18"
+USE_NODE nodes[1]
+EQUAL "3", (TEST "ls /exports/vol18/s2_e/* -d | wc -l").strip, "Check for fix-layout in server2 s2 unit vol18"
+USE_NODE nodes[2]
+EQUAL "3", (TEST "ls /exports/vol18/s3_e/* -d | wc -l").strip, "Check for fix-layout in server3 s3 unit vol18"
+
+USE_NODE nodes[0]
+TEST "kadalu volume rebalance-start DEV/vol18"
+TEST "sleep 3"
+
+EQUAL "5", (TEST "ls /exports/vol18/s1/d1/ | wc -l").strip, "Check for migrate-data in server1 s1/d1 unit vol18"
+EQUAL "4", (TEST "ls /exports/vol18/s1/d2/ | wc -l").strip, "Check for migrate-data in server1 s1/d2 unit vol18"
+EQUAL "4", (TEST "ls /exports/vol18/s1/d3/ | wc -l").strip, "Check for migrate-data in server1 s1/d3 unit vol18"
+
+EQUAL "4", (TEST "ls /exports/vol18/s1_e/d1/ | wc -l").strip, "Check for migrate-data in server1 s1_e/d1 unit vol18"
+EQUAL "5", (TEST "ls /exports/vol18/s1_e/d2/ | wc -l").strip, "Check for migrate-data in server1 s1_e/d2 unit vol18"
+EQUAL "5", (TEST "ls /exports/vol18/s1_e/d3/ | wc -l").strip, "Check for migrate-data in server1 s1_e/d3 unit vol18"
+
+USE_NODE nodes[1]
+EQUAL "5", (TEST "ls /exports/vol18/s2/d1/ | wc -l").strip, "Check for migrate-data in server2 s2/d1 unit vol18"
+EQUAL "4", (TEST "ls /exports/vol18/s2/d2/ | wc -l").strip, "Check for migrate-data in server2 s2/d2 unit vol18"
+EQUAL "4", (TEST "ls /exports/vol18/s2/d3/ | wc -l").strip, "Check for migrate-data in server2 s2/d3 unit vol18"
+
+EQUAL "4", (TEST "ls /exports/vol18/s2_e/d1/ | wc -l").strip, "Check for migrate-data in server2 s2_e/d1 unit vol18"
+EQUAL "5", (TEST "ls /exports/vol18/s2_e/d2/ | wc -l").strip, "Check for migrate-data in server2 s2_e/d2 unit vol18"
+EQUAL "5", (TEST "ls /exports/vol18/s2_e/d3/ | wc -l").strip, "Check for migrate-data in server2 s2_e/d3 unit vol18"
+
+USE_NODE nodes[2]
+EQUAL "5", (TEST "ls /exports/vol18/s3/d1/ | wc -l").strip, "Check for migrate-data in server3 s3/d1 unit vol18"
+EQUAL "4", (TEST "ls /exports/vol18/s3/d2/ | wc -l").strip, "Check for migrate-data in server3 s3/d2 unit vol18"
+EQUAL "4", (TEST "ls /exports/vol18/s3/d3/ | wc -l").strip, "Check for migrate-data in server3 s3/d3 unit vol18"
+
+EQUAL "4", (TEST "ls /exports/vol18/s3_e/d1/ | wc -l").strip, "Check for migrate-data in server3 s3_e/d1 unit vol18"
+EQUAL "5", (TEST "ls /exports/vol18/s3_e/d2/ | wc -l").strip, "Check for migrate-data in server3 s3_e/d2 unit vol18"
+EQUAL "5", (TEST "ls /exports/vol18/s3_e/d3/ | wc -l").strip, "Check for migrate-data in server3 s3_e/d3 unit vol18"
+
+USE_NODE nodes[0]
+TEST "umount /mnt/vol18"
+TEST "rmdir /mnt/vol18"
+
 TEST "kadalu volume stop DEV/vol18 --mode=script"
 TEST "kadalu volume delete DEV/vol18 --mode=script"
 

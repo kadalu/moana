@@ -6,15 +6,6 @@ require "../datastore/*"
 require "./ping"
 require "./volume_utils.cr"
 
-ACTION_MANAGE_SERVICES = "manage_services"
-
-node_action ACTION_MANAGE_SERVICES do |data, _env|
-  services, volfiles, _ = VolumeRequestToNode.from_json(data)
-  save_volfiles(volfiles)
-  sighup_processes(services)
-  restart_shd_service_and_start_fix_layout_service(services)
-end
-
 put "/api/v1/pools/:pool_name/volumes" do |env|
   pool_name = env.params.url["pool_name"]
 
