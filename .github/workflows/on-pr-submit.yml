@@ -37,8 +37,8 @@ jobs:
         run: |
           cd tests && ./build-container.sh
       - name: Setup Test environment
-        run: binnacle -v tests/setup.t
+        run: binnacle -vv tests/setup.t
       - name: Build and Install Storage manager to nodes/containers
-        run: VERSION="${{ github.ref_name }}" binnacle -v tests/install.t
+        run: VERSION="${{ github.ref_name }}" binnacle -vv tests/install.t
       - name: Run all Tests
-        run: binnacle -v tests/all
+        run: binnacle -vv tests/all

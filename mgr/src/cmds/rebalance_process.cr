@@ -147,9 +147,7 @@ class Rebalancer
           all_dirs << rel_path
           next
         end
-
         mnt_full_path = Path.new(@mount_dir, rel_path)
-
         # Stat the file from the @backend_dir to check the size
         begin
           file_info = File.info(backend_full_path, follow_symlinks: false)
