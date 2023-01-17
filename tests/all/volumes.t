@@ -256,7 +256,7 @@ USE_NODE nodes[2]
 EQUAL "3", (TEST "ls /exports/vol15/s3_e/* -d | wc -l").strip, "Check for fix-layout in server3 s3 unit"
 
 USE_NODE nodes[0]
-TEST "kadalu volume rebalance-start DEV/vol15"
+TEST "kadalu rebalance start DEV/vol15"
 TEST "sleep 3"
 
 EQUAL "3", (TEST "ls /exports/vol15/s1/d1/f3 /exports/vol15/s1/d2/f3 /exports/vol15/s1/d3/f3 | wc -l").strip, "Check for migrate-data in server1 s1 unit vol15"
@@ -296,7 +296,7 @@ USE_NODE nodes[2]
 EQUAL "3", (TEST "ls /exports/vol16/s3_e/* -d | wc -l").strip, "Check for fix-layout in server3 s3 unit vol16"
 
 USE_NODE nodes[0]
-TEST "kadalu volume rebalance-start DEV/vol16"
+TEST "kadalu rebalance start DEV/vol16"
 TEST "sleep 3"
 
 EQUAL "5", (TEST "ls /exports/vol16/s1/d1/ | wc -l").strip, "Check for migrate-data in server1 s1/d1 unit vol16"
@@ -354,7 +354,7 @@ EQUAL "3", (TEST "ls /exports/vol17/s3_e/* -d | wc -l").strip, "Check for fix-la
 EQUAL "3", (TEST "ls /exports/vol17/s6_e/* -d | wc -l").strip, "Check for fix-layout in server3 s6 unit vol17"
 
 USE_NODE nodes[0]
-TEST "kadalu volume rebalance-start DEV/vol17"
+TEST "kadalu rebalance start DEV/vol17"
 TEST "sleep 3"
 
 EQUAL "2", (TEST "ls /exports/vol17/s1/d1/ | wc -l").strip, "Check for migrate-data in server1 s1/d1 unit vol17"
@@ -433,7 +433,7 @@ USE_NODE nodes[2]
 EQUAL "3", (TEST "ls /exports/vol18/s3_e/* -d | wc -l").strip, "Check for fix-layout in server3 s3 unit vol18"
 
 USE_NODE nodes[0]
-TEST "kadalu volume rebalance-start DEV/vol18"
+TEST "kadalu rebalance start DEV/vol18"
 TEST "sleep 3"
 
 EQUAL "5", (TEST "ls /exports/vol18/s1/d1/ | wc -l").strip, "Check for migrate-data in server1 s1/d1 unit vol18"

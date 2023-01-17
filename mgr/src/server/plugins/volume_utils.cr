@@ -145,7 +145,7 @@ def restart_shd_service_and_manage_rebalance_services(services, action = "start"
       if svc.name == "shdservice"
         svc.restart
       elsif svc.name == "fixlayoutservice" || svc.name == "migratedataservice"
-        status_file_path = "/var/lib/kadalu/#{svc.id.gsub("/", "%2F")}.json"
+        status_file_path = "/var/lib/kadalu/#{svc.id}.json"
         FileUtils.rm(status_file_path) if File.exists?(status_file_path)
         if action == "start"
           svc.start
@@ -548,33 +548,4 @@ def add_migrate_data_service(services, pool_name, volume_name, node, storage_uni
   services[node.id] << service.unit
 
   services
-end
-
-def handle_volume_rebalance_start_stop(data, action)
-  services, volfiles, _ = VolumeRequestToNode.from_json(data)
-
-  if action == "start" && !volfiles[GlobalConfig.local_node.id]?.nil?
-    Dir.mkdir_p(Path.new(GlobalConfig.workdir, "volfiles"))
-    volfiles[GlobalConfig.local_node.id].each do |volfile|
-      File.write(Path.new(GlobalConfig.workdir, "volfiles", "#{volfile.name}.vol"), volfile.content)
-    end
-  end
-
-  unless services[GlobalConfig.local_node.id]?.nil?
-    # TODO: Hard coded path change?
-    Dir.mkdir_p("/var/log/kadalu")
-    Dir.mkdir_p("/run/kadalu")
-    services[GlobalConfig.local_node.id].each do |service|
-      svc = Service.from_json(service.to_json)
-      if svc.name == "migratedataservice"
-        if action == "start"
-          svc.start
-        else
-          svc.stop
-        end
-      end
-    end
-  end
-
-  NodeResponse.new(true, "")
 end
