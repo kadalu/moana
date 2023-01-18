@@ -36,10 +36,10 @@ node_action ACTION_VOLUME_CREATE_STOPPED do |data, _env|
 end
 
 node_action ACTION_MANAGE_SERVICES do |data, _env|
-  services, volfiles, _, action = VolumeRequestToNodeWithAction.from_json(data)
+  services, volfiles, rollback_volume, action = VolumeRequestToNodeWithAction.from_json(data)
   save_volfiles(volfiles)
   sighup_processes(services)
-  restart_shd_service_and_manage_rebalance_services(services, action)
+  restart_shd_service_and_manage_rebalance_services(services, rollback_volume.name, action)
 end
 
 def volfile_get(name)
@@ -138,14 +138,14 @@ def validate_volume_create(req)
   NodeResponse.new(true, "")
 end
 
-def restart_shd_service_and_manage_rebalance_services(services, action = "start")
+def restart_shd_service_and_manage_rebalance_services(services, volume_name, action = "start")
   unless services[GlobalConfig.local_node.id]?.nil?
     services[GlobalConfig.local_node.id].each do |service|
       svc = Service.from_json(service.to_json)
       if svc.name == "shdservice"
         svc.restart
       elsif svc.name == "fixlayoutservice" || svc.name == "migratedataservice"
-        status_file_path = "/var/lib/kadalu/#{svc.id}.json"
+        status_file_path = "/var/lib/kadalu/rebalance/#{volume_name}/#{svc.id}.json"
         FileUtils.rm(status_file_path) if File.exists?(status_file_path)
         if action == "start"
           svc.start
