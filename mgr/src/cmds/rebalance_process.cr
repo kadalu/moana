@@ -83,9 +83,10 @@ class Rebalancer
   end
 
   def status_file(rebalance_type)
-    # TODO: Change the path to a subdir
+    rebalance_dir = Path.new(WORKDIR, "rebalance", "#{@volume_name}").to_s
+    Dir.mkdir_p rebalance_dir
     Path.new(
-      WORKDIR,
+      rebalance_dir,
       "rebalance-#{rebalance_type}-#{@backend_dir.gsub("/", "%2F")}.json"
     ).to_s
   end
