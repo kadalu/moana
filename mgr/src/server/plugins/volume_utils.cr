@@ -15,7 +15,7 @@ VOLUME_ID_XATTR_NAME = "trusted.glusterfs.volume-id"
 
 alias VolumeRequestToNode = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, Array(MoanaTypes::Volfile)), MoanaTypes::Volume)
 alias VolumeRequestToNodeWithAction = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, Array(MoanaTypes::Volfile)), MoanaTypes::Volume, String)
-alias ServiceRequestToNode = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)))
+alias ServiceRequestToNodeWithVolume = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), MoanaTypes::Volume)
 
 ACTION_VALIDATE_VOLUME_CREATE = "validate_volume_create"
 ACTION_VOLUME_CREATE          = "volume_create"
@@ -545,7 +545,19 @@ end
 
 def add_migrate_data_service(services, pool_name, volume_name, node, storage_unit)
   service = MigrateDataService.new(pool_name, volume_name, storage_unit)
+  services[node.id] = [] of MoanaTypes::ServiceUnit unless services[node.id]?
   services[node.id] << service.unit
+
+  services
+end
+
+def construct_migrate_data_service_request(volume)
+  services = Hash(String, Array(MoanaTypes::ServiceUnit)).new
+
+  volume.distribute_groups.each do |dist_grp|
+    services = add_migrate_data_service(services, volume.pool.name, volume.name,
+      dist_grp.storage_units[0].node, dist_grp.storage_units[0])
+  end
 
   services
 end

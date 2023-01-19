@@ -45,3 +45,25 @@ handler "rebalance.stop" do |args|
     exit 1
   end
 end
+
+command "rebalance.status", "Show Kadalu Storage volume rebalance status" do |parser, _|
+  parser.banner = "Usage: kadalu rebalance status POOL/VOLNAME [arguments]"
+end
+
+handler "rebalance.status" do |args|
+  begin
+    command_error "Pool/Volname is required" if args.pos_args.size == 0
+    args.pool_name, volume_name = pool_and_volume_name(args.pos_args.size > 0 ? args.pos_args[0] : "")
+    api_call(args, "Failed to show rebalance status of volume") do |client|
+      status = client.pool(args.pool_name).volume(volume_name).rebalance_status
+
+      handle_json_output(status, args)
+
+      puts "Rebalance status of volume #{volume_name}"
+    end
+  rescue ex : InvalidVolumeRequest
+    STDERR.puts "Failed to show rebalance status of Kadalu Storage Volume"
+    STDERR.puts ex
+    exit 1
+  end
+end
