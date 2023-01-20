@@ -91,9 +91,10 @@ module MoanaTypes
       node = Node.new,
       type = "",
       fs = "",
+      service = ServiceUnit.new,
       metrics = Metrics.new,
       heal_metrics = HealMetrics.new,
-      service = ServiceUnit.new
+      migrate_data_status = MigrateDataRebalanceStatus.new
 
     def initialize(node_name, @port, @path)
       @node.name = node_name
@@ -245,7 +246,7 @@ module MoanaTypes
     include JSON::Serializable
 
     property complete = false, progress = 0, scanned_bytes = 0_i64,
-      total_bytes = 0_i64, duration_seconds = 0, estimate_seconds = 0
+      total_bytes = 0_i64, duration_seconds = 0, estimate_seconds = 0, state = "failed"
 
     def initialize
     end

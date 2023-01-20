@@ -10,40 +10,85 @@ REBALNCE_DIR = "/var/lib/kadalu/rebalance"
 
 ACTION_REBALANCE_STATUS = "action_rebalance_status"
 
+struct RebalanceStatusRequestToNode
+  include JSON::Serializable
+
+  property storage_units = [] of MoanaTypes::StorageUnit
+
+  def initialize
+  end
+end
+
+alias RebalanceRequestToNode = Tuple(String, Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, RebalanceStatusRequestToNode))
+
+# TODO: Assign migrate-data state at volume level
+def assign_migrate_data_state(migrate_data_status, svc)
+  return migrate_data_status if migrate_data_status.state == "not started"
+
+  if svc.running? == false && migrate_data_status.complete == false
+    migrate_data_status.state = "failed"
+  elsif svc.running? == true
+    migrate_data_status.state = "running"
+  elsif migrate_data_status.complete == true
+    migrate_data_status.state = "complete"
+  end
+
+  migrate_data_status
+end
+
 # Calculate the status file with highest estimate_seconds and return that file data from node.
 node_action ACTION_REBALANCE_STATUS do |data, _env|
-  services, volume = ServiceRequestToNodeWithVolume.from_json(data)
-  int_min = "-2147483648"
-  rebalance_status_file_with_highest_estimate_in_secs = ""
+  volume_name, services, request = RebalanceRequestToNode.from_json(data)
   status_file_path = ""
-  rebalance_dir = Path.new(WORKDIR, "rebalance", "#{volume.name}").to_s
-  node_resp = Hash(String, MoanaTypes::MigrateDataRebalanceStatus).new
+  rebalance_dir = Path.new(WORKDIR, "rebalance", "#{volume_name}").to_s
+  request = Hash(String, RebalanceStatusRequestToNode).from_json(request.to_json)
+  node_resp = RebalanceStatusRequestToNode.new
 
   unless services[GlobalConfig.local_node.id]?.nil?
     services[GlobalConfig.local_node.id].each do |service|
-      svc = Service.from_json(service.to_json)
-      puts "svc: #{svc}"
-      # TODO: Add check for svc.running?
-      if svc.name == "migratedataservice"
-        status_file_path = "#{rebalance_dir}/#{svc.id}.json"
-        if File.exists?(status_file_path)
-          data = MoanaTypes::MigrateDataRebalanceStatus.from_json(File.read(status_file_path))
-          puts "data"
-          if data.estimate_seconds.to_i64 > int_min.to_i64
-            int_min = data.estimate_seconds
-            rebalance_status_file_with_highest_estimate_in_secs = status_file_path
+      request.each do |node_id, storage_units_data|
+        next unless node_id == GlobalConfig.local_node.id
+        svc = Service.from_json(service.to_json)
+        storage_units_data.storage_units.each do |storage_unit|
+          next unless svc.id == "rebalance-migrate-data-#{storage_unit.path.gsub("/", "%2F")}"
+          status_file_path = "#{rebalance_dir}/#{svc.id}.json"
+          if File.exists?(status_file_path)
+            storage_unit.migrate_data_status = MoanaTypes::MigrateDataRebalanceStatus.from_json(File.read(status_file_path))
+          else
+            storage_unit.migrate_data_status.state = "not started"
           end
+          storage_unit.migrate_data_status = assign_migrate_data_state(storage_unit.migrate_data_status, svc)
+
+          node_resp.storage_units << storage_unit
         end
       end
     end
   end
 
-  if rebalance_status_file_with_highest_estimate_in_secs != ""
-    node_resp[GlobalConfig.local_node.id] = MoanaTypes::MigrateDataRebalanceStatus.from_json(File.read(rebalance_status_file_with_highest_estimate_in_secs))
-    NodeResponse.new(true, node_resp.to_json)
-  else
-    NodeResponse.new(true, (node_resp[GlobalConfig.local_node.id] = MoanaTypes::MigrateDataRebalanceStatus.new).to_json)
+  NodeResponse.new(true, node_resp.to_json)
+end
+
+def construct_migrate_data_service_request(volume)
+  services = Hash(String, Array(MoanaTypes::ServiceUnit)).new
+
+  volume.distribute_groups.each do |dist_grp|
+    services = add_migrate_data_service(services, volume.pool.name, volume.name,
+      dist_grp.storage_units[0].node, dist_grp.storage_units[0])
   end
+
+  services
+end
+
+def rebalance_status_node_request_prepare(pool_name, volume)
+  req = Hash(String, RebalanceStatusRequestToNode).new
+
+  volume.distribute_groups.each do |dist_grp|
+    storage_unit = dist_grp.storage_units[0]
+    req[storage_unit.node.id] = RebalanceStatusRequestToNode.new if req[storage_unit.node.id]?.nil?
+    req[storage_unit.node.id].storage_units << storage_unit
+  end
+
+  req
 end
 
 get "/api/v1/pools/:pool_name/volumes/:volume_name/rebalance_status" do |env|
@@ -55,7 +100,6 @@ get "/api/v1/pools/:pool_name/volumes/:volume_name/rebalance_status" do |env|
   volume = Datastore.get_volume(pool_name, volume_name)
   api_exception(volume.nil?, {"error": "Volume doesn't exists"}.to_json)
   volume = volume.not_nil!
-  pool = volume.not_nil!.pool
 
   nodes = participating_nodes(pool_name, volume)
 
@@ -66,28 +110,28 @@ get "/api/v1/pools/:pool_name/volumes/:volume_name/rebalance_status" do |env|
   api_exception(!resp.ok, node_errors("Not all participant nodes are reachable", resp.node_responses).to_json)
 
   services = construct_migrate_data_service_request(volume)
+  request = rebalance_status_node_request_prepare(pool_name, volume)
 
   resp = dispatch_action(
     ACTION_REBALANCE_STATUS,
     pool_name,
     nodes,
-    {services, volume}.to_json
+    {volume_name, services, request}.to_json
   )
 
   api_exception(!resp.ok, node_errors("Failed to get rebalance status of volume #{volume.name}", resp.node_responses).to_json)
 
-  # Goto every participating node of volume's workdir/rebalance/volume_name
-  # Fetch the highest estimate seconds value in that node
-  # construct status data which is highest estimate seconds of all nodes.
-  # Return by adding Rebalances status to Class Volume or Class StorageUnit in JSON
-
-  # Constraints
-  # How to show migrate-data has crashed [when svc.running? is false and complete: false]
-
-  # nodes.each do |node|
-  # 	puts "resp: #{resp}"
-  # end
-  puts "resp1: #{resp}"
+  volume.distribute_groups.each do |dist_grp|
+    storage_unit = dist_grp.storage_units[0]
+    if resp.node_responses[storage_unit.node.id].ok
+      node_resp = RebalanceStatusRequestToNode.from_json(resp.node_responses[storage_unit.node.id].response)
+      node_resp.storage_units.each do |su|
+        if su.node.id == storage_unit.node.id && su.path == storage_unit.path
+          storage_unit.migrate_data_status = su.migrate_data_status
+        end
+      end
+    end
+  end
 
   env.response.status_code = 200
   volume.to_json

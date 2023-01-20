@@ -15,7 +15,6 @@ VOLUME_ID_XATTR_NAME = "trusted.glusterfs.volume-id"
 
 alias VolumeRequestToNode = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, Array(MoanaTypes::Volfile)), MoanaTypes::Volume)
 alias VolumeRequestToNodeWithAction = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, Array(MoanaTypes::Volfile)), MoanaTypes::Volume, String)
-alias ServiceRequestToNodeWithVolume = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), MoanaTypes::Volume)
 
 ACTION_VALIDATE_VOLUME_CREATE = "validate_volume_create"
 ACTION_VOLUME_CREATE          = "volume_create"
