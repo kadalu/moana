@@ -549,14 +549,3 @@ def add_migrate_data_service(services, pool_name, volume_name, node, storage_uni
 
   services
 end
-
-def construct_migrate_data_service_request(volume)
-  services = Hash(String, Array(MoanaTypes::ServiceUnit)).new
-
-  volume.distribute_groups.each do |dist_grp|
-    services = add_migrate_data_service(services, volume.pool.name, volume.name,
-      dist_grp.storage_units[0].node, dist_grp.storage_units[0])
-  end
-
-  services
-end

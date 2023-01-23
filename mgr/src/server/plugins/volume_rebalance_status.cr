@@ -68,27 +68,20 @@ node_action ACTION_REBALANCE_STATUS do |data, _env|
   NodeResponse.new(true, node_resp.to_json)
 end
 
-def construct_migrate_data_service_request(volume)
-  services = Hash(String, Array(MoanaTypes::ServiceUnit)).new
-
-  volume.distribute_groups.each do |dist_grp|
-    services = add_migrate_data_service(services, volume.pool.name, volume.name,
-      dist_grp.storage_units[0].node, dist_grp.storage_units[0])
-  end
-
-  services
-end
-
-def rebalance_status_node_request_prepare(pool_name, volume)
+def construct_migrate_data_service_request(pool_name, volume)
   req = Hash(String, RebalanceStatusRequestToNode).new
+  services = Hash(String, Array(MoanaTypes::ServiceUnit)).new
 
   volume.distribute_groups.each do |dist_grp|
     storage_unit = dist_grp.storage_units[0]
     req[storage_unit.node.id] = RebalanceStatusRequestToNode.new if req[storage_unit.node.id]?.nil?
     req[storage_unit.node.id].storage_units << storage_unit
+
+    services = add_migrate_data_service(services, volume.pool.name, volume.name,
+      dist_grp.storage_units[0].node, storage_unit)
   end
 
-  req
+  {req, services}
 end
 
 get "/api/v1/pools/:pool_name/volumes/:volume_name/rebalance_status" do |env|
@@ -109,8 +102,7 @@ get "/api/v1/pools/:pool_name/volumes/:volume_name/rebalance_status" do |env|
   resp = dispatch_action(ACTION_PING, pool_name, nodes, "")
   api_exception(!resp.ok, node_errors("Not all participant nodes are reachable", resp.node_responses).to_json)
 
-  services = construct_migrate_data_service_request(volume)
-  request = rebalance_status_node_request_prepare(pool_name, volume)
+  request, services = construct_migrate_data_service_request(pool_name, volume)
 
   resp = dispatch_action(
     ACTION_REBALANCE_STATUS,
