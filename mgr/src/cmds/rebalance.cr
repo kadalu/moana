@@ -71,10 +71,17 @@ def rebalance_status_summary(volume, args)
   sum_of_scanned_bytes = 0
   sum_of_total_bytes = 0
   sum_of_progress = 0
+  fix_layout_status = volume.distribute_groups[0].storage_units[0].fix_layout_status
 
   puts "Name                       : #{volume.pool.name}/#{volume.name}"
   puts "Type                       : #{volume.type}"
   puts "ID                         : #{volume.id}"
+
+  puts "Fix-Layout Status          : #{fix_layout_status.state}"
+  if fix_layout_status.state != "not started"
+    puts "Total Dirs Scanned         : #{fix_layout_status.total_dirs}"
+    puts "Duration                   : #{fix_layout_status.duration_seconds}"
+  end
 
   volume.distribute_groups.each do |dist_grp|
     storage_unit = dist_grp.storage_units[0]
@@ -126,11 +133,19 @@ def detailed_rebalance_status(volume, args)
   total_completed_migrate_data_processes = 0
   total_non_started_migrate_data_processes = 0
   total_failed_migrate_data_processes = 0
+  fix_layout_status = volume.distribute_groups[0].storage_units[0].fix_layout_status
   rebalance_status = ""
 
   puts "Name                                    : #{volume.pool.name}/#{volume.name}"
   puts "Type                                    : #{volume.type}"
   puts "ID                                      : #{volume.id}"
+
+  puts "Fix-Layout Status                       : #{fix_layout_status.state}"
+  if fix_layout_status.state != "not started"
+    puts "Total Dirs Scanned                      : #{fix_layout_status.total_dirs}"
+    puts "Duration                                : #{fix_layout_status.duration_seconds}"
+  end
+  puts
 
   volume.distribute_groups.each_with_index do |dist_grp, dist_grp_index|
     storage_unit = dist_grp.storage_units[0]
@@ -156,10 +171,12 @@ def detailed_rebalance_status(volume, args)
     )
 
     printf("     Status                             : %s\n", migrate_data_status.state)
-    printf("     Progress                           : %s %%\n", migrate_data_status.progress)
-    printf("     Scanned                            : %s / %s\n", migrate_data_status.scanned_bytes.humanize_bytes, migrate_data_status.total_bytes.humanize_bytes)
-    printf("     Duration Seconds                   : %s\n", migrate_data_status.duration_seconds)
-    printf("     Estimate Seconds                   : %s\n", migrate_data_status.estimate_seconds)
+    if migrate_data_status.state != "not started"
+      printf("     Progress                           : %s %%\n", migrate_data_status.progress)
+      printf("     Scanned                            : %s / %s\n", migrate_data_status.scanned_bytes.humanize_bytes, migrate_data_status.total_bytes.humanize_bytes)
+      printf("     Duration Seconds                   : %s\n", migrate_data_status.duration_seconds)
+      printf("     Estimate Seconds                   : %s\n", migrate_data_status.estimate_seconds)
+    end
     puts
   end
 

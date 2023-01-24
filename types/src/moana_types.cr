@@ -94,6 +94,7 @@ module MoanaTypes
       service = ServiceUnit.new,
       metrics = Metrics.new,
       heal_metrics = HealMetrics.new,
+      fix_layout_status = FixLayoutRebalanceStatus.new,
       migrate_data_status = MigrateDataRebalanceStatus.new
 
     def initialize(node_name, @port, @path)
@@ -255,7 +256,7 @@ module MoanaTypes
   struct FixLayoutRebalanceStatus
     include JSON::Serializable
 
-    property complete = false, total_dirs = 0, duration_seconds = 0
+    property complete = false, total_dirs = 0, duration_seconds = 0, state = "failed"
 
     def initialize
     end

@@ -537,6 +537,7 @@ end
 
 def add_fix_layout_service(services, pool_name, volume_name, node, storage_unit)
   service = FixLayoutService.new(pool_name, volume_name, storage_unit)
+  services[node.id] = [] of MoanaTypes::ServiceUnit unless services[node.id]?
   services[node.id] << service.unit
 
   services
