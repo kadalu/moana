@@ -1,5 +1,7 @@
 = Kadalu Storage Volumes
 
+=== Volume Creation
+
 Create a Kadalu Storage Volume with Storage units from multiple Storage nodes.
 
 [source,console]
@@ -88,3 +90,105 @@ Ports for the Storage Unit are assigned automatically (`49252` to `49452`) while
 Volume vol1 created successfully
 ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
 ----
+
+=== Volume Expansion and Rebalance
+
+Expand an already created Kadalu Storage Volume with storage units from multiple storage nodes.
+
+Example,
+
+Create a Replicated or Mirror Kadalu Storage Volume 'vol1' with 3 different storage nodes and 3 storage units.
+
+[source,console]
+----
+[root@server1 ~]# kadalu volume create DEV/vol1 \
+    mirror server1.example.com:/exports/vol1/s1 \
+           server2.example.com:/exports/vol1/s2 \
+           server3.example.com:/exports/vol1/s3
+Volume vol1 created successfully
+ID: 03c6a3a4-e704-47ee-bb05-e541a561a875
+----
+
+Expand Kadalu Storage Volume `vol1` by adding more Storage units.
+
+- Note:
+
+  Volume type, distribute group count, replica count, data and redundant storage unit count should be the same as when the Kadalu Storage Volume was created.
+
+  For example above Kadalu Storage Volume being of type mirror 3, it has 1 distribute group with 3 storage units. Hence during volume expansion Kadalu Storage expects distribute group being a multiple of 1.
+
+
+[source,console]
+----
+[root@server1 ~]# kadalu volume expand DEV/vol1   \
+    mirror server1.example.com:/exports/vol1/s1_e \
+           server2.example.com:/exports/vol1/s2_e \
+           server3.example.com:/exports/vol1/s3_e
+Volume vol1 expanded successfully
+ID: 03c6a3a4-e704-47ee-bb05-e541a561a875
+
+Proceed to the rebalancing of volume vol1 by following the below steps.
+To start the rebalancing of volume: kadalu volume rebalance-start DEV/vol1.
+To force stop the rebalancing of volume: kadalu volume rebalance-stop DEV/vol1.
+----
+
+==== Rebalance
+
+During the expansion of volume, Kadalu Storage also fixes the layout of all expanded storage units, i.e., it triggers the creation of directories in the expanded storage units, to maintain the same directory structure as in storage units before expansion.
+
+Once the layout of the expanded storage units is fixed, data migration can commence. Data migration involves recalculating the hash of files and distributing them across storage units.
+
+To start and stop the rebalance (i.e., data migration), follow the steps displayed after the volume expansion.
+
+[source,console]
+----
+[root@server1 ~]# kadalu rebalance start DEV/vol1
+Rebalance of Volume vol1 started.
+----
+
+[source,console]
+----
+[root@server1 ~]# kadalu rebalance stop DEV/vol1
+Rebalance of Volume vol1 started.
+----
+
+- Note:
+
+  The Rebalance process, if restarted in the middle of completion, will start scanning storage units from the beginning and not from the point where it stopped
+
+To view the status of Rebalance processes,
+
+`kadalu rebalance status pool/vol`
+
+[source,console]
+----
+[root@server1 ~]# kadalu rebalance status DEV/vol1
+
+Name                       : DEV/vol1
+Type                       : Distributed Mirror
+ID                         : 03c6a3a4-e704-47ee-bb05-e541a561a875
+Fix-Layout Status          : complete
+Total Dirs Scanned         : 3
+Duration                   : 0
+Progress                   : 100.00 %
+Estimate Seconds           : 0
+Scanned                    : 1.13MiB / 1.13MiB
+
+Volume vol1 Rebalance Status            : complete
+Total Number of Rebalance Process       : 6
+Number of Completed Rebalance Process   : 6
+Number of Failed Rebalance Process      : 0
+----
+
+Where,
+
+- `Fix-Layout Status` is status of fix-layout process after volume expansion.
+- `Total Dirs Scanned` indicates total number of dirs which was scanned and added to newer storage units.
+- `Duration` is the time taken for fix-layout process to complete.
+- `Progress` is the percentage amount of progress made with migration of data (Rebalance).
+- `Estimate Seconds` is the estimated amount of time which might be taken for completion of migration of data.
+- `Scanned` indicates in Bytes, files scanned out of total files.
+
+- `Rebalance Status` can be of complete, partial, failed and not-started indicating the status of Rebalance at volume level.
+
+To view the `Rebalance Status` of each storage-unit : `kadalu rebalance status pool/vol --detail`.
