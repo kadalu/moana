@@ -166,6 +166,7 @@ module StorageMgr
 
     Log.info &.emit("Starting the Storage manager ReST API server", port: "#{Kemal.config.port}")
 
+    logger StorageManagerAPILogHandler.new
     add_handler ApiExceptionHandler.new
     add_handler MgrRequestsProxyHandler.new
     add_handler AuthHandler.new
@@ -174,7 +175,8 @@ module StorageMgr
     Kemal.run do |config|
       # TODO: Enable/Disable access logging if configured
       # Kemal.config.logging = false
-      config.logger = StorageManagerAPILogHandler.new
+      config.app_name = "Kadalu Storage"
+      config.powered_by_header = false
       server = config.server.not_nil!
       server.bind_tcp "0.0.0.0", 3000, reuse_port: true
     end
