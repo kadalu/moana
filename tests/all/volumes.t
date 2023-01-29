@@ -272,6 +272,10 @@ EQUAL "3", (TEST "ls /exports/vol15/s3/d1/f8 /exports/vol15/s3/d2/f4 /exports/vo
 EQUAL "4", (TEST "ls /exports/vol15/s3_e/d1/f1 /exports/vol15/s3_e/d1/f5 /exports/vol15/s3_e/d2/f8 /exports/vol15/s3_e/d3/f8 | wc -l").strip, "Check for migrate-data in server3 s3_e unit"
 
 USE_NODE nodes[0]
+
+TEST "kadalu rebalance status DEV/vol15"
+TEST "kadalu rebalance status DEV/vol15 --detail"
+
 TEST "umount /mnt/vol15"
 TEST "rmdir /mnt/vol15"
 TEST "kadalu volume stop DEV/vol15 --mode=script"

@@ -338,8 +338,8 @@ handler "volume.expand" do |args|
       puts "ID: #{volume.id}"
 
       puts "Proceed to the rebalancing of volume #{req.name} by following the below steps."
-      puts "To start the rebalancing of volume: `kadalu volume rebalnce-start #{args.pool_name}/#{req.name}`"
-      puts "To force stop the rebalancing of volume: `kadalu volume rebalnce-stop #{args.pool_name}/#{req.name}`"
+      puts "To start the rebalancing of volume: `kadalu rebalance start #{args.pool_name}/#{req.name}`"
+      puts "To force stop the rebalancing of volume: `kadalu rebalnce stop #{args.pool_name}/#{req.name}`"
     end
   rescue ex : InvalidVolumeRequest
     STDERR.puts "Volume expand failed"

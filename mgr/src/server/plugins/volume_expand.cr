@@ -136,10 +136,6 @@ put "/api/v1/pools/:pool_name/volumes" do |env|
 
   set_volume_metrics(req)
 
-  # Add only the first node for fix-layout service
-  services = add_fix_layout_service(services, pool.not_nil!.name, req.name, nodes[0],
-    volume.not_nil!.distribute_groups[0].storage_units[0])
-
   existing_nodes = participating_nodes(pool_name, volume)
 
   # Add only the first existing node for fix-layout service

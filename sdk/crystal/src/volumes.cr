@@ -221,5 +221,19 @@ module StorageManager
     def rebalance_stop
       volume_rebalance_start_stop("stop")
     end
+
+    def rebalance_status
+      url = "#{@client.url}/api/v1/pools/#{@pool_name}/volumes/#{@name}/rebalance_status"
+
+      response = StorageManager.http_get(
+        url,
+        headers: @client.auth_header
+      )
+      if response.status_code == 200
+        MoanaTypes::Volume.from_json(response.body)
+      else
+        StorageManager.error_response(response)
+      end
+    end
   end
 end
