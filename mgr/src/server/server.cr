@@ -24,24 +24,16 @@ end
 module StorageMgr
   class StorageManagerAPILogHandler < Kemal::BaseLogHandler
     def initialize
+      @handler = HTTP::LogHandler.new
     end
 
     def call(context : HTTP::Server::Context)
-      elapsed_time = Time.measure { call_next(context) }
-      elapsed_text = elapsed_text(elapsed_time)
-      Log.info &.emit("#{context.request.method} #{context.request.resource}", status_code: "#{context.response.status_code}", duration: "#{elapsed_text}")
-      context
+      @handler.next = @next
+      @handler.call(context)
     end
 
     def write(message : String)
       Log.info { message.strip }
-    end
-
-    private def elapsed_text(elapsed)
-      millis = elapsed.total_milliseconds
-      return "#{millis.round(2)}ms" if millis >= 1
-
-      "#{(millis * 1000).round(2)}µs"
     end
   end
 
@@ -166,7 +158,7 @@ module StorageMgr
 
     Log.info &.emit("Starting the Storage manager ReST API server", port: "#{Kemal.config.port}")
 
-    logger StorageManagerAPILogHandler.new
+    Kemal.config.logger = StorageManagerAPILogHandler.new
     add_handler ApiExceptionHandler.new
     add_handler MgrRequestsProxyHandler.new
     add_handler AuthHandler.new
