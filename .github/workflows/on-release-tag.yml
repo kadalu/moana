@@ -10,51 +10,21 @@ on:
   workflow_dispatch:
 
 jobs:
-  release_amd64:
-    runs-on: ubuntu-20.04
-    container:
-      image: crystallang/crystal:latest-alpine
+  release_amd64_arm64:
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
-      - name: Build the kadalu binary
+      - name: Install Binnacle
         run: |
-            apk add --update --no-cache --force-overwrite sqlite-dev sqlite-static
-            cd mgr
-            VERSION="${{ github.ref_name }}" shards build --production --release --static --stats --time
-      - name: Rename kadalu to kadalu-amd64
-        run: |
-          mv mgr/bin/kadalu mgr/bin/kadalu-amd64
-      - name: Upload kadalu-amd64 to the release
+          curl -fsSL https://github.com/kadalu/binnacle/releases/latest/download/install.sh | sudo bash -x
+          binnacle --version
+      - name: Release builds
+        run: sudo VERSION="${{ github.ref_name }}" binnacle -vv ci/release_build.t
+      - name: "Upload kadalu-{amd64,arm64} to the release"
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: mgr/bin/kadalu-amd64
-          tag: ${{ github.ref }}
-          overwrite: true
-          file_glob: true
-  release_arm64:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-
-      - name: Pull images
-        run: |
-          docker pull multiarch/qemu-user-static
-      - name: Install QEMU
-        run: |
-          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-      - name: Build
-        working-directory: .
-        run: |
-          docker run -i -v `pwd`:/workspace -w /workspace --rm multiarch/alpine:aarch64-edge /bin/sh -c "echo '@edge http://dl-cdn.alpinelinux.org/alpine/edge/community' >>/etc/apk/repositories; apk add --update --no-cache --force-overwrite llvm12-dev llvm12-static crystal@edge gc-dev gcc gmp-dev libatomic_ops libevent-static musl-dev pcre-dev libxml2-dev openssl-dev openssl-libs-static tzdata yaml-dev zlib-static make git g++ shards@edge yaml-static sqlite-dev sqlite-static; cd mgr; VERSION="${{ github.ref_name }}" shards build --production --release --static --stats --time"
-      - name: Rename kadalu to kadalu-amd64
-        run: |
-          sudo mv mgr/bin/kadalu mgr/bin/kadalu-arm64
-      - name: Upload kadalu-arm64 to the release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: mgr/bin/kadalu-arm64
+          file: mgr/bin/kadalu-*
           tag: ${{ github.ref }}
           overwrite: true
           file_glob: true
