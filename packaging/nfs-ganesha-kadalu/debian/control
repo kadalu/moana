@@ -1,0 +1,58 @@
+Source: nfs-ganesha-kadalu
+Section: admin
+Priority: optional
+Maintainer: Kadalu Technologies Private Limited <packaging@kadalu.tech>
+Standards-Version: 3.9.7
+Homepage: https://kadalu.tech
+Build-Depends: debhelper (>= 10~),
+               dh-python,
+               dh-systemd,
+               quilt,
+               bison,
+               flex,
+               cmake,
+               libdbus-1-dev,
+               libnfsidmap-dev,
+               libwbclient-dev,
+               libntirpc-dev,
+               libkrb5-dev,
+               libblkid-dev,
+               libattr1-dev,
+               libacl1-dev,
+               lttng-tools,
+               liblttng-ust-dev,
+               liblttng-ctl-dev,
+               liburcu-dev,
+               xfslibs-dev,
+               uuid-dev,
+               libcap-dev,
+               kadalu-storage,
+               librados-dev,
+               libcephfs-dev,
+               librgw-dev,
+               python3-all-dev,
+               libpython3-all-dev,
+               python3-setuptools,
+               python3-gi,
+               python3-pyparsing,
+               python3-pyqt5,
+               python3-sphinx,
+               pyqt5-dev-tools,
+               pkgconf,
+               lsb-release,
+               doxygen,
+               nfs-ganesha
+Vcs-Git: https://github.com/nfs-ganesha/nfs-ganesha.git
+
+Package: nfs-ganesha-kadalu
+Multi-Arch: same
+Architecture: any
+Section: libs
+Depends: ${misc:Depends}, ${shlibs:Depends}, nfs-ganesha, kadalu-storage
+Description: nfs-ganesha fsal gluster libraries
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. Supported name spaces are POSIX, PROXY, SNMP, FUSE-like,
+ HPSS, LUSTRE, XFS and ZFS.
+ .
+ This package contains a library for FSAL_GLUSTER and an example .conf file
