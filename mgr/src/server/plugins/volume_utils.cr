@@ -142,14 +142,14 @@ def restart_shd_service_and_manage_rebalance_services(services, volume_name, act
     services[GlobalConfig.local_node.id].each do |service|
       svc = Service.from_json(service.to_json)
       if svc.name == "shdservice"
-        svc.restart
+        svc.restart(plugin: GlobalConfig.service_mgr)
       elsif svc.name == "fixlayoutservice" || svc.name == "migratedataservice"
         status_file_path = "/var/lib/kadalu/rebalance/#{volume_name}/#{svc.id}.json"
         FileUtils.rm(status_file_path) if File.exists?(status_file_path)
         if action == "start"
-          svc.start
+          svc.start(plugin: GlobalConfig.service_mgr)
         else
-          svc.stop
+          svc.stop(plugin: GlobalConfig.service_mgr)
         end
       end
     end
@@ -175,9 +175,9 @@ def handle_node_volume_start_stop(data, action)
     services[GlobalConfig.local_node.id].each do |service|
       svc = Service.from_json(service.to_json)
       if action == "start"
-        svc.start
+        svc.start(plugin: GlobalConfig.service_mgr)
       else
-        svc.stop
+        svc.stop(plugin: GlobalConfig.service_mgr)
       end
     end
   end
@@ -240,7 +240,7 @@ def handle_volume_create(data, stopped = false)
     Dir.mkdir_p("/run/kadalu")
     services[GlobalConfig.local_node.id].each do |service|
       svc = Service.from_json(service.to_json)
-      svc.start
+      svc.start(plugin: GlobalConfig.service_mgr)
     end
   end
 

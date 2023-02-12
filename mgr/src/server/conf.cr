@@ -7,7 +7,8 @@ class GlobalConfig
     pool_name = "",
     local_hostname : String = `hostname`.strip,
     local_node = LocalNodeData.new,
-    agent = false
+    agent = false,
+    service_mgr = ""
 end
 
 struct LocalNodeData

@@ -82,7 +82,7 @@ module StorageMgr
     # Start all the services that were started previously
     services.each do |service|
       svc = Service.from_json(service.to_json)
-      svc.start
+      svc.start(plugin: GlobalConfig.service_mgr)
     end
   end
 
@@ -97,6 +97,7 @@ module StorageMgr
   def self.start(args)
     GlobalConfig.workdir = args.mgr_args.workdir
     GlobalConfig.logdir = args.mgr_args.logdir
+    GlobalConfig.service_mgr = args.mgr_args.service_mgr
 
     # Set the Datastore root directory
     Datastore.init(GlobalConfig.workdir)
