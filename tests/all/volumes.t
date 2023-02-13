@@ -248,6 +248,7 @@ TEST "touch /mnt/vol15/d1/f{1..9}"
 TEST "touch /mnt/vol15/d2/f{1..9}"
 TEST "touch /mnt/vol15/d3/f{1..9}"
 TEST "kadalu volume expand DEV/vol15 server1:/exports/vol15/s1_e server2:/exports/vol15/s2_e server3:/exports/vol15/s3_e"
+TEST "sleep 3"
 
 EQUAL "3", (TEST "ls /exports/vol15/s1_e/* -d | wc -l").strip, "Check for fix-layout in server1 s1 unit"
 USE_NODE nodes[1]

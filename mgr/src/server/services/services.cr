@@ -1,6 +1,9 @@
 require "json"
+require "log"
 
 require "moana_types"
+
+require "./plugins/*"
 
 module JSON::Serializable
   macro auto_json_discriminator(key)
@@ -13,6 +16,10 @@ module JSON::Serializable
     {% end %}
     end
 end
+
+SERVICE_MGR_PLUGINS = {
+  "systemd" => SystemdServiceManager.new,
+}
 
 abstract class Service
   include JSON::Serializable
@@ -52,11 +59,18 @@ abstract class Service
     false
   end
 
-  def start
+  def start(plugin = "")
+    Log.debug &.emit("Starting the service", plugin: plugin, cmd: "#{path} #{args.join(" ")}")
     return if running?
 
     # Create PID file directory if not exists
     Dir.mkdir_p(Path[pid_file].parent)
+
+    mgr = SERVICE_MGR_PLUGINS[plugin]?
+    if mgr
+      mgr.start(id, [path] + args)
+      return
+    end
 
     @proc = Process.new(path, args)
     File.write(pid_file, "#{@proc.not_nil!.pid}") if @create_pid_file
@@ -69,7 +83,14 @@ abstract class Service
     end
   end
 
-  def stop(force = false)
+  def stop(plugin = "", force = false)
+    Log.debug &.emit("Stopping the service", plugin: plugin, cmd: "#{path} #{args.join(" ")}")
+    mgr = SERVICE_MGR_PLUGINS[plugin]?
+    if mgr
+      mgr.stop(id)
+      return
+    end
+
     if @proc.nil?
       begin
         pid = File.read(pid_file).strip.to_i
@@ -86,9 +107,9 @@ abstract class Service
     File.delete(pid_file) if File.exists?(pid_file)
   end
 
-  def restart(force = false)
-    stop(force)
-    start
+  def restart(plugin = "", force = false)
+    stop(plugin: plugin, force: force)
+    start(plugin)
   end
 
   def signal(sig)
