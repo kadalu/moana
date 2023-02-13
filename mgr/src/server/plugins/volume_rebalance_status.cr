@@ -22,7 +22,6 @@ end
 
 alias RebalanceRequestToNode = Tuple(String, Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, RebalanceStatusRequestToNode))
 
-# TODO: Assign state at volume level
 def assign_state(status, svc)
   return status if status.state == "not started"
 
@@ -52,6 +51,8 @@ node_action ACTION_FIX_LAYOUT_STATUS do |data, _env|
       status_file_path = "#{rebalance_dir}/#{svc.id}.json"
       if File.exists?(status_file_path)
         storage_unit.fix_layout_status = MoanaTypes::FixLayoutRebalanceStatus.from_json(File.read(status_file_path))
+        # Set to 'started' to avoid returning without assigning state in 'assign_state'
+        storage_unit.fix_layout_status.state = "started"
       else
         storage_unit.fix_layout_status.state = "not started"
       end
@@ -81,6 +82,8 @@ node_action ACTION_MIGRATE_DATA_STATUS do |data, _env|
           status_file_path = "#{rebalance_dir}/#{svc.id}.json"
           if File.exists?(status_file_path)
             storage_unit.migrate_data_status = MoanaTypes::MigrateDataRebalanceStatus.from_json(File.read(status_file_path))
+            # Set to 'started' to avoid returning without assigning state in 'assign_state'
+            storage_unit.migrate_data_status.state = "started"
           else
             storage_unit.migrate_data_status.state = "not started"
           end
@@ -129,6 +132,16 @@ get "/api/v1/pools/:pool_name/volumes/:volume_name/rebalance_status" do |env|
   pool_name = env.params.url["pool_name"]
   volume_name = env.params.url["volume_name"]
 
+  total_migrate_data_processes = 0
+  total_non_started_migrate_data_processes = 0
+  total_completed_migrate_data_processes = 0
+  total_failed_migrate_data_processes = 0
+  rebalance_status = ""
+  highest_estimate_seconds = -2147483648
+  sum_of_scanned_bytes = 0
+  sum_of_total_bytes = 0
+  sum_of_progress = 0
+
   forbidden_api_exception(!Datastore.maintainer?(env.user_id, pool_name, volume_name))
 
   volume = Datastore.get_volume(pool_name, volume_name)
@@ -161,6 +174,11 @@ get "/api/v1/pools/:pool_name/volumes/:volume_name/rebalance_status" do |env|
     su = node_resp.storage_units[0]
     if su.node.id == storage_unit.node.id && su.path == storage_unit.path
       storage_unit.fix_layout_status = su.fix_layout_status
+
+      # Set fix-layout rebalance status summary at volume-level
+      volume.fix_layout_summary.state = su.fix_layout_status.state
+      volume.fix_layout_summary.total_dirs_scanned = su.fix_layout_status.total_dirs
+      volume.fix_layout_summary.duration_seconds = su.fix_layout_status.duration_seconds
     end
   end
 
@@ -181,10 +199,52 @@ get "/api/v1/pools/:pool_name/volumes/:volume_name/rebalance_status" do |env|
       node_resp.storage_units.each do |s_unit|
         if s_unit.node.id == storage_unit.node.id && s_unit.path == storage_unit.path
           storage_unit.migrate_data_status = s_unit.migrate_data_status
+
+          # Counters for Migrate-Data Summary at volume-level
+          if s_unit.migrate_data_status.estimate_seconds.to_i64 > highest_estimate_seconds
+            highest_estimate_seconds = s_unit.migrate_data_status.estimate_seconds.to_i64
+          end
+
+          sum_of_scanned_bytes += s_unit.migrate_data_status.scanned_bytes.to_i64
+          sum_of_total_bytes += s_unit.migrate_data_status.total_bytes.to_i64
+          sum_of_progress += s_unit.migrate_data_status.progress.to_i64
+
+          total_migrate_data_processes += 1
+          case s_unit.migrate_data_status.state
+          when "not started"
+            total_non_started_migrate_data_processes += 1
+          when "complete"
+            total_completed_migrate_data_processes += 1
+          when "failed"
+            total_failed_migrate_data_processes += 1
+          end
         end
       end
     end
   end
+
+  # Evaluate rebalance_status from counters and set to Volume
+  if total_completed_migrate_data_processes == total_migrate_data_processes
+    rebalance_status = "complete"
+  elsif total_failed_migrate_data_processes == total_migrate_data_processes
+    rebalance_status = "fail"
+  elsif total_non_started_migrate_data_processes == total_migrate_data_processes
+    rebalance_status = "not started"
+  else
+    rebalance_status = "partial"
+  end
+
+  volume.migrate_data_summary.total_migrate_data_processes = total_migrate_data_processes
+  volume.migrate_data_summary.total_non_started_migrate_data_processes = total_non_started_migrate_data_processes
+  volume.migrate_data_summary.total_completed_migrate_data_processes = total_completed_migrate_data_processes
+  volume.migrate_data_summary.total_failed_migrate_data_processes = total_failed_migrate_data_processes
+
+  volume.migrate_data_summary.avg_of_scanned_bytes = (sum_of_scanned_bytes/total_migrate_data_processes).to_i64
+  volume.migrate_data_summary.avg_of_total_bytes = (sum_of_total_bytes/total_migrate_data_processes).to_i64
+  volume.migrate_data_summary.avg_of_progress = sum_of_progress/total_migrate_data_processes
+  volume.migrate_data_summary.highest_estimate_seconds = highest_estimate_seconds.to_i64
+
+  volume.migrate_data_summary.state = rebalance_status
 
   env.response.status_code = 200
   volume.to_json

@@ -144,7 +144,9 @@ module MoanaTypes
       auto_add_nodes = false,
       options = Hash(String, String).new,
       metrics = Metrics.new,
-      snapshot_plugin = ""
+      snapshot_plugin = "",
+      fix_layout_summary = FixLayoutRebalanceSummary.new,
+      migrate_data_summary = MigrateDataRebalanceSummary.new
 
     def initialize
     end
@@ -243,11 +245,35 @@ module MoanaTypes
     end
   end
 
+  struct MigrateDataRebalanceSummary
+    include JSON::Serializable
+
+    property total_non_started_migrate_data_processes = 0,
+      total_completed_migrate_data_processes = 0,
+      total_failed_migrate_data_processes = 0,
+      total_migrate_data_processes = 0,
+      avg_of_scanned_bytes = 0_i64, avg_of_total_bytes = 0_i64,
+      avg_of_progress = 0.0, highest_estimate_seconds = 0_i64,
+      state = "not started"
+
+    def initialize
+    end
+  end
+
   struct MigrateDataRebalanceStatus
     include JSON::Serializable
 
     property complete = false, progress = 0, scanned_bytes = 0_i64,
-      total_bytes = 0_i64, duration_seconds = 0, estimate_seconds = 0, state = "failed"
+      total_bytes = 0_i64, duration_seconds = 0, estimate_seconds = 0, state = "not started"
+
+    def initialize
+    end
+  end
+
+  struct FixLayoutRebalanceSummary
+    include JSON::Serializable
+
+    property total_dirs_scanned = 0, duration_seconds = 0, state = "not started"
 
     def initialize
     end
@@ -256,7 +282,7 @@ module MoanaTypes
   struct FixLayoutRebalanceStatus
     include JSON::Serializable
 
-    property complete = false, total_dirs = 0, duration_seconds = 0, state = "failed"
+    property complete = false, total_dirs = 0, duration_seconds = 0, state = "not started"
 
     def initialize
     end

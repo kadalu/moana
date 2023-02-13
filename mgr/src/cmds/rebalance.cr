@@ -62,105 +62,42 @@ command "rebalance.status", "Show Kadalu Storage volume rebalance status" do |pa
 end
 
 def rebalance_status_summary(volume, args)
-  total_migrate_data_processes = 0
-  total_non_started_migrate_data_processes = 0
-  total_completed_migrate_data_processes = 0
-  total_failed_migrate_data_processes = 0
-  rebalance_status = ""
-  highest_estimate_seconds = -2147483648
-  sum_of_scanned_bytes = 0
-  sum_of_total_bytes = 0
-  sum_of_progress = 0
-  fix_layout_status = volume.distribute_groups[0].storage_units[0].fix_layout_status
-
   puts "Name                       : #{volume.pool.name}/#{volume.name}"
   puts "Type                       : #{volume.type}"
   puts "ID                         : #{volume.id}"
 
-  puts "Fix-Layout Status          : #{fix_layout_status.state}"
-  if fix_layout_status.state != "not started"
-    puts "Total Dirs Scanned         : #{fix_layout_status.total_dirs}"
-    puts "Duration                   : #{fix_layout_status.duration_seconds}"
+  puts "Fix-Layout Status          : #{volume.fix_layout_summary.state}"
+  if volume.fix_layout_summary.state != "not started"
+    puts "Total Dirs Scanned         : #{volume.fix_layout_summary.total_dirs_scanned}"
+    puts "Duration for fixing-layout : #{volume.fix_layout_summary.duration_seconds}"
   end
 
-  volume.distribute_groups.each do |dist_grp|
-    storage_unit = dist_grp.storage_units[0]
-    migrate_data_status = storage_unit.migrate_data_status
-    total_migrate_data_processes += 1
-
-    case migrate_data_status.state
-    when "not started"
-      total_non_started_migrate_data_processes += 1
-    when "complete"
-      total_completed_migrate_data_processes += 1
-    when "failed"
-      total_failed_migrate_data_processes += 1
-    end
-
-    if migrate_data_status.estimate_seconds.to_i64 > highest_estimate_seconds
-      highest_estimate_seconds = migrate_data_status.estimate_seconds.to_i64
-    end
-
-    sum_of_scanned_bytes += migrate_data_status.scanned_bytes.to_i64
-    sum_of_total_bytes += migrate_data_status.total_bytes.to_i64
-    sum_of_progress += migrate_data_status.progress.to_i64
-  end
-
-  printf("Progress                   : %.2f %%\n", (sum_of_progress/total_migrate_data_processes))
-  printf("Estimate Seconds           : %i\n", highest_estimate_seconds)
+  printf("Progress                   : %.2f %%\n", volume.migrate_data_summary.avg_of_progress)
+  printf("Estimate Seconds           : %i\n", volume.migrate_data_summary.highest_estimate_seconds)
   printf("Scanned                    : %s / %s\n",
-    (sum_of_scanned_bytes/total_migrate_data_processes).to_i64.humanize_bytes, (sum_of_total_bytes/total_migrate_data_processes).to_i64.humanize_bytes)
+    volume.migrate_data_summary.avg_of_scanned_bytes.humanize_bytes, volume.migrate_data_summary.avg_of_total_bytes.humanize_bytes)
   puts
 
-  if total_completed_migrate_data_processes == total_migrate_data_processes
-    rebalance_status = "complete"
-  elsif total_failed_migrate_data_processes == total_migrate_data_processes
-    rebalance_status = "fail"
-  elsif total_non_started_migrate_data_processes == total_migrate_data_processes
-    rebalance_status = "not started"
-  else
-    rebalance_status = "partial"
-  end
-
-  puts "Volume #{volume.name} Rebalance Status            : #{rebalance_status}"
-  puts "Total Number of Rebalance Process       : #{total_migrate_data_processes}"
-  puts "Number of Completed Rebalance Process   : #{total_completed_migrate_data_processes}"
-  puts "Number of Failed Rebalance Process      : #{total_failed_migrate_data_processes}"
+  puts "Volume #{volume.name} Rebalance Status            : #{volume.migrate_data_summary.state}"
+  puts "Total Number of Rebalance Process       : #{volume.migrate_data_summary.total_migrate_data_processes}"
+  puts "Number of Completed Rebalance Process   : #{volume.migrate_data_summary.total_completed_migrate_data_processes}"
+  puts "Number of Failed Rebalance Process      : #{volume.migrate_data_summary.total_failed_migrate_data_processes}"
 end
 
 def detailed_rebalance_status(volume, args)
-  total_migrate_data_processes = 0
-  total_completed_migrate_data_processes = 0
-  total_non_started_migrate_data_processes = 0
-  total_failed_migrate_data_processes = 0
-  fix_layout_status = volume.distribute_groups[0].storage_units[0].fix_layout_status
-  rebalance_status = ""
-
   puts "Name                                    : #{volume.pool.name}/#{volume.name}"
   puts "Type                                    : #{volume.type}"
   puts "ID                                      : #{volume.id}"
 
-  puts "Fix-Layout Status                       : #{fix_layout_status.state}"
-  if fix_layout_status.state != "not started"
-    puts "Total Dirs Scanned                      : #{fix_layout_status.total_dirs}"
-    puts "Duration                                : #{fix_layout_status.duration_seconds}"
+  puts "Fix-Layout Status                       : #{volume.fix_layout_summary.state}"
+  if volume.fix_layout_summary.state != "not started"
+    puts "Total Dirs Scanned                      : #{volume.fix_layout_summary.total_dirs_scanned}"
+    puts "Duration for fixing-layout              : #{volume.fix_layout_summary.duration_seconds}"
   end
-  puts
 
   volume.distribute_groups.each_with_index do |dist_grp, dist_grp_index|
     storage_unit = dist_grp.storage_units[0]
     migrate_data_status = storage_unit.migrate_data_status
-
-    total_migrate_data_processes += 1
-
-    case migrate_data_status.state
-    when "not started"
-      total_non_started_migrate_data_processes += 1
-    when "complete"
-      total_completed_migrate_data_processes += 1
-    when "failed"
-      total_failed_migrate_data_processes += 1
-    end
 
     printf("Distribute group %-2s\n", dist_grp_index + 1)
     printf(
@@ -180,20 +117,10 @@ def detailed_rebalance_status(volume, args)
     puts
   end
 
-  if total_completed_migrate_data_processes == total_migrate_data_processes
-    rebalance_status = "complete"
-  elsif total_failed_migrate_data_processes == total_migrate_data_processes
-    rebalance_status = "fail"
-  elsif total_non_started_migrate_data_processes == total_migrate_data_processes
-    rebalance_status = "not started"
-  else
-    rebalance_status = "partial"
-  end
-
-  puts "Volume #{volume.name} Rebalance Status            : #{rebalance_status}"
-  puts "Total Number of Rebalance Process       : #{total_migrate_data_processes}"
-  puts "Number of Completed Rebalance Process   : #{total_completed_migrate_data_processes}"
-  puts "Number of Failed Rebalance Process      : #{total_failed_migrate_data_processes}"
+  puts "Volume #{volume.name} Rebalance Status            : #{volume.migrate_data_summary.state}"
+  puts "Total Number of Rebalance Process       : #{volume.migrate_data_summary.total_migrate_data_processes}"
+  puts "Number of Completed Rebalance Process   : #{volume.migrate_data_summary.total_completed_migrate_data_processes}"
+  puts "Number of Failed Rebalance Process      : #{volume.migrate_data_summary.total_failed_migrate_data_processes}"
 end
 
 handler "rebalance.status" do |args|
