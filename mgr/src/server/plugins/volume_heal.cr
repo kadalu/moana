@@ -104,9 +104,8 @@ post "/api/v1/pools/:pool_name/volumes/:volume_name/heal/start" do |env|
   client_volfile = "/var/lib/kadalu/volfiles/client-dev-#{volume_name}.vol"
 
   if !File.exists?(client_volfile)
-    volfile_name = "client"
     tmpl = volfile_get("client")
-    content = Volfile.volume_level(volfile_name, tmpl, volume)
+    content = Volgen.generate(tmpl, volume.to_json, volume.options)
     Dir.mkdir_p "/var/lib/kadalu/volfiles"
     File.write(client_volfile, content)
   end
@@ -146,9 +145,8 @@ get "/api/v1/pools/:pool_name/volumes/:volume_name/heal" do |env|
   client_volfile = "/var/lib/kadalu/volfiles/client-dev-#{volume_name}.vol"
 
   if !File.exists?(client_volfile)
-    volfile_name = "client"
     tmpl = volfile_get("client")
-    content = Volfile.volume_level(volfile_name, tmpl, volume)
+    content = Volgen.generate(tmpl, volume.to_json, volume.options)
     Dir.mkdir_p "/var/lib/kadalu/volfiles"
     File.write(client_volfile, content)
   end

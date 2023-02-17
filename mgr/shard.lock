@@ -4,6 +4,10 @@ shards:
     git: https://github.com/sija/backtracer.cr.git
     version: 1.2.2
 
+  crinja:
+    git: https://github.com/straight-shoota/crinja.git
+    version: 0.8.0
+
   db:
     git: https://github.com/crystal-lang/crystal-db.git
     version: 0.11.0
@@ -24,10 +28,6 @@ shards:
     path: ../types
     version: 0.1.0
 
-  moana_volgen:
-    path: ../volgen
-    version: 0.1.0
-
   radix:
     git: https://github.com/luislavena/radix.git
     version: 0.4.1
@@ -35,6 +35,10 @@ shards:
   sqlite3:
     git: https://github.com/crystal-lang/crystal-sqlite3.git
     version: 0.19.0
+
+  volgen:
+    git: https://github.com/kadalu/volgen.git
+    version: 0.3.1
 
   xattr:
     git: https://github.com/aravindavk/xattr-crystal.git

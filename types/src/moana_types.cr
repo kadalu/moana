@@ -82,6 +82,15 @@ module MoanaTypes
     end
   end
 
+  class VolumeMeta
+    include JSON::Serializable
+
+    property id = "", name = ""
+
+    def initialize
+    end
+  end
+
   class StorageUnit
     include JSON::Serializable
 
@@ -95,7 +104,8 @@ module MoanaTypes
       metrics = Metrics.new,
       heal_metrics = HealMetrics.new,
       fix_layout_status = FixLayoutRebalanceStatus.new,
-      migrate_data_status = MigrateDataRebalanceStatus.new
+      migrate_data_status = MigrateDataRebalanceStatus.new,
+      volume = VolumeMeta.new
 
     def initialize(node_name, @port, @path)
       @node.name = node_name

@@ -10,8 +10,8 @@ OPTIONS_WITH_VALUE = %w[log-level log-file transport direct-io-mode volume-name 
 
 OPTIONS_WITHOUT_VALUE = %w[ro acl selinux worm enable-ino32 mem-accounting aux-gfid-mount thin-client resolve-gids localtime-logging global-threading fopen-keep-cache] + FUSE_MOUNT_OPTIONS + OPTIONS_NOT_HANDLED + IGNORE_OPTIONS
 
-LOG_LEVELS   = %w[CRITICAL ERROR WARNING INFO DEBUG TRACE NONE]
-OPTION_ALIAS = {
+MNT_LOG_LEVELS = %w[CRITICAL ERROR WARNING INFO DEBUG TRACE NONE]
+OPTION_ALIAS   = {
   "ro"             => "read-only",
   "transport"      => "volfile-server-transport",
   "volume-id"      => "volfile-id",
@@ -37,7 +37,7 @@ module MountKadalu
 
   def handle_log_level_option(old_name, key, value)
     if key == "log-level"
-      command_error "Invalid Log level(#{old_name}=#{value}" if LOG_LEVELS.includes?(value.upcase)
+      command_error "Invalid Log level(#{old_name}=#{value}" if MNT_LOG_LEVELS.includes?(value.upcase)
       add_option("--#{key}", value.upcase)
     end
   end

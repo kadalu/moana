@@ -26,8 +26,8 @@ dependencies:
   kadalu_storage_manager:
     path: ../sdk/crystal
 
-  moana_volgen:
-    path: ../volgen
+  volgen:
+    github: kadalu/volgen
 
   xattr:
     github: aravindavk/xattr-crystal
