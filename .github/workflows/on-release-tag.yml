@@ -28,6 +28,14 @@ jobs:
           tag: ${{ github.ref }}
           overwrite: true
           file_glob: true
+      - name: Upload Volfile templates
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: mgr/lib/volgen/templates/*
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
 
   upload_release_files:
     runs-on: ubuntu-latest
@@ -54,14 +62,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: extra/install.sh
-          tag: ${{ github.ref }}
-          overwrite: true
-          file_glob: true
-      - name: Upload Volfile templates
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: mgr/lib/volgen/templates/*
           tag: ${{ github.ref }}
           overwrite: true
           file_glob: true
