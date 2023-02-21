@@ -1,3 +1,6 @@
 usr/sbin/kadalu
 sbin/mount.kadalu
 lib/systemd/system/kadalu-mgr.service
+var/lib/kadalu/templates/client.vol.j2
+var/lib/kadalu/templates/storage_unit.vol.j2
+var/lib/kadalu/templates/shd.vol.j2

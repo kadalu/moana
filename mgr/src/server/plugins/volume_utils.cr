@@ -2,11 +2,11 @@ require "file_utils"
 
 require "moana_types"
 require "xattr"
+require "volgen"
 
 require "../conf"
 require "../services"
 require "../datastore/*"
-require "../default_volfiles"
 
 TEST_XATTR_NAME  = "user.testattr"
 TEST_XATTR_VALUE = "testvalue"
@@ -45,11 +45,11 @@ def volfile_get(name)
   # TODO: Add logic to read from the Templates directory
   case name
   when "client"
-    CLIENT_VOLFILE
+    File.read("/var/lib/kadalu/templates/client.vol.j2")
   when "storage_unit"
-    STORAGE_UNIT_VOLFILE
+    File.read("/var/lib/kadalu/templates/storage_unit.vol.j2")
   when "shd"
-    SHD_VOLFILE
+    File.read("/var/lib/kadalu/templates/shd.vol.j2")
   else
     ""
   end
@@ -299,13 +299,13 @@ def services_and_volfiles(req)
 
   # Client Volfile
   tmpl = volfile_get("client")
-  client_volfile_content = Volfile.volume_level("client", tmpl, req)
+  client_volfile_content = Volgen.generate(tmpl, req.to_json, req.options)
 
   # SHD Volfile
   shd_volfile_content = ""
   if req.replicate_family?
     tmpl = volfile_get("shd")
-    shd_volfile_content = Volfile.pool_level("shd", tmpl, [req])
+    shd_volfile_content = Volgen.generate(tmpl, req.to_json)
   end
 
   req.distribute_groups.each do |dist_grp|
@@ -319,7 +319,9 @@ def services_and_volfiles(req)
       # Generate Storage Unit Volfile
       # TODO: Expose option as req.storage_unit_volfile_template
       tmpl = volfile_get("storage_unit")
-      content = Volfile.storage_unit_level("storage_unit", tmpl, req, storage_unit.id)
+      storage_unit.volume.id = req.id
+      storage_unit.volume.name = req.name
+      content = Volgen.generate(tmpl, storage_unit.to_json)
       volfiles[storage_unit.node.id] = [] of MoanaTypes::Volfile unless volfiles[storage_unit.node.id]?
       volfiles[storage_unit.node.id] << MoanaTypes::Volfile.new(service.id, content)
 

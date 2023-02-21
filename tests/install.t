@@ -12,6 +12,13 @@ nodes.each do |node|
   TEST "docker cp ./mgr/bin/kadalu #{node}:/usr/sbin/kadalu"
   TEST "docker cp extra/kadalu-mgr.service #{node}:/lib/systemd/system/"
   TEST "docker cp extra/mount.kadalu #{node}:/sbin/mount.kadalu"
+  USE_NODE node do
+    TEST "mkdir -p /var/lib/kadalu/templates"
+  end
+  TEST "docker cp mgr/lib/volgen/templates/. #{node}:/var/lib/kadalu/templates/"
+  USE_NODE node do
+    TEST "ls -l /var/lib/kadalu/templates/"
+  end
 end
 
 # Sanity test

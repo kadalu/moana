@@ -209,7 +209,7 @@ puts TEST "df /mnt/vol_volfile_6"
 TEST "umount /mnt/vol_volfile_*"
 
 # Change option using Volume set
-TEST "kadalu volume set DEV/vol_volfile debug/io-stats.log-level DEBUG"
+TEST "kadalu volume set DEV/vol_volfile diagnostics.client-log-level DEBUG"
 TEST "sleep 5"
 
 # Print the mount log to see if the option changed is reflected
