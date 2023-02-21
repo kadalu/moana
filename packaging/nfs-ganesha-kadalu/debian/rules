@@ -1,0 +1,95 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+#
+# Expected debian/rules file that is used by the dpkg build procedure
+#
+#   $ git clone <nfs-ganesha>
+#   $ cd nfs-ganesha/src
+#   $ dpkg-buildpackage -uc -us
+#
+export DH_VERBOSE=1
+export PREFIX=/usr
+export DESTDIR=$(CURDIR)/debian/tmp
+export DEB_BUILD_MAINT_OPTIONS=hardening=+all
+
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
+%:
+	 dh $@ --with python3,systemd
+
+override_dh_shlibdeps:
+	 dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
+
+override_dh_auto_configure:
+	 cd src && ln -s ../debian .
+	 cd src && dh_auto_configure -- \
+		-DWITH_PYTHON3=3 \
+		-DBUILD_CONFIG=debian \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DLIB_INSTALL_DIR:STRING=lib/${DEB_HOST_MULTIARCH} \
+		-DFSAL_DESTINATION=/usr/lib/${DEB_HOST_MULTIARCH}/ganesha \
+		-DUSE_FSAL_NULL=NO \
+		-DUSE_FSAL_MEM=NO \
+		-DUSE_FSAL_XFS=NO \
+		-DUSE_FSAL_LUSTRE=NO \
+		-DUSE_FSAL_CEPH=NO \
+		-DUSE_FSAL_RGW=NO \
+		-DUSE_FSAL_GPFS=NO \
+		-DUSE_FSAL_KVSFS=NO \
+		-DUSE_FSAL_GLUSTER=YES \
+		-DUSE_FSAL_VFS=NO \
+		-DUSE_FSAL_PROXY_V4=ON \
+		-DUSE_FSAL_PROXY_V3=ON \
+		-DUSE_SYSTEM_NTIRPC=YES \
+		-DUSE_9P_RDMA=NO \
+		-DUSE_LTTNG=NO \
+		-DUSE_RADOS_RECOV=YES \
+		-DRADOS_URLS=YES \
+		-DUSE_ADMIN_TOOLS=YES \
+		-DUSE_GUI_ADMIN_TOOLS=YES \
+		-DUSE_DBUS=ON \
+		-DUSE_9P=ON \
+		-DDISTNAME_HAS_GIT_DATA=OFF \
+		-DUSE_MAN_PAGE=YES \
+		-D_MSPAC_SUPPORT=YES \
+		-DSANITIZE_ADDRESS=NO \
+		-DALLOCATOR=jemalloc
+
+override_dh_auto_build:
+	cd src && dh_auto_build
+
+override_dh_auto_test:
+
+override_dh_install:
+	mkdir -p debian/tmp/etc/ganesha/
+	mkdir -p debian/tmp/lib/systemd/system/
+	mkdir -p debian/tmp/etc/systemd/system/nfs-ganesha-lock.service.d
+	mkdir -p debian/tmp/etc/default
+	mkdir -p debian/tmp/etc/logrotate.d/
+	mkdir -p debian/tmp/etc/dbus-1/system.d/
+	mkdir -p debian/tmp/usr/lib/ganesha
+	mkdir -p debian/tmp/usr/lib/${DEB_HOST_MULTIARCH}/ganesha
+	mkdir -p debian/tmp/usr/sbin/
+	cp src/config_samples/ganesha.conf.example debian/tmp/etc/ganesha/
+	cp src/config_samples/vfs.conf debian/tmp/etc/ganesha/
+	cp src/config_samples/ceph.conf debian/tmp/etc/ganesha/
+	cp src/config_samples/rgw.conf debian/tmp/etc/ganesha/
+	cp src/config_samples/mem.conf debian/tmp/etc/ganesha/
+	cp src/config_samples/gluster.conf debian/tmp/etc/ganesha/
+	cp src/config_samples/gpfs.conf debian/tmp/etc/ganesha/
+	cp src/config_samples/gpfs.ganesha.exports.conf debian/tmp/etc/ganesha/
+	cp src/config_samples/gpfs.ganesha.log.conf debian/tmp/etc/ganesha/
+	cp src/config_samples/gpfs.ganesha.main.conf debian/tmp/etc/ganesha/
+	cp src/config_samples/gpfs.ganesha.nfsd.conf debian/tmp/etc/ganesha/
+	cp src/config_samples/logrotate_ganesha debian/tmp/etc/logrotate.d/nfs-ganesha
+	cp src/config_samples/logrotate_fsal_gluster debian/tmp/etc/logrotate.d/nfs-ganesha-gfapi
+	cp src/scripts/systemd/nfs-ganesha.service.debian8 debian/tmp/lib/systemd/system/nfs-ganesha.service
+	cp src/scripts/systemd/nfs-ganesha-lock.service.debian10 src/scripts/systemd/nfs-ganesha-lock.service
+	cp src/scripts/systemd/nfs-ganesha-config.service debian/tmp/lib/systemd/system/
+	cp src/scripts/systemd/nfs-ganesha-lock.service.debian10 debian/tmp/lib/systemd/system/nfs-ganesha-lock.service
+	cp src/scripts/systemd/rpc-statd.conf.debian10 debian/tmp/etc/systemd/system/nfs-ganesha-lock.service.d/rpc-statd.conf
+	cp src/scripts/systemd/sysconfig/nfs-ganesha debian/tmp/etc/default/
+	cp src/scripts/ganeshactl/org.ganesha.nfsd.conf debian/tmp/etc/dbus-1/system.d/nfs-ganesha-dbus.conf
+	install -m 0755 src/scripts/nfs-ganesha-config.sh debian/tmp/usr/lib/ganesha/
+	install -m 0755 src/tools/mount.9P debian/tmp/usr/sbin/
+	make -C src/obj-*-linux-gnu* install && dh_install --sourcedir=./src

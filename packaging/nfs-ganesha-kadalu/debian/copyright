@@ -1,0 +1,8 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: moana
+Upstream-Contact: <hello@kadalu.tech>
+Source: <https://github.com/kadalu/moana>
+
+Files: *
+Copyright: Copyright 2022 Kadalu Technologies Pvt Limited <packaging@kadalu.tech>
+License: GPL-3

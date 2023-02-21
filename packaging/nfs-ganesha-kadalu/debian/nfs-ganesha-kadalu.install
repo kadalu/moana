@@ -1,0 +1,3 @@
+usr/lib/*-linux-gnu*/ganesha/libfsalgluster.so*
+etc/logrotate.d/nfs-ganesha-gfapi
+etc/ganesha/gluster.conf
