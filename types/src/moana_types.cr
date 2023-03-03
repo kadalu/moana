@@ -11,32 +11,10 @@ module MoanaTypes
     end
   end
 
-  struct PoolCreateRequest
-    include JSON::Serializable
-
-    property name = ""
-
-    def initialize
-    end
-  end
-
-  struct Pool
-    include JSON::Serializable
-    include DB::Serializable
-
-    property id = "", name = "", volumes_count = 0, nodes_count = 0
-
-    def initialize(@id : String, @name : String)
-    end
-
-    def initialize
-    end
-  end
-
   struct NodeRequest
     include JSON::Serializable
 
-    property name = "", endpoint = "", pool_name = "", mgr_node_id = "",
+    property name = "", endpoint = "", mgr_node_id = "",
       mgr_url = "", mgr_port = 3000, mgr_https = false, mgr_token = "",
       mgr_hostname = ""
 
@@ -46,8 +24,9 @@ module MoanaTypes
 
   class Node
     include JSON::Serializable
+    include DB::Serializable
 
-    property id = "", name = "", state = "", endpoint = "", addresses = [] of String, token = "", pool = Pool.new
+    property id = "", name = "", state = "", endpoint = "", addresses = [] of String, token = ""
 
     def initialize
     end
@@ -82,7 +61,7 @@ module MoanaTypes
     end
   end
 
-  class VolumeMeta
+  class PoolMeta
     include JSON::Serializable
 
     property id = "", name = ""
@@ -105,7 +84,7 @@ module MoanaTypes
       heal_metrics = HealMetrics.new,
       fix_layout_status = FixLayoutRebalanceStatus.new,
       migrate_data_status = MigrateDataRebalanceStatus.new,
-      volume = VolumeMeta.new
+      pool = PoolMeta.new
 
     def initialize(node_name, @port, @path)
       @node.name = node_name
@@ -140,16 +119,16 @@ module MoanaTypes
     end
   end
 
-  class Volume
+  class Pool
     include JSON::Serializable
 
     property id = "",
       name = "",
       state = "",
-      pool = Pool.new,
+      distribute = false,
       distribute_groups = [] of DistributeGroup,
       no_start = false,
-      volume_id = "",
+      pool_id = "",
       auto_create_pool = false,
       auto_add_nodes = false,
       options = Hash(String, String).new,
@@ -230,7 +209,7 @@ module MoanaTypes
   struct Role
     include JSON::Serializable
 
-    property user_id = "", pool_id = "", volume_id = "", role = ""
+    property user_id = "", pool_id = "", role = ""
 
     def initialize
     end

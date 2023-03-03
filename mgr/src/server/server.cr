@@ -57,7 +57,7 @@ module StorageMgr
             scheme: GlobalConfig.local_node.mgr_https ? "https" : "http",
             host: GlobalConfig.local_node.mgr_hostname,
             port: GlobalConfig.local_node.mgr_port,
-            path: "/api/v1/pools/#{GlobalConfig.local_node.pool_name}/nodes/#{GlobalConfig.local_node.name}/services"
+            path: "/api/v1/nodes/#{GlobalConfig.local_node.name}/services"
           )
           resp = HTTP::Client.get(mgr_url, headers: headers)
           if resp.status_code == 200
@@ -73,9 +73,9 @@ module StorageMgr
         end
       end
     else
-      node = Datastore.get_node(GlobalConfig.local_node.pool_name, GlobalConfig.local_node.name)
+      node = Datastore.get_node(GlobalConfig.local_node.name)
       if !node.nil?
-        services = Datastore.list_services(node.pool.id, node.id)
+        services = Datastore.list_services(node.id)
       end
     end
 

@@ -6,7 +6,7 @@ OPTIONS_NOT_HANDLED           = %w[async sync dirsync mand nomand silent loud iv
 
 # these ones(auto,noauto,_netdev) are interpreted during system initialization
 IGNORE_OPTIONS     = %w[rw auto noauto _netdev]
-OPTIONS_WITH_VALUE = %w[log-level log-file transport direct-io-mode volume-name volume-id subdir-mount volfile-check server-port attribute-timeout entry-timeout negative-timeout gid-timeout lru-limit invalidate-limit fetch-attempts background-qlen congestion-threshold oom-score-adj xlator-option fuse-mountopts use-readdirp fopen-keep-cache event-history reader-thread-count auto-invalidation no-root-squash root-squash kernel-writeback-cache attr-times-granularity dump-fuse fuse-flush-handle-interrupt fuse-dev-eperm-ratelimit-ns halo-max-latency halo-max-replicas halo-min-replicas process-name fopen-keep-cache io-engine backup-volfile-servers backupvolfile-server volfile-server volfile-servers] + FUSE_MOUNT_OPTIONS_WITH_VALUE
+OPTIONS_WITH_VALUE = %w[log-level log-file transport direct-io-mode pool-name pool-id subdir-mount volfile-check server-port attribute-timeout entry-timeout negative-timeout gid-timeout lru-limit invalidate-limit fetch-attempts background-qlen congestion-threshold oom-score-adj xlator-option fuse-mountopts use-readdirp fopen-keep-cache event-history reader-thread-count auto-invalidation no-root-squash root-squash kernel-writeback-cache attr-times-granularity dump-fuse fuse-flush-handle-interrupt fuse-dev-eperm-ratelimit-ns halo-max-latency halo-max-replicas halo-min-replicas process-name fopen-keep-cache io-engine backup-volfile-servers backupvolfile-server volfile-server volfile-servers] + FUSE_MOUNT_OPTIONS_WITH_VALUE
 
 OPTIONS_WITHOUT_VALUE = %w[ro acl selinux worm enable-ino32 mem-accounting aux-gfid-mount thin-client resolve-gids localtime-logging global-threading fopen-keep-cache] + FUSE_MOUNT_OPTIONS + OPTIONS_NOT_HANDLED + IGNORE_OPTIONS
 
@@ -14,7 +14,7 @@ MNT_LOG_LEVELS = %w[CRITICAL ERROR WARNING INFO DEBUG TRACE NONE]
 OPTION_ALIAS   = {
   "ro"             => "read-only",
   "transport"      => "volfile-server-transport",
-  "volume-id"      => "volfile-id",
+  "pool-id"        => "volfile-id",
   "server-port"    => "volfile-server-port",
   "fetch-attempts" => "volfile-max-fetch-attempts",
 }
@@ -117,6 +117,7 @@ module MountKadalu
     when "volfile-server", "volfile-servers"
       handle_volfile_servers_options(opt_name, new_name, opt_value)
     else
+      new_name = new_name.gsub(/pool/, "volume")
       add_option("--#{new_name}", opt_value) if new_name != "" && @@options["--#{new_name}"]?.nil?
     end
   end
@@ -174,14 +175,14 @@ module MountKadalu
     end
   end
 
-  def set_volfile_server_options(hostname, pool_name, volume_name, volfile_path)
+  def set_volfile_server_options(hostname, pool_name, volfile_path)
     # TODO: Validate Hostname
     # TODO: Handle Backup Volfile servers
     if volfile_path == ""
-      add_option("--volfile-id", "#{volume_name}") if @@options["--volfile-id"]?.nil?
+      add_option("--volfile-id", "#{pool_name}") if @@options["--volfile-id"]?.nil?
     else
-      if volume_name != "" && @@options["--volfile-id"]?.nil?
-        add_option("--volfile-id", "#{volume_name}")
+      if pool_name != "" && @@options["--volfile-id"]?.nil?
+        add_option("--volfile-id", "#{pool_name}")
       end
     end
 
@@ -201,19 +202,17 @@ module MountKadalu
     args
   end
 
-  def volume_details(volume)
-    return {"", "", "", volume} if File.exists?(volume)
+  def pool_details(pool)
+    return {"", "", pool} if File.exists?(pool)
 
     # Example: server1.example.com:mypool
-    hostname, _, pool_volume_name = volume.rpartition(":")
+    hostname, _, pool_name = pool.rpartition(":")
 
-    pool_name, _, volume_name = pool_volume_name.rpartition("/")
     pool_name = pool_name.strip("/")
 
     command_error "Pool name is not provided" if pool_name == ""
-    command_error "Volume name is not provided" if volume_name == ""
 
-    {hostname, pool_name, volume_name, ""}
+    {hostname, pool_name, ""}
   end
 
   def pretty_mount_command
@@ -229,31 +228,31 @@ module MountKadalu
     cmd_lines.join("\n")
   end
 
-  def set_display_name(pool_name, volume_name, volfile_path)
+  def set_display_name(pool_name, volfile_path)
     if volfile_path != ""
       add_option("--fs-display-name", "kadalu:#{File.basename(volfile_path)}")
     else
-      add_option("--fs-display-name", "kadalu:#{pool_name}/#{volume_name}")
+      add_option("--fs-display-name", "kadalu:#{pool_name}")
     end
   end
 
-  def run(hostname, pool_name, volume_name, volfile_path, mount_path, raw_options)
+  def run(hostname, pool_name, volfile_path, mount_path, raw_options)
     command_error "glusterfs client is not installed" if @@glusterfs_cmd.nil?
     STDERR.puts "WARNING: getfattr not found, certain checks will be skipped.." unless @@getfattr_cmd
 
     validate_mount_path(mount_path)
 
-    # Snapshot Volume mount is read only
-    # Also change the Volume name as understood by glusterfs
-    if volume_name.includes?('@')
+    # Snapshot Pool mount is read only
+    # Also change the Pool name as understood by glusterfs
+    if pool_name.includes?('@')
       add_option("--read-only")
-      parts = volume_name.split("@")
+      parts = pool_name.split("@")
       # /snaps/<snapname>/<volname> format
-      volume_name = "/snaps/#{parts[1]}/#{parts[0]}"
+      pool_name = "/snaps/#{parts[1]}/#{parts[0]}"
     end
 
     # If Subdirectory is specified
-    volume_name, _, subdir = volume_name.partition("/")
+    pool_name, _, subdir = pool_name.partition("/")
     add_option("--subdir-mount", "/#{subdir}") if subdir != ""
 
     if volfile_path == ""
@@ -265,10 +264,10 @@ module MountKadalu
     end
 
     parse_options(raw_options)
-    set_volfile_server_options(hostname, pool_name, volume_name, volfile_path)
+    set_volfile_server_options(hostname, pool_name, volfile_path)
 
     set_process_name
-    set_display_name(pool_name, volume_name, volfile_path)
+    set_display_name(pool_name, volfile_path)
 
     # Subdir mount: Add slash if not added
     add_option("--subdir-mount", "/#{@@options["--subdir-mount"].lstrip("/")}") if @@options["--subdir-mount"]?
@@ -281,7 +280,7 @@ module MountKadalu
 
     # TODO: Handle Updatedb settings
 
-    puts "Executing the following command to mount the Kadalu Storage Volume"
+    puts "Executing the following command to mount the Kadalu Storage Pool"
     puts
     puts pretty_mount_command
 
@@ -293,7 +292,7 @@ module MountKadalu
     # 'stderr', so no need to point them to logfile.
     unless rc == 0
       STDERR.puts err.strip
-      command_error "Mounting Kadalu Storage Volume on #{mount_path} failed."
+      command_error "Mounting Kadalu Storage Pool on #{mount_path} failed."
     end
 
     # TODO: Mount path inode check

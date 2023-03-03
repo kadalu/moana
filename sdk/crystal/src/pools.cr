@@ -1,13 +1,61 @@
-require "./nodes"
-require "./volumes"
-
 module StorageManager
   class Pool
     def initialize(@client : Client, @name : String)
     end
 
-    def self.list(client : Client)
+    def self.create(client : Client, pool : MoanaTypes::Pool)
       url = "#{client.url}/api/v1/pools"
+
+      response = StorageManager.http_post(
+        url,
+        pool.to_json,
+        headers: client.auth_header
+      )
+      if response.status_code == 201
+        MoanaTypes::Pool.from_json(response.body)
+      else
+        StorageManager.error_response(response)
+      end
+    end
+
+    def self.create(client : Client, name : String, dist_grps : Array(MoanaTypes::PoolDistributeGroup), no_start = false)
+      req = MoanaTypes::Pool.new
+      req.name = name
+      req.distribute_groups = dist_grps
+      req.no_start = no_start
+      create(client, pool_name, req)
+    end
+
+    def get_volfile(name : String, storage_unit = "")
+      url = "#{@client.url}/api/v1/pools/#{@name}/volfiles/#{name}"
+      url += "?storage_unit=#{storage_unit}" if storage_unit != ""
+
+      response = StorageManager.http_get(
+        url,
+        headers: @client.auth_header
+      )
+      if response.status_code == 200
+        MoanaTypes::Volfile.from_json(response.body)
+      else
+        StorageManager.error_response(response)
+      end
+    end
+
+    def get(state = false)
+      url = "#{@client.url}/api/v1/pools/#{@name}?state=#{state ? 1 : 0}"
+      response = StorageManager.http_get(
+        url,
+        headers: @client.auth_header
+      )
+      if response.status_code == 200
+        MoanaTypes::Pool.from_json(response.body)
+      else
+        StorageManager.error_response(response)
+      end
+    end
+
+    def self.list(client : Client, state = false)
+      url = "#{client.url}/api/v1/pools?state=#{state ? 1 : 0}"
       response = StorageManager.http_get(
         url,
         headers: client.auth_header
@@ -19,16 +67,32 @@ module StorageManager
       end
     end
 
-    def self.create(client : Client, name : String)
-      url = "#{client.url}/api/v1/pools"
+    def start_stop_pool(action)
+      url = "#{@client.url}/api/v1/pools/#{@name}/#{action}"
 
-      req = MoanaTypes::PoolCreateRequest.new
-      req.name = name
+      response = StorageManager.http_post(url, "{}", headers: @client.auth_header)
+      if response.status_code == 200
+        MoanaTypes::Pool.from_json(response.body)
+      else
+        StorageManager.error_response(response)
+      end
+    end
+
+    def start
+      start_stop_pool("start")
+    end
+
+    def stop
+      start_stop_pool("stop")
+    end
+
+    def set(pool_options : Hash(String, String))
+      url = "#{@client.url}/api/v1/pools/#{@name}/options/set"
 
       response = StorageManager.http_post(
         url,
-        req.to_json,
-        headers: client.auth_header
+        pool_options.to_json,
+        headers: @client.auth_header
       )
       if response.status_code == 201
         MoanaTypes::Pool.from_json(response.body)
@@ -37,42 +101,16 @@ module StorageManager
       end
     end
 
-    def node(node_name)
-      Node.new(@client, @name, node_name)
-    end
+    def reset(pool_option_keys : Array(String))
+      url = "#{@client.url}/api/v1/pools/#{@name}/options/reset"
 
-    def add_node(name : String, endpoint : String)
-      Node.add(@client, @name, name, endpoint)
-    end
-
-    def list_nodes(state = false)
-      Node.list(@client, @name, state)
-    end
-
-    def list_volumes(state = false)
-      Volume.list(@client, @name, state)
-    end
-
-    def create_volume(req : MoanaTypes::Volume)
-      Volume.create(@client, @name, req)
-    end
-
-    def create_volume(name : String, dist_grps : Array(MoanaTypes::VolumeDistributeGroup), no_start = false)
-      Volume.create(@client, @name, name, dist_grps, no_start)
-    end
-
-    def volume(name : String)
-      Volume.new(@client, @name, name)
-    end
-
-    def get_volfile(name : String)
-      url = "#{@client.url}/api/v1/pools/#{@name}/volfiles/#{name}"
-      response = StorageManager.http_get(
+      response = StorageManager.http_post(
         url,
+        pool_option_keys.to_json,
         headers: @client.auth_header
       )
-      if response.status_code == 200
-        MoanaTypes::Volfile.from_json(response.body)
+      if response.status_code == 201
+        MoanaTypes::Pool.from_json(response.body)
       else
         StorageManager.error_response(response)
       end
@@ -91,15 +129,93 @@ module StorageManager
       end
     end
 
+    def heal_start
+      url = "#{@client.url}/api/v1/pools/#{@name}/heal/start"
+
+      response = StorageManager.http_post(
+        url,
+        "{}",
+        headers: @client.auth_header
+      )
+
+      if response.status_code == 200
+        MoanaTypes::Pool.from_json(response.body)
+      else
+        StorageManager.error_response(response)
+      end
+    end
+
+    def heal_info
+      url = "#{@client.url}/api/v1/pools/#{@name}/heal"
+
+      response = StorageManager.http_get(
+        url,
+        headers: @client.auth_header
+      )
+      if response.status_code == 200
+        MoanaTypes::Pool.from_json(response.body)
+      else
+        StorageManager.error_response(response)
+      end
+    end
+
     def rename(new_pool_name : String)
       url = "#{@client.url}/api/v1/pools/#{@name}/rename"
 
       response = StorageManager.http_post(
         url,
-        {"new_pool_name": new_pool_name}.to_json,
+        {"new_name": new_pool_name}.to_json,
         headers: @client.auth_header
       )
 
+      if response.status_code == 200
+        MoanaTypes::Pool.from_json(response.body)
+      else
+        StorageManager.error_response(response)
+      end
+    end
+
+    def expand(pool : MoanaTypes::Pool)
+      url = "#{@client.url}/api/v1/pools"
+
+      response = StorageManager.http_put(
+        url,
+        pool.to_json,
+        headers: @client.auth_header
+      )
+      if response.status_code == 200
+        MoanaTypes::Pool.from_json(response.body)
+      else
+        StorageManager.error_response(response)
+      end
+    end
+
+    def pool_rebalance_start_stop(action)
+      url = "#{@client.url}/api/v1/pools/#{@name}/rebalance_#{action}"
+
+      response = StorageManager.http_post(url, "{}", headers: @client.auth_header)
+      if response.status_code == 200
+        MoanaTypes::Pool.from_json(response.body)
+      else
+        StorageManager.error_response(response)
+      end
+    end
+
+    def rebalance_start
+      pool_rebalance_start_stop("start")
+    end
+
+    def rebalance_stop
+      pool_rebalance_start_stop("stop")
+    end
+
+    def rebalance_status
+      url = "#{@client.url}/api/v1/pools/#{@name}/rebalance_status"
+
+      response = StorageManager.http_get(
+        url,
+        headers: @client.auth_header
+      )
       if response.status_code == 200
         MoanaTypes::Pool.from_json(response.body)
       else

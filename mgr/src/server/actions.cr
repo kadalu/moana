@@ -40,7 +40,7 @@ module Action
     @@actions[name].call(data, env)
   end
 
-  def self.dispatch(name : String, pool_name : String, nodes : Array(MoanaTypes::Node), data : String)
+  def self.dispatch(name : String, nodes : Array(MoanaTypes::Node), data : String)
     headers = HTTP::Headers.new
     headers["Content-Type"] = "application/json"
     resp = Response.new
@@ -56,17 +56,17 @@ module Action
       begin
         node_resp = HTTP::Client.post(url, body: {"data": data}.to_json, headers: headers)
         resp.set_node_response(
-          node.id == "" ? node.name : node.id,
+          node.name,
           NodeResponse.from_json(node_resp.body)
         )
       rescue Socket::ConnectError
         resp.set_node_response(
-          node.id == "" ? node.name : node.id,
+          node.name,
           NodeResponse.new(false, {"error": "Node is not reachable"}.to_json)
         )
       rescue Socket::Addrinfo::Error
         resp.set_node_response(
-          node.id == "" ? node.name : node.id,
+          node.name,
           NodeResponse.new(false, {"error": "Hostname lookup failed for node #{node.name}"}.to_json)
         )
       end

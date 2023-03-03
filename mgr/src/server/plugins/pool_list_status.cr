@@ -1,13 +1,13 @@
 require "./helpers"
 require "../datastore/*"
-require "./volume_utils"
+require "./pool_utils"
 
-ACTION_VOLUME_STATUS = "volume_status"
+ACTION_POOL_STATUS = "pool_status"
 
-class VolumeNotFound < Exception
+class PoolNotFound < Exception
 end
 
-struct VolumeStatusRequestToNode
+struct PoolStatusRequestToNode
   include JSON::Serializable
 
   property service_units = [] of MoanaTypes::ServiceUnit, storage_units = [] of MoanaTypes::StorageUnit
@@ -16,11 +16,11 @@ struct VolumeStatusRequestToNode
   end
 end
 
-node_action ACTION_VOLUME_STATUS do |data, _env|
-  Log.debug &.emit("Node Action", action: ACTION_VOLUME_STATUS, data: data)
+node_action ACTION_POOL_STATUS do |data, _env|
+  Log.debug &.emit("Node Action", action: ACTION_POOL_STATUS, data: data)
 
-  req = Hash(String, VolumeStatusRequestToNode).from_json(data)
-  resp = VolumeStatusRequestToNode.new
+  req = Hash(String, PoolStatusRequestToNode).from_json(data)
+  resp = PoolStatusRequestToNode.new
   req.each do |node_name, node_data|
     next unless node_name == GlobalConfig.local_node.name
 
@@ -61,16 +61,16 @@ node_action ACTION_VOLUME_STATUS do |data, _env|
   NodeResponse.new(true, resp.to_json)
 end
 
-def volume_status_node_request_prepare(pool_name, volumes)
-  req = Hash(String, VolumeStatusRequestToNode).new
+def pool_status_node_request_prepare(pools)
+  req = Hash(String, PoolStatusRequestToNode).new
 
-  # TODO: Generate SHD service one per Volume per Storage node
-  volumes.each do |volume|
-    volume.distribute_groups.each do |dist_grp|
+  # TODO: Generate SHD service one per Pool per Storage node
+  pools.each do |pool|
+    pool.distribute_groups.each do |dist_grp|
       dist_grp.storage_units.each do |storage_unit|
-        req[storage_unit.node.name] = VolumeStatusRequestToNode.new if req[storage_unit.node.name]?.nil?
+        req[storage_unit.node.name] = PoolStatusRequestToNode.new if req[storage_unit.node.name]?.nil?
         # Generate Service Unit
-        storage_unit.service = StorageUnitService.new(volume.name, storage_unit).unit
+        storage_unit.service = StorageUnitService.new(pool.name, storage_unit).unit
         req[storage_unit.node.name].storage_units << storage_unit
       end
     end
@@ -79,31 +79,29 @@ def volume_status_node_request_prepare(pool_name, volumes)
   req
 end
 
-def volume_list_detail_status(env, pool_name, volume_name, state)
+def pool_list_detail_status(env, pool_name, state)
   if pool_name == ""
-    volumes = Datastore.list_volumes_by_user(env.user_id)
-  elsif volume_name.nil?
-    volumes = Datastore.list_volumes_by_user(env.user_id, pool_name)
+    pools = Datastore.list_pools_by_user(env.user_id)
   else
-    vol = Datastore.get_volume(pool_name, volume_name)
-    raise VolumeNotFound.new("Volume #{volume_name} not found") unless vol
+    p = Datastore.get_pool(pool_name)
+    raise PoolNotFound.new("Pool #{pool_name} not found") unless p
 
-    volumes = [vol]
+    pools = [p]
   end
 
-  return volumes.to_json unless state
+  return pools.to_json unless state
 
-  nodes = participating_nodes(pool_name, volumes)
+  nodes = participating_nodes(pools)
 
   # Collect list of services and Storage Units
-  data = volume_status_node_request_prepare(pool_name, volumes)
-  resp = dispatch_action(ACTION_VOLUME_STATUS, pool_name, nodes, data.to_json)
+  data = pool_status_node_request_prepare(pools)
+  resp = dispatch_action(ACTION_POOL_STATUS, nodes, data.to_json)
 
-  volumes.each do |volume|
-    volume.distribute_groups.each do |dist_grp|
+  pools.each do |pool|
+    pool.distribute_groups.each do |dist_grp|
       dist_grp.storage_units.each do |storage_unit|
         if resp.node_responses[storage_unit.node.id].ok
-          node_resp = VolumeStatusRequestToNode.from_json(resp.node_responses[storage_unit.node.id].response)
+          node_resp = PoolStatusRequestToNode.from_json(resp.node_responses[storage_unit.node.id].response)
           node_resp.storage_units.each do |su|
             if su.node.name == storage_unit.node.name && su.path == storage_unit.path
               storage_unit.metrics = su.metrics
@@ -118,38 +116,25 @@ def volume_list_detail_status(env, pool_name, volume_name, state)
     end
   end
 
-  # Post process the Metrics to find Volume Health and Volume Utilization
-  volumes.each do |volume|
-    set_volume_metrics(volume)
+  # Post process the Metrics to find Pool Health and Pool Utilization
+  pools.each do |pool|
+    set_pool_metrics(pool)
   end
 
-  volume_name.nil? ? volumes.to_json : volumes[0].to_json
+  pools.to_json
 end
 
-get "/api/v1/volumes" do |env|
+get "/api/v1/pools" do |env|
   state = env.params.query["state"]
 
-  volume_list_detail_status(env, "", nil, state ? true : false)
+  pool_list_detail_status(env, "", state ? true : false)
 end
 
-get "/api/v1/pools/:pool_name/volumes" do |env|
+get "/api/v1/pools/:pool_name" do |env|
   pool_name = env.params.url["pool_name"]
   state = env.params.query["state"]
 
-  volume_list_detail_status(env, pool_name, nil, state ? true : false)
-rescue ex : VolumeNotFound
-  halt(env, status_code: 400, response: ({"error": "#{ex}"}.to_json))
-end
-
-get "/api/v1/pools/:pool_name/volumes/:volume_name" do |env|
-  pool_name = env.params.url["pool_name"]
-  volume_name = env.params.url["volume_name"]
-
-  next forbidden(env) unless Datastore.viewer?(env.user_id, pool_name, volume_name)
-
-  state = env.params.query["state"]
-
-  volume_list_detail_status(env, pool_name, volume_name, state ? true : false)
-rescue ex : VolumeNotFound
+  pool_list_detail_status(env, pool_name, state ? true : false)
+rescue ex : PoolNotFound
   halt(env, status_code: 400, response: ({"error": "#{ex}"}.to_json))
 end

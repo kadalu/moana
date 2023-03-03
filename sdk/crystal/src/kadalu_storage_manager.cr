@@ -1,6 +1,7 @@
 require "moana_types"
 
 require "./helpers"
+require "./nodes"
 require "./pools"
 require "./users"
 require "./config_snapshots"
@@ -25,20 +26,28 @@ module StorageManager
       end
     end
 
-    def create_pool(name : String)
-      Pool.create(self, name)
+    def node(node_name)
+      Node.new(self, node_name)
     end
 
-    def list_pools
-      Pool.list(self)
+    def add_node(name : String, endpoint : String)
+      Node.add(self, name, endpoint)
+    end
+
+    def create_pool(req : MoanaTypes::Pool)
+      Pool.create(self, req)
+    end
+
+    def create_pool(name : String, dist_grps : Array(MoanaTypes::VolumeDistributeGroup), no_start = false)
+      Pool.create(self, name, dist_grps, no_start)
+    end
+
+    def list_pools(state = false)
+      Pool.list(self, state)
     end
 
     def list_nodes(state = false)
       Node.list(self, state)
-    end
-
-    def list_volumes(state = false)
-      Volume.list(self, state)
     end
 
     def pool(name : String)

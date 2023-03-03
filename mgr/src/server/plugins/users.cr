@@ -12,6 +12,12 @@ post "/api/v1/users" do |env|
 
   # TODO: Validate Username and Name
   env.response.status_code = 201
+
+  if !Datastore.users_exists?
+    Datastore.set_manager
+    GlobalConfig.agent = false
+  end
+
   Datastore.create_user(username, name, password).to_json
 end
 
@@ -125,15 +131,6 @@ get "/api/v1/pools/:pool_name/users" do |env|
   forbidden_api_exception(!Datastore.admin?(env.user_id, pool_name))
 
   Datastore.list_users(pool_name).to_json
-end
-
-# Get Volume users
-get "/api/v1/pools/:pool_name/volumes/:volume_name/users" do |env|
-  pool_name = env.params.url["pool_name"]
-  volume_name = env.params.url["volume_name"]
-  forbidden_api_exception(!Datastore.admin?(env.user_id, pool_name, volume_name))
-
-  Datastore.list_users(pool_name, volume_name).to_json
 end
 
 post "/api/v1/users/:username/api-keys" do |env|

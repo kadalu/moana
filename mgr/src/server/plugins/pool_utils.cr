@@ -11,34 +11,34 @@ require "../datastore/*"
 TEST_XATTR_NAME  = "user.testattr"
 TEST_XATTR_VALUE = "testvalue"
 
-VOLUME_ID_XATTR_NAME = "trusted.glusterfs.volume-id"
+POOL_ID_XATTR_NAME = "trusted.glusterfs.volume-id"
 
-alias VolumeRequestToNode = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, Array(MoanaTypes::Volfile)), MoanaTypes::Volume)
-alias VolumeRequestToNodeWithAction = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, Array(MoanaTypes::Volfile)), MoanaTypes::Volume, String)
+alias PoolRequestToNode = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, Array(MoanaTypes::Volfile)), MoanaTypes::Pool)
+alias PoolRequestToNodeWithAction = Tuple(Hash(String, Array(MoanaTypes::ServiceUnit)), Hash(String, Array(MoanaTypes::Volfile)), MoanaTypes::Pool, String)
 
-ACTION_VALIDATE_VOLUME_CREATE = "validate_volume_create"
-ACTION_VOLUME_CREATE          = "volume_create"
-ACTION_VOLUME_CREATE_STOPPED  = "volume_create_stopped"
-ACTION_MANAGE_SERVICES        = "manage_services"
+ACTION_VALIDATE_POOL_CREATE = "validate_pool_create"
+ACTION_POOL_CREATE          = "pool_create"
+ACTION_POOL_CREATE_STOPPED  = "pool_create_stopped"
+ACTION_MANAGE_SERVICES      = "manage_services"
 
-node_action ACTION_VALIDATE_VOLUME_CREATE do |data, _env|
-  req = MoanaTypes::Volume.from_json(data)
-  validate_volume_create(req)
+node_action ACTION_VALIDATE_POOL_CREATE do |data, _env|
+  req = MoanaTypes::Pool.from_json(data)
+  validate_pool_create(req)
 end
 
-node_action ACTION_VOLUME_CREATE do |data, _env|
-  handle_volume_create(data, stopped: false)
+node_action ACTION_POOL_CREATE do |data, _env|
+  handle_pool_create(data, stopped: false)
 end
 
-node_action ACTION_VOLUME_CREATE_STOPPED do |data, _env|
-  handle_volume_create(data, stopped: true)
+node_action ACTION_POOL_CREATE_STOPPED do |data, _env|
+  handle_pool_create(data, stopped: true)
 end
 
 node_action ACTION_MANAGE_SERVICES do |data, _env|
-  services, volfiles, rollback_volume, action = VolumeRequestToNodeWithAction.from_json(data)
+  services, volfiles, rollback_pool, action = PoolRequestToNodeWithAction.from_json(data)
   save_volfiles(volfiles)
   sighup_processes(services)
-  restart_shd_service_and_manage_rebalance_services(services, rollback_volume.name, action)
+  restart_shd_service_and_manage_rebalance_services(services, rollback_pool.name, action)
 end
 
 def volfile_get(name)
@@ -55,9 +55,9 @@ def volfile_get(name)
   end
 end
 
-def participating_nodes(pool_name, req)
+def participating_nodes(req)
   case req
-  when MoanaTypes::Volume
+  when MoanaTypes::Pool
     nodes = [] of MoanaTypes::Node
     req.distribute_groups.each do |dist_grp|
       dist_grp.storage_units.each do |storage_unit|
@@ -70,10 +70,10 @@ def participating_nodes(pool_name, req)
     # end
     nodes.uniq!(&.name)
     nodes
-  when Array(MoanaTypes::Volume)
+  when Array(MoanaTypes::Pool)
     nodes = [] of MoanaTypes::Node
-    req.each do |volume|
-      nodes += participating_nodes(volume.pool.name, volume)
+    req.each do |pool|
+      nodes += participating_nodes(pool)
     end
 
     nodes.uniq!(&.name)
@@ -91,7 +91,7 @@ rescue ex : IO::Error
   raise ex
 end
 
-def validate_volume_create(req)
+def validate_pool_create(req)
   # TODO: Validate Rootdir
   req.distribute_groups.each do |dist_grp|
     dist_grp.storage_units.each do |storage_unit|
@@ -118,17 +118,17 @@ def validate_volume_create(req)
         FileUtils.rmdir storage_unit.path unless storage_unit_pre_exists
       end
 
-      xattr_vol_id = get_xattr(storage_unit.path, VOLUME_ID_XATTR_NAME) if storage_unit_pre_exists
+      xattr_pool_id = get_xattr(storage_unit.path, POOL_ID_XATTR_NAME) if storage_unit_pre_exists
 
       # Storage unit already exists with volume-id xattr
-      if storage_unit_pre_exists && !xattr_vol_id.nil?
-        xattr_vol_id_string = UUID.new(xattr_vol_id.not_nil!.to_slice).to_s
-        # --volume-id is not set
-        if req.volume_id == ""
-          return NodeResponse.new(false, {"error": "Storage unit #{storage_unit.path} is part of some other Volume or Stale"}.to_json)
-          # Below req.id & req.volume_id are same
-        elsif xattr_vol_id_string != req.id
-          return NodeResponse.new(false, {"error": "Volume-id do not match to reuse storage-unit #{storage_unit.path}"}.to_json)
+      if storage_unit_pre_exists && !xattr_pool_id.nil?
+        xattr_pool_id_string = UUID.new(xattr_pool_id.not_nil!.to_slice).to_s
+        # --pool-id is not set
+        if req.pool_id == ""
+          return NodeResponse.new(false, {"error": "Storage unit #{storage_unit.path} is part of some other Pool or Stale"}.to_json)
+          # Below req.id & req.pool_id are same
+        elsif xattr_pool_id_string != req.id
+          return NodeResponse.new(false, {"error": "Pool-id do not match to reuse storage-unit #{storage_unit.path}"}.to_json)
         end
       end
     end
@@ -137,14 +137,14 @@ def validate_volume_create(req)
   NodeResponse.new(true, "")
 end
 
-def restart_shd_service_and_manage_rebalance_services(services, volume_name, action = "start")
+def restart_shd_service_and_manage_rebalance_services(services, pool_name, action = "start")
   unless services[GlobalConfig.local_node.id]?.nil?
     services[GlobalConfig.local_node.id].each do |service|
       svc = Service.from_json(service.to_json)
       if svc.name == "shdservice"
         svc.restart(plugin: GlobalConfig.service_mgr)
       elsif svc.name == "fixlayoutservice" || svc.name == "migratedataservice"
-        status_file_path = "/var/lib/kadalu/rebalance/#{volume_name}/#{svc.id}.json"
+        status_file_path = "/var/lib/kadalu/rebalance/#{pool_name}/#{svc.id}.json"
         FileUtils.rm(status_file_path) if File.exists?(status_file_path)
         if action == "start"
           svc.start(plugin: GlobalConfig.service_mgr)
@@ -158,8 +158,8 @@ def restart_shd_service_and_manage_rebalance_services(services, volume_name, act
   NodeResponse.new(true, "")
 end
 
-def handle_node_volume_start_stop(data, action)
-  services, volfiles, _ = VolumeRequestToNode.from_json(data)
+def handle_node_pool_start_stop(data, action)
+  services, volfiles, _ = PoolRequestToNode.from_json(data)
 
   if action == "start" && !volfiles[GlobalConfig.local_node.id]?.nil?
     Dir.mkdir_p(Path.new(GlobalConfig.workdir, "volfiles"))
@@ -185,8 +185,8 @@ def handle_node_volume_start_stop(data, action)
   NodeResponse.new(true, "")
 end
 
-def handle_volume_create(data, stopped = false)
-  services, volfiles, req = VolumeRequestToNode.from_json(data)
+def handle_pool_create(data, stopped = false)
+  services, volfiles, req = PoolRequestToNode.from_json(data)
   resp = Hash(String, MoanaTypes::StorageUnit).new
 
   req.distribute_groups.each do |dist_grp|
@@ -197,13 +197,13 @@ def handle_volume_create(data, stopped = false)
       Dir.mkdir_p storage_unit.path
 
       # Set volume-id xattr, ignore if same Volume ID exists
-      volume_id = UUID.new(req.id)
+      pool_id = UUID.new(req.id)
       begin
-        XAttr.set(storage_unit.path, VOLUME_ID_XATTR_NAME,
-          volume_id.bytes.to_slice, only_create: true)
+        XAttr.set(storage_unit.path, POOL_ID_XATTR_NAME,
+          pool_id.bytes.to_slice, only_create: true)
       rescue ex : IO::Error
         if ex.os_error != Errno::EEXIST
-          return NodeResponse.new(false, {"error": "Failed to set Volume ID Xattr. Error=#{ex}"}.to_json)
+          return NodeResponse.new(false, {"error": "Failed to set Pool ID Xattr. Error=#{ex}"}.to_json)
         end
       end
 
@@ -247,14 +247,14 @@ def handle_volume_create(data, stopped = false)
   NodeResponse.new(true, resp.to_json)
 end
 
-def node_details_add_to_volume(volume, nodes)
+def node_details_add_to_pool(pool, nodes)
   nodes_lookup = Hash(String, MoanaTypes::Node).new
 
   nodes.each do |node|
     nodes_lookup[node.name] = node
   end
 
-  volume.distribute_groups.each do |dist_grp|
+  pool.distribute_groups.each do |dist_grp|
     dist_grp.storage_units.each do |storage_unit|
       storage_unit.node = nodes_lookup[storage_unit.node.name]
     end
@@ -319,8 +319,8 @@ def services_and_volfiles(req)
       # Generate Storage Unit Volfile
       # TODO: Expose option as req.storage_unit_volfile_template
       tmpl = volfile_get("storage_unit")
-      storage_unit.volume.id = req.id
-      storage_unit.volume.name = req.name
+      storage_unit.pool.id = req.id
+      storage_unit.pool.name = req.name
       content = Volgen.generate(tmpl, storage_unit.to_json)
       volfiles[storage_unit.node.id] = [] of MoanaTypes::Volfile unless volfiles[storage_unit.node.id]?
       volfiles[storage_unit.node.id] << MoanaTypes::Volfile.new(service.id, content)
@@ -374,8 +374,8 @@ def distribute_group_health(dist_grp, up_storage_units_count)
   end
 end
 
-def volume_health(volume, up_dist_grps_count, down_dist_grps_count)
-  if volume.distribute_groups.size == up_dist_grps_count
+def pool_health(pool, up_dist_grps_count, down_dist_grps_count)
+  if pool.distribute_groups.size == up_dist_grps_count
     "Up"
   elsif down_dist_grps_count > 0
     "Degraded"
@@ -431,7 +431,7 @@ def set_distribute_group_metrics(dist_grp)
   dist_grp.metrics.inodes_count = inodes_used_count + inodes_free_count
 end
 
-def set_volume_metrics(volume)
+def set_pool_metrics(pool)
   up_count : Int32 = 0
   down_count : Int32 = 0
   size_used_bytes : Int64 = 0
@@ -439,7 +439,7 @@ def set_volume_metrics(volume)
   inodes_used_count : Int64 = 0
   inodes_free_count : Int64 = 0
 
-  volume.distribute_groups.each do |dist_grp|
+  pool.distribute_groups.each do |dist_grp|
     next if dist_grp.metrics.health == "Unknown"
 
     set_distribute_group_metrics(dist_grp)
@@ -452,13 +452,13 @@ def set_volume_metrics(volume)
     inodes_free_count += dist_grp.metrics.inodes_free_count
   end
 
-  volume.metrics.health = volume_health(volume, up_count, down_count)
-  volume.metrics.size_used_bytes = size_used_bytes
-  volume.metrics.size_free_bytes = size_free_bytes
-  volume.metrics.size_bytes = size_used_bytes + size_free_bytes
-  volume.metrics.inodes_used_count = inodes_used_count
-  volume.metrics.inodes_free_count = inodes_free_count
-  volume.metrics.inodes_count = inodes_used_count + inodes_free_count
+  pool.metrics.health = pool_health(pool, up_count, down_count)
+  pool.metrics.size_used_bytes = size_used_bytes
+  pool.metrics.size_free_bytes = size_free_bytes
+  pool.metrics.size_bytes = size_used_bytes + size_free_bytes
+  pool.metrics.inodes_used_count = inodes_used_count
+  pool.metrics.inodes_free_count = inodes_free_count
+  pool.metrics.inodes_count = inodes_used_count + inodes_free_count
 end
 
 def save_volfiles(volfiles)
@@ -480,35 +480,33 @@ def sighup_processes(services)
   end
 end
 
-def combine_req_and_volume(req, volume)
-  rollback_volume = MoanaTypes::Volume.new
+def combine_req_and_pool(req, pool)
+  rollback_pool = MoanaTypes::Pool.new
 
-  rollback_volume.id = volume.id
-  rollback_volume.name = volume.name
-  rollback_volume.state = volume.state
-  rollback_volume.pool = volume.pool
-  rollback_volume.volume_id = volume.volume_id
+  rollback_pool.id = pool.id
+  rollback_pool.name = pool.name
+  rollback_pool.state = pool.state
 
-  combined_volume_options = volume.options.merge(req.options).compact
-  rollback_volume.options = combined_volume_options
+  combined_pool_options = pool.options.merge(req.options).compact
+  rollback_pool.options = combined_pool_options
 
-  rollback_volume.distribute_groups.concat(volume.distribute_groups)
-  rollback_volume.distribute_groups.concat(req.distribute_groups)
+  rollback_pool.distribute_groups.concat(pool.distribute_groups)
+  rollback_pool.distribute_groups.concat(req.distribute_groups)
 
-  rollback_volume
+  rollback_pool
 end
 
 # Validate if the nodes are part of the Pool
 # Also fetch the full node details
-def validate_and_add_nodes(pool, req)
+def validate_and_add_nodes(req)
   nodes = [] of MoanaTypes::Node
 
-  participating_nodes(pool.name, req).each do |n|
-    node = Datastore.get_node(pool.name, n.name)
+  participating_nodes(req).each do |n|
+    node = Datastore.get_node(n.name)
     if node.nil?
       if req.auto_add_nodes
         endpoint = node_endpoint(n.name)
-        invite = node_invite(pool.name, n.name, endpoint)
+        invite = node_invite(n.name, endpoint)
 
         participating_node = MoanaTypes::Node.new
         participating_node.endpoint = endpoint
@@ -516,7 +514,6 @@ def validate_and_add_nodes(pool, req)
 
         resp = dispatch_action(
           ACTION_NODE_INVITE_ACCEPT,
-          pool.name,
           [participating_node],
           invite.to_json
         )
@@ -525,10 +522,10 @@ def validate_and_add_nodes(pool, req)
 
         node = MoanaTypes::Node.from_json(resp.node_responses[n.name].response)
         node.endpoint = endpoint
-        Datastore.create_node(pool.id, node.id, n.name, endpoint, node.token, invite.mgr_token)
+        Datastore.create_node(node.id, n.name, endpoint, node.token, invite.mgr_token)
       end
 
-      api_exception(node.nil?, ({"error": "Node #{n.name} is not part of the Pool"}.to_json))
+      api_exception(node.nil?, ({"error": "Node #{n.name} is not part of the Cluster"}.to_json))
     end
 
     nodes << node unless node.nil?
@@ -537,16 +534,16 @@ def validate_and_add_nodes(pool, req)
   nodes
 end
 
-def add_fix_layout_service(services, pool_name, volume_name, node, storage_unit)
-  service = FixLayoutService.new(pool_name, volume_name, storage_unit)
+def add_fix_layout_service(services, pool_name, node, storage_unit)
+  service = FixLayoutService.new(pool_name, storage_unit)
   services[node.id] = [] of MoanaTypes::ServiceUnit unless services[node.id]?
   services[node.id] << service.unit
 
   services
 end
 
-def add_migrate_data_service(services, pool_name, volume_name, node, storage_unit)
-  service = MigrateDataService.new(pool_name, volume_name, storage_unit)
+def add_migrate_data_service(services, pool_name, node, storage_unit)
+  service = MigrateDataService.new(pool_name, storage_unit)
   services[node.id] = [] of MoanaTypes::ServiceUnit unless services[node.id]?
   services[node.id] << service.unit
 

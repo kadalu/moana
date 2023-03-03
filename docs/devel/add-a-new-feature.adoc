@@ -1,20 +1,20 @@
 = Add a new feature
 
-Let us implement a feature that shows Uptime of all the nodes of a Storage Pool.
+Let us implement a feature that shows Uptime of all the nodes of a Cluster.
 
 [source,console]
 ----
-kadalu node uptime <POOL_NAME>
+kadalu node uptime
 ----
 
 For example,
 
 [source,console]
 ----
-$ kadalu node uptime DEV
+$ kadalu node uptime
 Name                     Uptime
-DEV/server1.example.com  up 1 day, 5 hours, 17 minutes
-DEV/server2.example.com  up 1 day, 4 hours, 24 minutes
+server1.example.com      up 1 day, 5 hours, 17 minutes
+server2.example.com      up 1 day, 4 hours, 24 minutes
 ----
 
 First we will add ReST api handler (`$SRC/mgr/src/server/plugins/node_uptime.cr`)
@@ -24,10 +24,8 @@ First we will add ReST api handler (`$SRC/mgr/src/server/plugins/node_uptime.cr`
 require "./helpers"
 require "../datastore/*"
 
-get "/api/v1/pools/:pool_name/uptime" do |env|
-  pool_name = env.params.url["pool_name"]
-
-  nodes = Datastore.list_nodes(pool_name)
+get "/api/v1/uptime" do |env|
+  nodes = Datastore.list_nodes()
 
   nodes.to_json
 end
@@ -37,7 +35,7 @@ Now if we run below curl command, then it returns just the nodes list.
 
 [source,console]
 ----
-$ curl http://localhost:3000/api/v1/pools/DEV/uptime
+$ curl http://localhost:3000/api/v1/uptime
 [
   {
     "id":"341cd9ce-49a6-42ce-bdbf-de4cdbc4159a",
@@ -45,12 +43,7 @@ $ curl http://localhost:3000/api/v1/pools/DEV/uptime
     "state":"",
     "endpoint":"http://kadalu-dev:3000",
     "addresses":[],
-    "token":"",
-    "pool":{
-      "id":"986e16f1-8865-481a-b1d7-40431656bf1b",
-      "name":"DEV",
-      "nodes":[]
-    }
+    "token":""
   }
 ]
 ----
@@ -69,7 +62,6 @@ so that it can have uptime details when exported.
              endpoint = "",
              addresses = [] of String,
              token = "",
-             pool = Pool.new,
              uptime = ""
 
     def initialize
@@ -123,14 +115,11 @@ node_action ACTION_NODE_UPTIME do |_|
   end
 end
 
-get "/api/v1/pools/:pool_name/uptime" do |env|
-  pool_name = env.params.url["pool_name"]
-
-  nodes = Datastore.list_nodes(pool_name)
+get "/api/v1/uptime" do |env|
+  nodes = Datastore.list_nodes
 
   resp = dispatch_action(
     ACTION_NODE_UPTIME,
-    pool_name,
     nodes
   )
 
@@ -147,11 +136,11 @@ end
 ----
 
 Now the same curl command returns the Uptime
-details for each node in the Pool
+details for each node in the Cluster
 
 [source,console]
 ----
-$ curl http://localhost:3000/api/v1/pools/DEV/uptime
+$ curl http://localhost:3000/api/v1/uptime
 [
   {
     "id":"341cd9ce-49a6-42ce-bdbf-de4cdbc4159a",
@@ -160,22 +149,17 @@ $ curl http://localhost:3000/api/v1/pools/DEV/uptime
     "endpoint":"http://kadalu-dev:3000",
     "addresses":[],
     "token":"",
-    "pool":{
-      "id":"986e16f1-8865-481a-b1d7-40431656bf1b",
-      "name":"DEV",
-      "nodes":[]
-    },
     "uptime":"up 1 day, 4 hours, 33 minutes"
   }
 ]
 ----
 
-Now add the Client library (`$SRC/sdk/crystal/src/pools.cr`)
+Now add the Client library (`$SRC/sdk/crystal/src/kadalu_storage_manager.cr`)
 
 [source,crystal]
 ----
     def nodes_uptime
-      url = "#{@client.url}/api/v1/pools/#{@name}/uptime"
+      url = "#{@client.url}/api/v1/uptime"
       response = MoanaClient.http_get(
         url,
         headers: @client.auth_header
@@ -195,22 +179,18 @@ Last but not the least, add CLI command handler (`$SRC/mgr/src/cmds/node_uptime.
 require "./helpers"
 
 command "node.uptime", "Nodes Uptime" do |parser, _|
-  parser.banner = "Usage: kadalu node uptime POOL"
+  parser.banner = "Usage: kadalu node uptime"
 end
 
 handler "node.uptime" do |args|
-  args.pool_name, _ = pool_and_node_name(args.pos_args.size < 1 ? "" : args.pos_args[0])
-
-  command_error "Pool name is required" if args.pool_name == ""
-
   api_call(args, "Failed to get list of nodes") do |client|
-    nodes = client.pool(args.pool_name).nodes_uptime
+    nodes = client.nodes_uptime
 
     table = CliTable.new(2)
     table.header("Name", "Uptime")
 
     nodes.each do |node|
-      table.record("#{node.pool.name}/#{node.name}", node.uptime)
+      table.record(node.name, node.uptime)
     end
 
     table.render
@@ -232,7 +212,7 @@ In other terminal, run the following command
 
 [source,console]
 ----
-root@kadalu-dev:/src/mgr# ./bin/kadalu node uptime DEV
+root@kadalu-dev:/src/mgr# ./bin/kadalu node uptime
 Name            Uptime
-DEV/kadalu-dev  up 1 day, 5 hours, 30 minutes
+kadalu-dev      up 1 day, 5 hours, 30 minutes
 ----

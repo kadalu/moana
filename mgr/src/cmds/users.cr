@@ -1,7 +1,7 @@
 require "./helpers"
 
 struct UserArgs
-  property username = "", password = "", name = "", pool_name = "", volume_name = "", role_name = "",
+  property username = "", password = "", name = "", pool_name = "", role_name = "",
     current_password = "", new_password = ""
 end
 
@@ -20,10 +20,6 @@ command "user.create", "Create a Kadalu Storage user" do |parser, args|
   parser.banner = "Usage: kadalu user create USERNAME [arguments]"
   parser.on("--pool=POOL_NAME", "Storage pool name") do |name|
     args.user_args.pool_name = name
-  end
-
-  parser.on("--volume=VOLUME_NAME", "Volume name") do |name|
-    args.user_args.volume_name = name
   end
 
   parser.on("--role=ROLE_NAME", "Role name (admin,maintainer,viewer,client)") do |name|

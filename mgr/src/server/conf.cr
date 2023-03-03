@@ -15,7 +15,7 @@ struct LocalNodeData
   include JSON::Serializable
 
   property pool_name = "", id = "", name = "", token_hash = "",
-    mgr_hostname = "", mgr_port = 3000, mgr_https = false, mgr_token = ""
+    mgr_hostname = "", mgr_port = 3000, mgr_https = false, mgr_token = "", joined = false
 
   def initialize
   end

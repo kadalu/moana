@@ -7,20 +7,16 @@ def test_node_apis():
     mgr = StorageManager("http://server1:3000")
     mgr.create_user("admin", "admin", "kadalu")
     mgr.user("admin").login("kadalu")
-    mgr.create_pool("DEV")
     for node in NODES:
-        mgr.pool("DEV").add_node(node)
+        mgr.add_node(node)
 
-    print(mgr.pool("DEV").list_nodes())
+    print(mgr.list_nodes())
     for node in NODES:
-        mgr.pool("DEV").node(node).remove()
-    
+        mgr.node(node).remove()
+
     # Add and remove again to see node cleanup happens after remove
     for node in NODES:
-        mgr.pool("DEV").add_node(node)
-        mgr.pool("DEV").node(node).remove()
+        mgr.add_node(node)
+        mgr.node(node).remove()
 
-    mgr.pool("DEV").delete()
-    pools = mgr.list_pools()
-    assert len(pools) == 0
     mgr.user("admin").logout()

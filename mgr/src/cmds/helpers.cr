@@ -3,7 +3,7 @@ require "option_parser"
 require "kadalu_storage_manager"
 
 class Args
-  property cmd = "", pos_args = [] of String, url = "", pool_name = "", script_mode = false, json = false
+  property cmd = "", pos_args = [] of String, url = "", script_mode = false, json = false
 end
 
 struct Command
@@ -131,15 +131,15 @@ def handle_json_error(message, args)
   end
 end
 
-def validate_volume_options(volume_options : Array)
-  if volume_options.size % 2 != 0
-    STDERR.puts "Volume options pairs invalid"
+def validate_pool_options(pool_options : Array)
+  if pool_options.size % 2 != 0
+    STDERR.puts "Pool options pairs invalid"
     exit 1
   end
 
-  vol_opts = Hash(String, String).new
-  volume_options.each_slice(2) do |opt|
-    vol_opts[opt[0]] = opt[1]
+  pool_opts = Hash(String, String).new
+  pool_options.each_slice(2) do |opt|
+    pool_opts[opt[0]] = opt[1]
   end
-  vol_opts
+  pool_opts
 end

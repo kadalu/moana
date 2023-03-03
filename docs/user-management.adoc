@@ -22,7 +22,6 @@ Logged in successfully. Details cached in `~/.kadalu/sessions/admin`. Delete thi
 
 * Users with admin privileges can add more users.
 * Pool Admin can add more users only to that pool.
-* Volume Admins can add more users only to that Volume.
 
 [source,console]
 ----
@@ -35,7 +34,7 @@ Assign a default role while creating a user
 
 [source,console]
 ----
-$ kadalu user create demo --pool=PROD --volume=all --role=viewer
+$ kadalu user create demo --pool=PROD --role=viewer
 Password:
 User created successfully. Now login to continue with other commands.
 ----
@@ -44,7 +43,7 @@ Add a role after creating a user
 
 [source,console]
 ----
-$ kadalu role add demo viewer --pool=PROD --volume=all
+$ kadalu role add demo viewer --pool=PROD
 ----
 
 Change the password of a user
@@ -61,7 +60,7 @@ Delete a Role
 
 [source,console]
 ----
-$ kadalu role remove demo viewer --pool=PROD --volume=all
+$ kadalu role remove demo viewer --pool=PROD
 ----
 
 Delete a user

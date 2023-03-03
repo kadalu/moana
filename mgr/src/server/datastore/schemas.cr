@@ -12,20 +12,13 @@ SCHEMAS = [
        updated_on    TIMESTAMP,
        accessed_on   TIMESTAMP
    )",
-  "CREATE TABLE IF NOT EXISTS pools (
-       id          UUID PRIMARY KEY,
-       name        VARCHAR UNIQUE,
-       created_on  TIMESTAMP,
-       updated_on  TIMESTAMP
-   )",
   "CREATE TABLE IF NOT EXISTS roles (
        user_id     UUID,
        pool_id     UUID,
-       volume_id   UUID,
        name        VARCHAR,
        created_on  TIMESTAMP,
        updated_on  TIMESTAMP,
-       UNIQUE (user_id, pool_id, volume_id, name)
+       UNIQUE (user_id, pool_id, name)
    )",
   "CREATE TABLE IF NOT EXISTS api_keys (
        id          UUID PRIMARY KEY,
@@ -39,22 +32,20 @@ SCHEMAS = [
    )",
   "CREATE TABLE IF NOT EXISTS nodes (
        id               UUID PRIMARY KEY,
-       pool_id          UUID,
        name             VARCHAR,
        endpoint         VARCHAR UNIQUE,
        token            VARCHAR,
        mgr_token_hash   VARCHAR,
        mgr_address      VARCHAR,
-       volume_address   VARCHAR,
+       pool_address     VARCHAR,
        heal_address     VARCHAR,
        internal_address VARCHAR,
        created_on       TIMESTAMP,
        updated_on       TIMESTAMP,
-       UNIQUE (pool_id, name)
+       UNIQUE (name)
    )",
-  "CREATE TABLE IF NOT EXISTS volumes (
+  "CREATE TABLE IF NOT EXISTS pools (
        id                  UUID PRIMARY KEY,
-       pool_id             UUID,
        name                VARCHAR,
        type                VARCHAR,
        state               VARCHAR,
@@ -66,12 +57,11 @@ SCHEMAS = [
        inodes_count        INTEGER,
        created_on          TIMESTAMP,
        updated_on          TIMESTAMP,
-       UNIQUE (pool_id, name)
+       UNIQUE (name)
    )",
   "CREATE TABLE IF NOT EXISTS distribute_groups (
        id                  UUID PRIMARY KEY,
        pool_id             UUID,
-       volume_id           UUID,
        idx                 SMALLINT,
        type                VARCHAR,
        replica_count       SMALLINT,
@@ -84,12 +74,11 @@ SCHEMAS = [
        inodes_count        INTEGER,
        created_on          TIMESTAMP,
        updated_on          TIMESTAMP,
-       UNIQUE (pool_id, volume_id, idx)
+       UNIQUE (pool_id, idx)
    )",
   "CREATE TABLE IF NOT EXISTS storage_units (
        id                  UUID PRIMARY KEY,
        pool_id             UUID,
-       volume_id           UUID,
        distribute_group_id UUID,
        idx                 SMALLINT,
        node_id             UUID,
@@ -101,23 +90,21 @@ SCHEMAS = [
        inodes_count        INTEGER,
        created_on          TIMESTAMP,
        updated_on          TIMESTAMP,
-       UNIQUE (pool_id, node_id, path)
+       UNIQUE (node_id, path)
    )",
   "CREATE TABLE IF NOT EXISTS ports (
-       pool_id    UUID,
        node_id    UUID,
        port       SMALLINT,
        created_on TIMESTAMP,
        updated_on TIMESTAMP,
-       UNIQUE (pool_id, node_id, port)
+       UNIQUE (node_id, port)
     );",
   "CREATE TABLE IF NOT EXISTS services (
-       pool_id    UUID,
        node_id    UUID,
        name       VARCHAR,
        unit       TEXT,
        created_on TIMESTAMP,
        updated_on TIMESTAMP,
-       UNIQUE (pool_id, node_id, name)
+       UNIQUE (node_id, name)
   )",
 ]

@@ -40,5 +40,5 @@ or run a specific test
 
 [source,console]
 ----
-binnacle -v tests/all/volumes.t
+binnacle -v tests/all/pools.t
 ----

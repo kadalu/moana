@@ -4,49 +4,39 @@ require "../conf"
 require "./helpers"
 require "../datastore/*"
 require "./ping"
-require "./volume_utils.cr"
+require "./pool_utils.cr"
 
-post "/api/v1/pools/:pool_name/volumes" do |env|
+post "/api/v1/pools" do |env|
   pool_name = env.params.url["pool_name"]
 
   forbidden_api_exception(!Datastore.maintainer?(env.user_id, pool_name))
 
   # TODO: Validate if env.request.body.nil?
-  req = MoanaTypes::Volume.from_json(env.request.body.not_nil!)
+  req = MoanaTypes::Pool.from_json(env.request.body.not_nil!)
 
-  volume = Datastore.get_volume(pool_name, req.name)
-  api_exception(!volume.nil?, ({"error": "Volume already exists"}.to_json))
+  pool = Datastore.get_pool(req.name)
+  api_exception(!pool.nil?, ({"error": "Pool already exists"}.to_json))
 
-  pool = Datastore.get_pool(pool_name)
-  if pool.nil?
-    api_exception(!req.auto_create_pool, ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
-
-    # If the user is not global maintainer, can't create a Pool
-    forbidden_api_exception(!Datastore.maintainer?(env.user_id))
-
-    pool = create_pool(pool_name)
-  end
-
-  req.id = req.volume_id == "" ? UUID.random.to_s : req.volume_id
+  req.id = req.pool_id == "" ? UUID.random.to_s : req.pool_id
 
   api_exception(
-    req.volume_id != "" && !valid_uuid?(req.volume_id),
-    ({"error": "Volume ID does not match UUID format"}.to_json)
+    req.pool_id != "" && !valid_uuid?(req.pool_id),
+    ({"error": "Pool ID does not match UUID format"}.to_json)
   )
 
-  # To avoid creating existing volume with volume-id option
+  # To avoid creating existing pool with pool-id option
   api_exception(
-    req.volume_id != "" && Datastore.volume_exists_by_id?(pool.not_nil!.id, req.id),
-    ({"error": "Volume already exists with the given ID"}.to_json)
+    req.pool_id != "" && Datastore.pool_exists_by_id?(req.id),
+    ({"error": "Pool already exists with the given ID"}.to_json)
   )
 
   # TODO: Validate the request, dist count, storage_units count etc
 
-  nodes = validate_and_add_nodes(pool.not_nil!, req)
-  node_details_add_to_volume(req, nodes)
+  nodes = validate_and_add_nodes(req)
+  node_details_add_to_pool(req, nodes)
 
   # Validate if all the nodes are reachable.
-  resp = dispatch_action(ACTION_PING, pool_name, nodes, "")
+  resp = dispatch_action(ACTION_PING, nodes)
   api_exception(!resp.ok, node_errors("Not all participant nodes are reachable", resp.node_responses).to_json)
 
   # If User specified the Port in the request then validate if
@@ -55,7 +45,7 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
     dist_grp.storage_units.each do |storage_unit|
       next if storage_unit.port == 0
 
-      unless Datastore.port_available?(pool.not_nil!.id, storage_unit.node.id, storage_unit.port)
+      unless Datastore.port_available?(storage_unit.node.id, storage_unit.port)
         api_exception(true, ({"error": "Port is already used(#{storage_unit.node.name}:#{storage_unit.port})"}).to_json)
       end
     end
@@ -63,13 +53,12 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
 
   # Local Validations
   resp = dispatch_action(
-    ACTION_VALIDATE_VOLUME_CREATE,
-    pool_name,
+    ACTION_VALIDATE_POOL_CREATE,
     nodes,
     req.to_json
   )
 
-  api_exception(!resp.ok, node_errors("Invalid Volume create request", resp.node_responses).to_json)
+  api_exception(!resp.ok, node_errors("Invalid Pool create request", resp.node_responses).to_json)
 
   # Update Free Ports and reserve it
   # Also generate Brick ID
@@ -79,42 +68,41 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
       storage_unit.id = UUID.random.to_s
       # Request doesn't contain the Port, find a free port
       if storage_unit.port == 0
-        free_port = Datastore.free_port(pool.not_nil!.id, storage_unit.node.id)
+        free_port = Datastore.free_port(storage_unit.node.id)
         storage_unit.port = free_port unless free_port.nil?
       end
 
       # No free port found
       api_exception(storage_unit.port == 0, ({"error": "No free Port available in #{storage_unit.node.name}"}).to_json)
 
-      Datastore.reserve_port(pool.not_nil!.id, storage_unit.node.id, storage_unit.port)
+      Datastore.reserve_port(storage_unit.node.id, storage_unit.port)
     end
   end
 
-  # Generate Services and Volfiles if Volume to be started
+  # Generate Services and Volfiles if Pool to be started
   services, volfiles = services_and_volfiles(req)
 
-  action = ACTION_VOLUME_CREATE
+  action = ACTION_POOL_CREATE
   req.state = "Started"
   if req.no_start
-    action = ACTION_VOLUME_CREATE_STOPPED
+    action = ACTION_POOL_CREATE_STOPPED
     req.state = "Created"
   end
 
-  # Volume create action {req, services, volfiles}
+  # Pool create action {req, services, volfiles}
   resp = dispatch_action(
     action,
-    pool_name,
     nodes,
     {services, volfiles, req}.to_json
   )
 
-  api_exception(!resp.ok, node_errors("Failed to create Volume", resp.node_responses).to_json)
+  api_exception(!resp.ok, node_errors("Failed to create Pool", resp.node_responses).to_json)
 
   # Save Services details
   services.each do |node_id, svcs|
     svcs.each do |svc|
       # Enable each Services
-      Datastore.enable_service(pool.not_nil!.id, node_id, svc)
+      Datastore.enable_service(node_id, svc)
     end
   end
 
@@ -131,10 +119,10 @@ post "/api/v1/pools/:pool_name/volumes" do |env|
     end
   end
 
-  set_volume_metrics(req)
+  set_pool_metrics(req)
 
-  # Save Volume info
-  Datastore.create_volume(pool.not_nil!.id, req)
+  # Save Pool info
+  Datastore.create_pool(req)
 
   env.response.status_code = 201
   req.to_json

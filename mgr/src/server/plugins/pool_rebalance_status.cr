@@ -4,7 +4,7 @@ require "../conf"
 require "./helpers"
 require "../datastore/*"
 require "./ping"
-require "./volume_utils.cr"
+require "./pool_utils"
 
 REBALNCE_DIR = "/var/lib/kadalu/rebalance"
 
@@ -37,9 +37,9 @@ def assign_state(status, svc)
 end
 
 node_action ACTION_FIX_LAYOUT_STATUS do |data, _env|
-  volume_name, services, request = RebalanceRequestToNode.from_json(data)
+  pool_name, services, request = RebalanceRequestToNode.from_json(data)
   status_file_path = ""
-  rebalance_dir = Path.new(WORKDIR, "rebalance", "#{volume_name}").to_s
+  rebalance_dir = Path.new(WORKDIR, "rebalance", "#{pool_name}").to_s
   request = Hash(String, RebalanceStatusRequestToNode).from_json(request.to_json)
   local_node_id = GlobalConfig.local_node.id
   node_resp = RebalanceStatusRequestToNode.new
@@ -66,9 +66,9 @@ node_action ACTION_FIX_LAYOUT_STATUS do |data, _env|
 end
 
 node_action ACTION_MIGRATE_DATA_STATUS do |data, _env|
-  volume_name, services, request = RebalanceRequestToNode.from_json(data)
+  pool_name, services, request = RebalanceRequestToNode.from_json(data)
   status_file_path = ""
-  rebalance_dir = Path.new(WORKDIR, "rebalance", "#{volume_name}").to_s
+  rebalance_dir = Path.new(WORKDIR, "rebalance", "#{pool_name}").to_s
   request = Hash(String, RebalanceStatusRequestToNode).from_json(request.to_json)
   node_resp = RebalanceStatusRequestToNode.new
 
@@ -98,39 +98,38 @@ node_action ACTION_MIGRATE_DATA_STATUS do |data, _env|
   NodeResponse.new(true, node_resp.to_json)
 end
 
-def construct_fix_layout_service_request(pool_name, nodes, volume)
+def construct_fix_layout_service_request(nodes, pool)
   req = Hash(String, RebalanceStatusRequestToNode).new
   services = Hash(String, Array(MoanaTypes::ServiceUnit)).new
 
   # Add only the first existing node & first storage_unit for fix-layout service
-  storage_unit = volume.distribute_groups[0].storage_units[0]
+  storage_unit = pool.distribute_groups[0].storage_units[0]
   req[storage_unit.node.id] = RebalanceStatusRequestToNode.new if req[storage_unit.node.id]?.nil?
   req[storage_unit.node.id].storage_units << storage_unit
-  services = add_fix_layout_service(services, pool_name, volume.name, nodes[0],
-    volume.distribute_groups[0].storage_units[0])
+  services = add_fix_layout_service(services, pool.name, nodes[0],
+    pool.distribute_groups[0].storage_units[0])
 
   {req, services}
 end
 
-def construct_migrate_data_service_request(pool_name, volume)
+def construct_migrate_data_service_request(pool)
   req = Hash(String, RebalanceStatusRequestToNode).new
   services = Hash(String, Array(MoanaTypes::ServiceUnit)).new
 
-  volume.distribute_groups.each do |dist_grp|
+  pool.distribute_groups.each do |dist_grp|
     storage_unit = dist_grp.storage_units[0]
     req[storage_unit.node.id] = RebalanceStatusRequestToNode.new if req[storage_unit.node.id]?.nil?
     req[storage_unit.node.id].storage_units << storage_unit
 
-    services = add_migrate_data_service(services, volume.pool.name, volume.name,
+    services = add_migrate_data_service(services, pool.name,
       dist_grp.storage_units[0].node, storage_unit)
   end
 
   {req, services}
 end
 
-get "/api/v1/pools/:pool_name/volumes/:volume_name/rebalance_status" do |env|
+get "/api/v1/pools/:pool_name/rebalance_status" do |env|
   pool_name = env.params.url["pool_name"]
-  volume_name = env.params.url["volume_name"]
 
   total_migrate_data_processes = 0
   total_non_started_migrate_data_processes = 0
@@ -142,57 +141,55 @@ get "/api/v1/pools/:pool_name/volumes/:volume_name/rebalance_status" do |env|
   sum_of_total_bytes = 0
   sum_of_progress = 0
 
-  forbidden_api_exception(!Datastore.maintainer?(env.user_id, pool_name, volume_name))
+  forbidden_api_exception(!Datastore.maintainer?(env.user_id, pool_name))
 
-  volume = Datastore.get_volume(pool_name, volume_name)
-  api_exception(volume.nil?, {"error": "Volume doesn't exists"}.to_json)
-  volume = volume.not_nil!
+  pool = Datastore.get_pool(pool_name)
+  api_exception(pool.nil?, {"error": "Pool doesn't exists"}.to_json)
+  pool = pool.not_nil!
 
-  nodes = participating_nodes(pool_name, volume)
+  nodes = participating_nodes(pool)
 
   # TODO: Add to missed_ops if a node is not reachable [Check if this is required, since node ping check is done]
 
   # Validate if all the nodes are reachable.
-  resp = dispatch_action(ACTION_PING, pool_name, nodes, "")
+  resp = dispatch_action(ACTION_PING, nodes)
   api_exception(!resp.ok, node_errors("Not all participant nodes are reachable", resp.node_responses).to_json)
 
-  request, services = construct_fix_layout_service_request(pool_name, nodes, volume)
+  request, services = construct_fix_layout_service_request(nodes, pool)
   first_node = [] of MoanaTypes::Node
   first_node << nodes[0]
   resp = dispatch_action(
     ACTION_FIX_LAYOUT_STATUS,
-    pool_name,
     first_node,
-    {volume_name, services, request}.to_json
+    {pool_name, services, request}.to_json
   )
 
-  api_exception(!resp.ok, node_errors("Failed to get fix-layout status of volume #{volume.name}", resp.node_responses).to_json)
+  api_exception(!resp.ok, node_errors("Failed to get fix-layout status of pool #{pool.name}", resp.node_responses).to_json)
 
-  storage_unit = volume.distribute_groups[0].storage_units[0]
+  storage_unit = pool.distribute_groups[0].storage_units[0]
   if resp.node_responses[storage_unit.node.id].ok
     node_resp = RebalanceStatusRequestToNode.from_json(resp.node_responses[storage_unit.node.id].response)
     su = node_resp.storage_units[0]
     if su.node.id == storage_unit.node.id && su.path == storage_unit.path
       storage_unit.fix_layout_status = su.fix_layout_status
 
-      # Set fix-layout rebalance status summary at volume-level
-      volume.fix_layout_summary.state = su.fix_layout_status.state
-      volume.fix_layout_summary.total_dirs_scanned = su.fix_layout_status.total_dirs
-      volume.fix_layout_summary.duration_seconds = su.fix_layout_status.duration_seconds
+      # Set fix-layout rebalance status summary at pool-level
+      pool.fix_layout_summary.state = su.fix_layout_status.state
+      pool.fix_layout_summary.total_dirs_scanned = su.fix_layout_status.total_dirs
+      pool.fix_layout_summary.duration_seconds = su.fix_layout_status.duration_seconds
     end
   end
 
-  request, services = construct_migrate_data_service_request(pool_name, volume)
+  request, services = construct_migrate_data_service_request(pool)
   resp = dispatch_action(
     ACTION_MIGRATE_DATA_STATUS,
-    pool_name,
     nodes,
-    {volume_name, services, request}.to_json
+    {pool_name, services, request}.to_json
   )
 
-  api_exception(!resp.ok, node_errors("Failed to get migrate-data status of volume #{volume.name}", resp.node_responses).to_json)
+  api_exception(!resp.ok, node_errors("Failed to get migrate-data status of pool #{pool.name}", resp.node_responses).to_json)
 
-  volume.distribute_groups.each do |dist_grp|
+  pool.distribute_groups.each do |dist_grp|
     storage_unit = dist_grp.storage_units[0]
     if resp.node_responses[storage_unit.node.id].ok
       node_resp = RebalanceStatusRequestToNode.from_json(resp.node_responses[storage_unit.node.id].response)
@@ -200,7 +197,7 @@ get "/api/v1/pools/:pool_name/volumes/:volume_name/rebalance_status" do |env|
         if s_unit.node.id == storage_unit.node.id && s_unit.path == storage_unit.path
           storage_unit.migrate_data_status = s_unit.migrate_data_status
 
-          # Counters for Migrate-Data Summary at volume-level
+          # Counters for Migrate-Data Summary at pool-level
           if s_unit.migrate_data_status.estimate_seconds.to_i64 > highest_estimate_seconds
             highest_estimate_seconds = s_unit.migrate_data_status.estimate_seconds.to_i64
           end
@@ -223,7 +220,7 @@ get "/api/v1/pools/:pool_name/volumes/:volume_name/rebalance_status" do |env|
     end
   end
 
-  # Evaluate rebalance_status from counters and set to Volume
+  # Evaluate rebalance_status from counters and set to Pool
   if total_completed_migrate_data_processes == total_migrate_data_processes
     rebalance_status = "complete"
   elsif total_failed_migrate_data_processes == total_migrate_data_processes
@@ -234,18 +231,18 @@ get "/api/v1/pools/:pool_name/volumes/:volume_name/rebalance_status" do |env|
     rebalance_status = "partial"
   end
 
-  volume.migrate_data_summary.total_migrate_data_processes = total_migrate_data_processes
-  volume.migrate_data_summary.total_non_started_migrate_data_processes = total_non_started_migrate_data_processes
-  volume.migrate_data_summary.total_completed_migrate_data_processes = total_completed_migrate_data_processes
-  volume.migrate_data_summary.total_failed_migrate_data_processes = total_failed_migrate_data_processes
+  pool.migrate_data_summary.total_migrate_data_processes = total_migrate_data_processes
+  pool.migrate_data_summary.total_non_started_migrate_data_processes = total_non_started_migrate_data_processes
+  pool.migrate_data_summary.total_completed_migrate_data_processes = total_completed_migrate_data_processes
+  pool.migrate_data_summary.total_failed_migrate_data_processes = total_failed_migrate_data_processes
 
-  volume.migrate_data_summary.avg_of_scanned_bytes = (sum_of_scanned_bytes/total_migrate_data_processes).to_i64
-  volume.migrate_data_summary.avg_of_total_bytes = (sum_of_total_bytes/total_migrate_data_processes).to_i64
-  volume.migrate_data_summary.avg_of_progress = sum_of_progress/total_migrate_data_processes
-  volume.migrate_data_summary.highest_estimate_seconds = highest_estimate_seconds.to_i64
+  pool.migrate_data_summary.avg_of_scanned_bytes = (sum_of_scanned_bytes/total_migrate_data_processes).to_i64
+  pool.migrate_data_summary.avg_of_total_bytes = (sum_of_total_bytes/total_migrate_data_processes).to_i64
+  pool.migrate_data_summary.avg_of_progress = sum_of_progress/total_migrate_data_processes
+  pool.migrate_data_summary.highest_estimate_seconds = highest_estimate_seconds.to_i64
 
-  volume.migrate_data_summary.state = rebalance_status
+  pool.migrate_data_summary.state = rebalance_status
 
   env.response.status_code = 200
-  volume.to_json
+  pool.to_json
 end

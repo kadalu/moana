@@ -68,12 +68,12 @@ def node_action(name, &block : String, HTTP::Server::Context -> NodeResponse)
   Action.add(name, &block)
 end
 
-def dispatch_action(name, pool_name, nodes, data)
-  Action.dispatch(name, pool_name, nodes, data)
+def dispatch_action(name, nodes, data)
+  Action.dispatch(name, nodes, data)
 end
 
-def dispatch_action(name, pool_name, nodes)
-  Action.dispatch(name, pool_name, nodes, "")
+def dispatch_action(name, nodes)
+  Action.dispatch(name, nodes, "")
 end
 
 def hash_sha256(value : String)

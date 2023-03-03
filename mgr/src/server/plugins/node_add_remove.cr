@@ -14,14 +14,13 @@ node_action ACTION_NODE_INVITE_ACCEPT do |data, _env|
   end
 
   local_node_data = LocalNodeData.from_json(File.read(data_file))
-  if local_node_data.pool_name != ""
-    msg = local_node_data.pool_name == req.pool_name ? "the " : "a different "
-    next NodeResponse.new(false, {"error": "Node is already part of #{msg} Pool"}.to_json)
+  if local_node_data.joined
+    next NodeResponse.new(false, {"error": "Node is already part of the cluster"}.to_json)
   end
 
   # TODO: Change this to user check once user management is implemented
-  if Datastore.pools_exists? && local_node_data.id != req.mgr_node_id
-    next NodeResponse.new(false, {"error": "Node is already a Storage Manager for different Pools"}.to_json)
+  if Datastore.users_exists? && local_node_data.id != req.mgr_node_id
+    next NodeResponse.new(false, {"error": "Node is already a Storage Manager for different Cluster"}.to_json)
   end
 
   node = MoanaTypes::Node.new
@@ -29,7 +28,7 @@ node_action ACTION_NODE_INVITE_ACCEPT do |data, _env|
   node.token = UUID.random.to_s
   node.name = req.name
 
-  local_node_data.pool_name = req.pool_name
+  local_node_data.joined = true
   local_node_data.name = req.name
   local_node_data.token_hash = hash_sha256(node.token)
   local_node_data.mgr_token = req.mgr_token
@@ -59,19 +58,16 @@ node_action ACTION_NODE_REMOVE do |data, _env|
   end
 
   local_node_data = LocalNodeData.from_json(File.read(data_file))
-  if local_node_data.pool_name == ""
+  if !local_node_data.joined
     next NodeResponse.new(true, "{}")
-  elsif local_node_data.pool_name != req.pool_name
-    next NodeResponse.new(false, {"error": "Node is already part of a different Pool"}.to_json)
   end
 
-  # TODO: Change this to user check once user management is implemented
-  if Datastore.pools_exists? && local_node_data.id != req.mgr_node_id
-    next NodeResponse.new(false, {"error": "Node is already a Storage Manager for different Pools"}.to_json)
+  if Datastore.users_exists? && local_node_data.id != req.mgr_node_id
+    next NodeResponse.new(false, {"error": "Node is part of Storage Manager for different Cluster"}.to_json)
   end
 
-  local_node_data.pool_name = ""
   local_node_data.name = req.name
+  local_node_data.joined = false
   local_node_data.token_hash = ""
   if !Datastore.manager?
     local_node_data.mgr_hostname = ""
@@ -88,10 +84,9 @@ node_action ACTION_NODE_REMOVE do |data, _env|
   NodeResponse.new(true, "")
 end
 
-def node_invite(pool_name : String, node_name : String, endpoint : String)
+def node_invite(node_name : String, endpoint : String)
   invite = MoanaTypes::NodeRequest.new
   invite.endpoint = endpoint
-  invite.pool_name = pool_name
   invite.name = node_name
   invite.mgr_node_id = GlobalConfig.local_node.id
   invite.mgr_port = Kemal.config.port
@@ -109,23 +104,18 @@ def node_endpoint(node_name, endpoint = "")
   endpoint == "" ? "http://#{node_name}:3000" : endpoint
 end
 
-post "/api/v1/pools/:pool_name/nodes" do |env|
-  pool_name = env.params.url["pool_name"]
+post "/api/v1/nodes" do |env|
   node_name = env.params.json["name"].as(String)
 
-  forbidden_api_exception(!Datastore.maintainer?(env.user_id, pool_name))
+  forbidden_api_exception(!Datastore.maintainer?(env.user_id))
 
   endpoint = node_endpoint(node_name, env.params.json.fetch("endpoint", "").as(String))
 
-  pool = Datastore.get_pool(pool_name)
-  api_exception(pool.nil?, ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
-  pool = pool.not_nil!
+  node = Datastore.get_node(node_name)
 
-  node = Datastore.get_node(pool_name, node_name)
+  api_exception(!node.nil?, ({"error": "Node is already part of the Cluster"}.to_json))
 
-  api_exception(!node.nil?, ({"error": "Node is already part of the Pool"}.to_json))
-
-  invite = node_invite(pool_name, node_name, endpoint)
+  invite = node_invite(node_name, endpoint)
 
   participating_node = MoanaTypes::Node.new
   participating_node.endpoint = endpoint
@@ -133,7 +123,6 @@ post "/api/v1/pools/:pool_name/nodes" do |env|
 
   resp = dispatch_action(
     ACTION_NODE_INVITE_ACCEPT,
-    pool_name,
     [participating_node],
     invite.to_json
   )
@@ -141,7 +130,7 @@ post "/api/v1/pools/:pool_name/nodes" do |env|
   api_exception(!resp.ok, resp.node_responses[node_name].response)
 
   node = MoanaTypes::Node.from_json(resp.node_responses[node_name].response)
-  Datastore.create_node(pool.id, node.id, node_name, endpoint, node.token, invite.mgr_token)
+  Datastore.create_node(node.id, node_name, endpoint, node.token, invite.mgr_token)
 
   # TODO: If Datastore.create_node fails then call Rollback
 
@@ -152,41 +141,34 @@ post "/api/v1/pools/:pool_name/nodes" do |env|
   node.to_json
 end
 
-delete "/api/v1/pools/:pool_name/nodes/:node_name" do |env|
-  pool_name = env.params.url["pool_name"]
+delete "/api/v1/nodes/:node_name" do |env|
   node_name = env.params.url["node_name"]
 
-  next forbidden(env) unless Datastore.maintainer?(env.user_id, pool_name)
+  next forbidden(env) unless Datastore.maintainer?(env.user_id)
 
-  pool = Datastore.get_pool(pool_name)
-  api_exception(pool.nil?, ({"error": "Pool doesn't exists"}.to_json))
-  pool = pool.not_nil!
-
-  node = Datastore.get_node(pool_name, node_name)
+  node = Datastore.get_node(node_name)
   api_exception(node.nil?, ({"error": "Node doesn't exists"}.to_json))
   node = node.not_nil!
 
   api_exception(
-    Datastore.storage_units_from_node?(pool.id, node.id),
-    ({"error": "Node is part of one or more Volumes"}.to_json)
+    Datastore.storage_units_from_node?(node.id),
+    ({"error": "Node is part of one or more Pools"}.to_json)
   )
 
   invite = MoanaTypes::NodeRequest.new
   invite.endpoint = node.endpoint
-  invite.pool_name = pool_name
   invite.name = node_name
   invite.mgr_node_id = GlobalConfig.local_node.id
 
   resp = dispatch_action(
     ACTION_NODE_REMOVE,
-    pool_name,
     [node],
     invite.to_json
   )
 
   api_exception(!resp.ok, resp.node_responses[node.id].response)
 
-  Datastore.delete_node(pool.id, node.id)
+  Datastore.delete_node(node.id)
 
   env.response.status_code = 204
 end
