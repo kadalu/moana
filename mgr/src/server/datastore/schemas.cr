@@ -100,11 +100,11 @@ SCHEMAS = [
        UNIQUE (node_id, port)
     );",
   "CREATE TABLE IF NOT EXISTS services (
-       node_id    UUID,
+       node_name  VARCHAR,
        name       VARCHAR,
        unit       TEXT,
        created_on TIMESTAMP,
        updated_on TIMESTAMP,
-       UNIQUE (node_id, name)
+       UNIQUE (node_name, name)
   )",
 ]

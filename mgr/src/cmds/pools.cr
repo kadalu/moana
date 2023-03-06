@@ -4,7 +4,7 @@ require "./gluster_volume_parser"
 
 struct PoolArgs
   property status = false, detail = false, name = "", pool_id = "", no_start = false,
-    distribute = false, auto_add_nodes = false,
+    auto_add_nodes = false,
     node_maps = Hash(String, String).new, volfiles_separator = " "
 end
 
@@ -19,9 +19,6 @@ command "pool.create", "Kadalu Storage Pool Create" do |parser, args|
   end
   parser.on("--pool-id=ID", "Set pool-id to import a pool") do |pool_id|
     args.pool_args.pool_id = pool_id
-  end
-  parser.on("--distribute", "Create distributed Pool") do
-    args.pool_args.distribute = true
   end
   parser.on("--auto-add-nodes", "Automatically add nodes to the pool") do
     args.pool_args.auto_add_nodes = true
@@ -52,7 +49,6 @@ handler "pool.create" do |args|
 
     req.no_start = args.pool_args.no_start
     req.auto_add_nodes = args.pool_args.auto_add_nodes
-    req.distribute = args.pool_args.distribute
     api_call(args, "Failed to create pool") do |client|
       pool = client.create_pool(req)
 

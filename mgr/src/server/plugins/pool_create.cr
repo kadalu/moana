@@ -97,10 +97,10 @@ post "/api/v1/pools" do |env|
   api_exception(!resp.ok, node_errors("Failed to create Pool", resp.node_responses).to_json)
 
   # Save Services details
-  services.each do |node_id, svcs|
+  services.each do |node_name, svcs|
     svcs.each do |svc|
       # Enable each Services
-      Datastore.enable_service(node_id, svc)
+      Datastore.enable_service(node_name, svc)
     end
   end
 

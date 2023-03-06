@@ -5,9 +5,10 @@
     - title: Introduction
     - title: Install
     - title: User Management
+    - title: Setting up the Storage Cluster
+      slug: setup
     - title: Config Snapshots
     - title: Pools
-    - title: Volumes
     - title: FAQs
 - section: Tutorials
   chapters:

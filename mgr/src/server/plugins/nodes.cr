@@ -31,5 +31,5 @@ get "/api/v1/nodes/:node_name/services" do |env|
   api_exception(node.nil?, ({"error": "Node does not exist."}.to_json))
   node = node.not_nil!
 
-  Datastore.list_services(node.id).to_json
+  Datastore.list_services(node.name).to_json
 end

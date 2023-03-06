@@ -45,14 +45,14 @@ def rebalance_start_stop(env, action)
   api_exception(!resp.ok, node_errors("Failed to #{action} rebalancing of Volume", resp.node_responses).to_json)
 
   # Save Services details
-  services.each do |node_id, svcs|
+  services.each do |node_name, svcs|
     svcs.each do |svc|
       if action == "start"
         # Enable each Services
-        Datastore.enable_service(node_id, svc)
+        Datastore.enable_service(node_name, svc)
       else
         # Disable each Services
-        Datastore.disable_service(node_id, svc)
+        Datastore.disable_service(node_name, svc)
       end
     end
   end

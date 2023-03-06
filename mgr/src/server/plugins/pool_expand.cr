@@ -156,12 +156,12 @@ put "/api/v1/pools" do |env|
   Datastore.update_pool(req, pool.distribute_groups.size)
 
   # Save Services details. If service already exist, update with newer details
-  services.each do |node_id, svcs|
+  services.each do |node_name, svcs|
     svcs.each do |svc|
       begin
-        Datastore.enable_service(node_id, svc)
+        Datastore.enable_service(node_name, svc)
       rescue ex : Exception
-        Datastore.update_service(node_id, svc)
+        Datastore.update_service(node_name, svc)
       end
     end
   end

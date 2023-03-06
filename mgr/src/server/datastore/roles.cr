@@ -6,7 +6,6 @@ module Datastore
 
   def role?(user_id, pool_name, roles)
     # If pool_name is "all" then do not join the pools table
-    # Similarly do not join volumes table if the volume name is "all"
     query = "SELECT COUNT(1) FROM roles "
     params = [] of DB::Any
     params << user_id

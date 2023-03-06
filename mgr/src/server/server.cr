@@ -75,7 +75,7 @@ module StorageMgr
     else
       node = Datastore.get_node(GlobalConfig.local_node.name)
       if !node.nil?
-        services = Datastore.list_services(node.id)
+        services = Datastore.list_services(node.name)
       end
     end
 
