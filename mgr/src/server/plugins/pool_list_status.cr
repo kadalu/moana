@@ -89,7 +89,7 @@ def pool_list_detail_status(env, pool_name, state)
     pools = [p]
   end
 
-  return pools.to_json unless state
+  return pools unless state
 
   nodes = participating_nodes(pools)
 
@@ -121,20 +121,21 @@ def pool_list_detail_status(env, pool_name, state)
     set_pool_metrics(pool)
   end
 
-  pools.to_json
+  pools
 end
 
 get "/api/v1/pools" do |env|
   state = env.params.query["state"]
 
-  pool_list_detail_status(env, "", state ? true : false)
+  pool_list_detail_status(env, "", state ? true : false).to_json
 end
 
 get "/api/v1/pools/:pool_name" do |env|
   pool_name = env.params.url["pool_name"]
   state = env.params.query["state"]
 
-  pool_list_detail_status(env, pool_name, state ? true : false)
+  pools = pool_list_detail_status(env, pool_name, state ? true : false)
+  pools[0].to_json
 rescue ex : PoolNotFound
   halt(env, status_code: 400, response: ({"error": "#{ex}"}.to_json))
 end

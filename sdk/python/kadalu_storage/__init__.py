@@ -1,7 +1,6 @@
 # noqa # pylint: disable=missing-module-docstring
 from kadalu_storage.pools import Pool
 from kadalu_storage.nodes import Node
-from kadalu_storage.volumes import Volume
 from kadalu_storage.users import User
 from kadalu_storage.helpers import StorageManagerBase
 

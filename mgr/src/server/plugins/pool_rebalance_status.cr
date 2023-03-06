@@ -41,12 +41,12 @@ node_action ACTION_FIX_LAYOUT_STATUS do |data, _env|
   status_file_path = ""
   rebalance_dir = Path.new(WORKDIR, "rebalance", "#{pool_name}").to_s
   request = Hash(String, RebalanceStatusRequestToNode).from_json(request.to_json)
-  local_node_id = GlobalConfig.local_node.id
+  local_node_name = GlobalConfig.local_node.name
   node_resp = RebalanceStatusRequestToNode.new
 
-  if services.has_key?(local_node_id) && request.has_key?(local_node_id)
-    svc = Service.from_json(services[local_node_id][0].to_json)
-    storage_unit = request[local_node_id].storage_units[0]
+  if services.has_key?(local_node_name) && request.has_key?(local_node_name)
+    svc = Service.from_json(services[local_node_name][0].to_json)
+    storage_unit = request[local_node_name].storage_units[0]
     if svc.id == "rebalance-fix-layout-#{storage_unit.path.gsub("/", "%2F")}"
       status_file_path = "#{rebalance_dir}/#{svc.id}.json"
       if File.exists?(status_file_path)
@@ -74,8 +74,8 @@ node_action ACTION_MIGRATE_DATA_STATUS do |data, _env|
 
   unless services[GlobalConfig.local_node.name]?.nil?
     services[GlobalConfig.local_node.name].each do |service|
-      request.each do |node_id, storage_units_data|
-        next unless node_id == GlobalConfig.local_node.id
+      request.each do |node_name, storage_units_data|
+        next unless node_name == GlobalConfig.local_node.name
         svc = Service.from_json(service.to_json)
         storage_units_data.storage_units.each do |storage_unit|
           next unless svc.id == "rebalance-migrate-data-#{storage_unit.path.gsub("/", "%2F")}"

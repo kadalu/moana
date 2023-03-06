@@ -137,16 +137,28 @@ export default class StorageManager {
         return;
     }
 
-    async listPools() {
-        return await Pool.list(this);
+    async listPools(state=false) {
+        return await Pool.list(this, state);
     }
 
     pool(name) {
         return new Pool(this, name);
     }
 
-    async createPool(name) {
-        return await Pool.create(this, name);
+    node(name) {
+        return new Node(this, name);
+    }
+
+    async addNode(name, endpoint="") {
+        return await Node.add(this, name, endpoint);
+    }
+
+    async listNodes(state=false) {
+        return await Node.list(this, state);
+    }
+
+    async createPool(name, distribute_groups, opts) {
+        return await Pool.create(this, name, distribute_groups, opts);
     }
 
     async createUser(username, password, fullName="") {
