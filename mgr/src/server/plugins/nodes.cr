@@ -16,7 +16,7 @@ get "/api/v1/nodes" do |env|
   )
 
   nodes.each do |node|
-    node.state = resp.node_responses[node.id].ok ? "Up" : "Down"
+    node.state = resp.node_responses[node.name].ok ? "Up" : "Down"
   end
 
   nodes.to_json

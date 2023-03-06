@@ -138,8 +138,8 @@ def validate_pool_create(req)
 end
 
 def restart_shd_service_and_manage_rebalance_services(services, pool_name, action = "start")
-  unless services[GlobalConfig.local_node.id]?.nil?
-    services[GlobalConfig.local_node.id].each do |service|
+  unless services[GlobalConfig.local_node.name]?.nil?
+    services[GlobalConfig.local_node.name].each do |service|
       svc = Service.from_json(service.to_json)
       if svc.name == "shdservice"
         svc.restart(plugin: GlobalConfig.service_mgr)
@@ -161,18 +161,18 @@ end
 def handle_node_pool_start_stop(data, action)
   services, volfiles, _ = PoolRequestToNode.from_json(data)
 
-  if action == "start" && !volfiles[GlobalConfig.local_node.id]?.nil?
+  if action == "start" && !volfiles[GlobalConfig.local_node.name]?.nil?
     Dir.mkdir_p(Path.new(GlobalConfig.workdir, "volfiles"))
-    volfiles[GlobalConfig.local_node.id].each do |volfile|
+    volfiles[GlobalConfig.local_node.name].each do |volfile|
       File.write(Path.new(GlobalConfig.workdir, "volfiles", "#{volfile.name}.vol"), volfile.content)
     end
   end
 
-  unless services[GlobalConfig.local_node.id]?.nil?
+  unless services[GlobalConfig.local_node.name]?.nil?
     # TODO: Hard coded path change?
     Dir.mkdir_p("/var/log/kadalu")
     Dir.mkdir_p("/run/kadalu")
-    services[GlobalConfig.local_node.id].each do |service|
+    services[GlobalConfig.local_node.name].each do |service|
       svc = Service.from_json(service.to_json)
       if action == "start"
         svc.start(plugin: GlobalConfig.service_mgr)
@@ -234,11 +234,11 @@ def handle_pool_create(data, stopped = false)
 
   save_volfiles(volfiles)
 
-  unless services[GlobalConfig.local_node.id]?.nil?
+  unless services[GlobalConfig.local_node.name]?.nil?
     # TODO: Hard coded path change?
     Dir.mkdir_p("/var/log/kadalu")
     Dir.mkdir_p("/run/kadalu")
-    services[GlobalConfig.local_node.id].each do |service|
+    services[GlobalConfig.local_node.name].each do |service|
       svc = Service.from_json(service.to_json)
       svc.start(plugin: GlobalConfig.service_mgr)
     end
@@ -312,34 +312,34 @@ def services_and_volfiles(req)
     dist_grp.storage_units.each do |storage_unit|
       # Generate Service Unit
       service = StorageUnitService.new(req.name, storage_unit)
-      services[storage_unit.node.id] = [] of MoanaTypes::ServiceUnit unless services[storage_unit.node.id]?
+      services[storage_unit.node.name] = [] of MoanaTypes::ServiceUnit unless services[storage_unit.node.name]?
 
-      services[storage_unit.node.id] << service.unit
+      services[storage_unit.node.name] << service.unit
 
       # Generate Storage Unit Volfile
       # TODO: Expose option as req.storage_unit_volfile_template
       tmpl = volfile_get("storage_unit")
-      storage_unit.pool.id = req.id
-      storage_unit.pool.name = req.name
+      storage_unit.volume.id = req.id
+      storage_unit.volume.name = req.name
       content = Volgen.generate(tmpl, storage_unit.to_json)
-      volfiles[storage_unit.node.id] = [] of MoanaTypes::Volfile unless volfiles[storage_unit.node.id]?
-      volfiles[storage_unit.node.id] << MoanaTypes::Volfile.new(service.id, content)
+      volfiles[storage_unit.node.name] = [] of MoanaTypes::Volfile unless volfiles[storage_unit.node.name]?
+      volfiles[storage_unit.node.name] << MoanaTypes::Volfile.new(service.id, content)
 
       # Store Client Volfile
-      if client_volfiles[storage_unit.node.id]?.nil?
-        volfiles[storage_unit.node.id] << MoanaTypes::Volfile.new(
+      if client_volfiles[storage_unit.node.name]?.nil?
+        volfiles[storage_unit.node.name] << MoanaTypes::Volfile.new(
           "#{req.name}", client_volfile_content
         )
-        client_volfiles[storage_unit.node.id] = true
+        client_volfiles[storage_unit.node.name] = true
       end
 
       # Generate and add shd Volfiles and services only if it is
       # not added for that node.
-      if req.replicate_family? && shd_services[storage_unit.node.id]?.nil?
-        shd_services[storage_unit.node.id] = true
-        service = ShdService.new(req.name, storage_unit.node.id)
-        services[storage_unit.node.id] << service.unit
-        volfiles[storage_unit.node.id] << MoanaTypes::Volfile.new(service.id, shd_volfile_content)
+      if req.replicate_family? && shd_services[storage_unit.node.name]?.nil?
+        shd_services[storage_unit.node.name] = true
+        service = ShdService.new(req.name, storage_unit.node.name)
+        services[storage_unit.node.name] << service.unit
+        volfiles[storage_unit.node.name] << MoanaTypes::Volfile.new(service.id, shd_volfile_content)
       end
     end
   end
@@ -462,9 +462,9 @@ def set_pool_metrics(pool)
 end
 
 def save_volfiles(volfiles)
-  unless volfiles[GlobalConfig.local_node.id]?.nil?
+  unless volfiles[GlobalConfig.local_node.name]?.nil?
     Dir.mkdir_p(Path.new(GlobalConfig.workdir, "volfiles"))
-    volfiles[GlobalConfig.local_node.id].each do |volfile|
+    volfiles[GlobalConfig.local_node.name].each do |volfile|
       File.write(Path.new(GlobalConfig.workdir, "volfiles", "#{volfile.name}.vol"), volfile.content)
     end
   end
@@ -472,8 +472,8 @@ end
 
 def sighup_processes(services)
   # Send SIGHUP to all the processes (Storage Unit and SHD processes)
-  unless services[GlobalConfig.local_node.id]?.nil?
-    services[GlobalConfig.local_node.id].each do |service|
+  unless services[GlobalConfig.local_node.name]?.nil?
+    services[GlobalConfig.local_node.name].each do |service|
       svc = Service.from_json(service.to_json)
       svc.signal(Signal::HUP) if svc.running?
     end
@@ -536,16 +536,16 @@ end
 
 def add_fix_layout_service(services, pool_name, node, storage_unit)
   service = FixLayoutService.new(pool_name, storage_unit)
-  services[node.id] = [] of MoanaTypes::ServiceUnit unless services[node.id]?
-  services[node.id] << service.unit
+  services[node.name] = [] of MoanaTypes::ServiceUnit unless services[node.name]?
+  services[node.name] << service.unit
 
   services
 end
 
 def add_migrate_data_service(services, pool_name, node, storage_unit)
   service = MigrateDataService.new(pool_name, storage_unit)
-  services[node.id] = [] of MoanaTypes::ServiceUnit unless services[node.id]?
-  services[node.id] << service.unit
+  services[node.name] = [] of MoanaTypes::ServiceUnit unless services[node.name]?
+  services[node.name] << service.unit
 
   services
 end

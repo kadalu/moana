@@ -123,8 +123,8 @@ put "/api/v1/pools" do |env|
   # Save Ports details and Update Storage unit metrics and FS type
   req.distribute_groups.each do |dist_grp|
     dist_grp.storage_units.each do |storage_unit|
-      storage_unit.metrics = storage_units[storage_unit.node.id][storage_unit.path].metrics
-      storage_unit.fs = storage_units[storage_unit.node.id][storage_unit.path].fs
+      storage_unit.metrics = storage_units[storage_unit.node.name][storage_unit.path].metrics
+      storage_unit.fs = storage_units[storage_unit.node.name][storage_unit.path].fs
     end
   end
 

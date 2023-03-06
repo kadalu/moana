@@ -166,7 +166,7 @@ delete "/api/v1/nodes/:node_name" do |env|
     invite.to_json
   )
 
-  api_exception(!resp.ok, resp.node_responses[node.id].response)
+  api_exception(!resp.ok, resp.node_responses[node.name].response)
 
   Datastore.delete_node(node.id)
 

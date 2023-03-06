@@ -28,7 +28,7 @@ module Datastore
   end
 
   def viewer?(user_id, pool_name)
-    viewer?(user_id, pool_name) ||
+    viewer?(user_id) ||
       role?(user_id, pool_name, ["viewer", "maintainer", "admin"])
   end
 
@@ -37,7 +37,7 @@ module Datastore
   end
 
   def maintainer?(user_id, pool_name)
-    maintainer?(user_id, pool_name) ||
+    maintainer?(user_id) ||
       role?(user_id, pool_name, ["maintainer", "admin"])
   end
 
@@ -55,7 +55,7 @@ module Datastore
   end
 
   def client?(user_id, pool_name)
-    client?(user_id, pool_name) ||
+    client?(user_id) ||
       role?(user_id, pool_name, ["client", "maintainer", "admin"])
   end
 

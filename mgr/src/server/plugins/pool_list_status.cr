@@ -100,8 +100,8 @@ def pool_list_detail_status(env, pool_name, state)
   pools.each do |pool|
     pool.distribute_groups.each do |dist_grp|
       dist_grp.storage_units.each do |storage_unit|
-        if resp.node_responses[storage_unit.node.id].ok
-          node_resp = PoolStatusRequestToNode.from_json(resp.node_responses[storage_unit.node.id].response)
+        if resp.node_responses[storage_unit.node.name].ok
+          node_resp = PoolStatusRequestToNode.from_json(resp.node_responses[storage_unit.node.name].response)
           node_resp.storage_units.each do |su|
             if su.node.name == storage_unit.node.name && su.path == storage_unit.path
               storage_unit.metrics = su.metrics

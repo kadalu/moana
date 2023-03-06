@@ -84,7 +84,7 @@ module MoanaTypes
       heal_metrics = HealMetrics.new,
       fix_layout_status = FixLayoutRebalanceStatus.new,
       migrate_data_status = MigrateDataRebalanceStatus.new,
-      pool = PoolMeta.new
+      volume = PoolMeta.new
 
     def initialize(node_name, @port, @path)
       @node.name = node_name

@@ -38,14 +38,14 @@ uninstall:
 
 
 fmt-check:
-	crystal tool format --check mgr/src types/src volgen/src volgen/spec sdk/crystal/src
+	crystal tool format --check mgr/src types/src sdk/crystal/src
 
 lint:
 	cd lint && shards install
-	./lint/bin/ameba mgr/src types/src volgen/src volgen/spec sdk/crystal/src
+	./lint/bin/ameba mgr/src types/src sdk/crystal/src
 
 fmt:
-	crystal tool format mgr/src types/src volgen/src volgen/spec sdk/crystal/src
+	crystal tool format mgr/src types/src sdk/crystal/src
 
 dist:
 	rm -rf moana-$(VERSION)

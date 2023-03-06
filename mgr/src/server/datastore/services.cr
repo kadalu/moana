@@ -19,7 +19,7 @@ module Datastore
   end
 
   def list_services(node_id)
-    query = "select unit FROM services WHERE AND node_id = ?"
+    query = "select unit FROM services WHERE node_id = ?"
     units = connection.query_all(query, node_id, as: String)
     units.map do |unit|
       MoanaTypes::ServiceUnit.from_json(unit)

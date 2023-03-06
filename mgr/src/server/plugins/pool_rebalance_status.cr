@@ -72,8 +72,8 @@ node_action ACTION_MIGRATE_DATA_STATUS do |data, _env|
   request = Hash(String, RebalanceStatusRequestToNode).from_json(request.to_json)
   node_resp = RebalanceStatusRequestToNode.new
 
-  unless services[GlobalConfig.local_node.id]?.nil?
-    services[GlobalConfig.local_node.id].each do |service|
+  unless services[GlobalConfig.local_node.name]?.nil?
+    services[GlobalConfig.local_node.name].each do |service|
       request.each do |node_id, storage_units_data|
         next unless node_id == GlobalConfig.local_node.id
         svc = Service.from_json(service.to_json)
@@ -104,8 +104,8 @@ def construct_fix_layout_service_request(nodes, pool)
 
   # Add only the first existing node & first storage_unit for fix-layout service
   storage_unit = pool.distribute_groups[0].storage_units[0]
-  req[storage_unit.node.id] = RebalanceStatusRequestToNode.new if req[storage_unit.node.id]?.nil?
-  req[storage_unit.node.id].storage_units << storage_unit
+  req[storage_unit.node.name] = RebalanceStatusRequestToNode.new if req[storage_unit.node.name]?.nil?
+  req[storage_unit.node.name].storage_units << storage_unit
   services = add_fix_layout_service(services, pool.name, nodes[0],
     pool.distribute_groups[0].storage_units[0])
 
@@ -118,8 +118,8 @@ def construct_migrate_data_service_request(pool)
 
   pool.distribute_groups.each do |dist_grp|
     storage_unit = dist_grp.storage_units[0]
-    req[storage_unit.node.id] = RebalanceStatusRequestToNode.new if req[storage_unit.node.id]?.nil?
-    req[storage_unit.node.id].storage_units << storage_unit
+    req[storage_unit.node.name] = RebalanceStatusRequestToNode.new if req[storage_unit.node.name]?.nil?
+    req[storage_unit.node.name].storage_units << storage_unit
 
     services = add_migrate_data_service(services, pool.name,
       dist_grp.storage_units[0].node, storage_unit)
@@ -167,8 +167,8 @@ get "/api/v1/pools/:pool_name/rebalance_status" do |env|
   api_exception(!resp.ok, node_errors("Failed to get fix-layout status of pool #{pool.name}", resp.node_responses).to_json)
 
   storage_unit = pool.distribute_groups[0].storage_units[0]
-  if resp.node_responses[storage_unit.node.id].ok
-    node_resp = RebalanceStatusRequestToNode.from_json(resp.node_responses[storage_unit.node.id].response)
+  if resp.node_responses[storage_unit.node.name].ok
+    node_resp = RebalanceStatusRequestToNode.from_json(resp.node_responses[storage_unit.node.name].response)
     su = node_resp.storage_units[0]
     if su.node.id == storage_unit.node.id && su.path == storage_unit.path
       storage_unit.fix_layout_status = su.fix_layout_status
@@ -191,8 +191,8 @@ get "/api/v1/pools/:pool_name/rebalance_status" do |env|
 
   pool.distribute_groups.each do |dist_grp|
     storage_unit = dist_grp.storage_units[0]
-    if resp.node_responses[storage_unit.node.id].ok
-      node_resp = RebalanceStatusRequestToNode.from_json(resp.node_responses[storage_unit.node.id].response)
+    if resp.node_responses[storage_unit.node.name].ok
+      node_resp = RebalanceStatusRequestToNode.from_json(resp.node_responses[storage_unit.node.name].response)
       node_resp.storage_units.each do |s_unit|
         if s_unit.node.id == storage_unit.node.id && s_unit.path == storage_unit.path
           storage_unit.migrate_data_status = s_unit.migrate_data_status
