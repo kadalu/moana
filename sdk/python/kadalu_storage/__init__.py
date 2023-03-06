@@ -24,11 +24,11 @@ class StorageManager(StorageManagerBase):
         self.url = url.strip("/")
         super().__init__()
 
-    def create_pool(self, name):
+    def add_node(self, node_name, endpoint=""):
         """
-        == Create a new Pool
+        == Add a node to a Pool
 
-        Create a new Pool
+        Add a node to a Pool
 
         Example:
 
@@ -38,16 +38,19 @@ class StorageManager(StorageManagerBase):
 
         mgr = StorageManager("http://localhost:3000")
 
-        mgr.create_pool("DEV")
+        mgr.add_node(
+            "server1",
+            "http://localhost:3000"
+        )
         ----
         """
-        return Pool.create(self, name)
+        return Node.add(self, node_name, endpoint)
 
-    def pool(self, name):
+    def node(self, node_name):
         """
-        == Pool instance
+        == Node instance
 
-        Pool instance
+        Node instance
 
         Example:
 
@@ -57,16 +60,35 @@ class StorageManager(StorageManagerBase):
 
         mgr = StorageManager("http://localhost:3000")
 
-        mgr.pool("DEV")
+        mgr.node("server1.example.com")
         ----
         """
-        return Pool(self, name)
+        return Node(self, node_name)
+
+    def list_nodes(self):
+        """
+        == List nodes of a Pool
+
+        List nodes of a Pool
+
+        Example:
+
+        [source,python]
+        ----
+        from kadalu_storage import StorageManager
+
+        mgr = StorageManager("http://localhost:3000")
+
+        mgr.list_nodes()
+        ----
+        """
+        return Node.list(self)
 
     def list_pools(self):
         """
         == List Kadalu Storage Pools
 
-        List Pools
+        List Kadalu Storage Pools
 
         Example:
 
@@ -81,11 +103,11 @@ class StorageManager(StorageManagerBase):
         """
         return Pool.list(self)
 
-    def list_nodes(self, state=False):
+    def create_pool(self, pool_name, distribute_groups, options=None):
         """
-        == List Kadalu Storage Nodes
+        == Create a Kadalu Storage Pool
 
-        List Nodes
+        Create a Kadalu Storage Pool
 
         Example:
 
@@ -95,16 +117,33 @@ class StorageManager(StorageManagerBase):
 
         mgr = StorageManager("http://localhost:3000")
 
-        mgr.list_nodes()
+        mgr.create_pool(
+            "pool1",
+            "distribute_groups": [
+              {
+               "replica_count": 3,
+               "storage_units": [
+                  {"node": "server1.example.com", "path": "/exports/pool1/s1/storage"},
+                  {"node": "server2.example.com", "path": "/exports/pool1/s2/storage"},
+                  {"node": "server3.example.com", "path": "/exports/pool1/s3/storage"}
+                ]
+              }
+            ]
+        )
         ----
         """
-        return Node.list(self, state=state)
+        return Pool.create(
+            self,
+            pool_name,
+            distribute_groups,
+            options
+        )
 
-    def list_volumes(self, state=False):
+    def pool(self, pool_name):
         """
-        == List Kadalu Storage Volumes
+        == Pool instance
 
-        List Volumes
+        Pool instance
 
         Example:
 
@@ -114,10 +153,10 @@ class StorageManager(StorageManagerBase):
 
         mgr = StorageManager("http://localhost:3000")
 
-        mgr.list_volumes()
+        mgr.pool("pool1")
         ----
         """
-        return Volume.list(self, state=state)
+        return Pool(self, pool_name)
 
     def create_user(self, username, name, password):
         """
