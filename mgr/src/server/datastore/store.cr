@@ -37,6 +37,13 @@ module Datastore
     end
   end
 
+  def belongs_to_a_cluster?
+    # Check if the current node is part of
+    # any cluster.
+    data_file = Path.new(@@rootdir, "info")
+    File.exists?(data_file)
+  end
+
   def manager_file
     Path.new(@@rootdir, "mgr")
   end

@@ -1,8 +1,6 @@
 # noqa # pylint: disable=missing-module-docstring
 
 from kadalu_storage.helpers import response_object_or_error
-from kadalu_storage.nodes import Node
-from kadalu_storage.volumes import Volume
 
 
 class Pool:
@@ -12,44 +10,35 @@ class Pool:
         self.name = name
 
     @classmethod
-    def create(cls, mgr, name):
+    def list(cls, mgr, state = False):
         # noqa # pylint: disable=missing-function-docstring
-        resp = mgr.http_post(mgr.url + "/api/v1/pools", {"name": name})
-        return response_object_or_error("Pool", resp, 201)
-
-    @classmethod
-    def list(cls, mgr):
-        # noqa # pylint: disable=missing-function-docstring
-        resp = mgr.http_get(mgr.url + "/api/v1/pools")
+        resp = mgr.http_get(f'{mgr.url}/api/v1/pools?state={1 if state else 0}')
         return response_object_or_error("Pool", resp, 200)
 
-    def add_node(self, node_name, endpoint=""):
-        """
-        == Add a node to a Pool
-
-        Add a node to a Pool
-
-        Example:
-
-        [source,python]
-        ----
-        from kadalu_storage import StorageManager
-
-        mgr = StorageManager("http://localhost:3000")
-
-        mgr.pool("DEV").add_node(
-            "server1",
-            "http://localhost:3000"
+    @classmethod
+    def create(cls, mgr, name, distribute_groups, options=None):
+        # noqa # pylint: disable=missing-function-docstring
+        # noqa # pylint: disable=too-many-arguments
+        options = {} if options is None else options
+        resp = mgr.http_post(
+            f"{mgr.url}/api/v1/pools",
+            {
+                "name": name,
+                "distribute_groups": distribute_groups,
+                "no_start": options.get("no_start", False),
+                "distribute": options.get("distribute", False),
+                "pool_id": options.get("pool_id", ""),
+                "auto_add_nodes": options.get("auto_add_nodes", False),
+                "options": options.get("options", {})
+            }
         )
-        ----
-        """
-        return Node.add(self.mgr, self.name, node_name, endpoint)
+        return response_object_or_error("Pool", resp, 201)
 
-    def node(self, node_name):
+    def start(self):
         """
-        == Node instance
+        == Start a Kadalu Storage Pool
 
-        Node instance
+        Start a Kadalu Storage Pool
 
         Example:
 
@@ -59,91 +48,19 @@ class Pool:
 
         mgr = StorageManager("http://localhost:3000")
 
-        mgr.pool("DEV").node("server1.example.com")
+        mgr.pool("pool1").start()
         ----
         """
-        return Node(self.mgr, self.name, node_name)
-
-    def list_nodes(self):
-        """
-        == List nodes of a Pool
-
-        List nodes of a Pool
-
-        Example:
-
-        [source,python]
-        ----
-        from kadalu_storage import StorageManager
-
-        mgr = StorageManager("http://localhost:3000")
-
-        mgr.pool("DEV").list_nodes()
-        ----
-        """
-        return Node.list(self.mgr, self.name)
-
-    def list_volumes(self):
-        """
-        == List volumes of a Pool
-
-        List volumes of a Pool
-
-        Example:
-
-        [source,python]
-        ----
-        from kadalu_storage import StorageManager
-
-        mgr = StorageManager("http://localhost:3000")
-
-        mgr.pool("DEV").list_volumes()
-        ----
-        """
-        return Volume.list(self.mgr, self.name)
-
-    def create_volume(self, volume_name, distribute_groups, options=None):
-        """
-        == Create a Kadalu Storage Volume
-
-        Create a Kadalu Storage Volume
-
-        Example:
-
-        [source,python]
-        ----
-        from kadalu_storage import StorageManager
-
-        mgr = StorageManager("http://localhost:3000")
-
-        mgr.pool("DEV").create_volume(
-            "vol1",
-            "distribute_groups": [
-              {
-               "replica_count": 3,
-               "storage_units": [
-                  {"node": "server1.example.com", "path": "/exports/vol1/s1/storage"},
-                  {"node": "server2.example.com", "path": "/exports/vol1/s2/storage"},
-                  {"node": "server3.example.com", "path": "/exports/vol1/s3/storage"}
-                ]
-              }
-            ]
+        resp = self.mgr.http_post(
+            f"{self.mgr.url}/api/v1/pools/{self.name}/start"
         )
-        ----
-        """
-        return Volume.create(
-            self.mgr,
-            self.name,
-            volume_name,
-            distribute_groups,
-            options
-        )
+        return response_object_or_error("Pool", resp, 200)
 
-    def volume(self, volume_name):
+    def stop(self):
         """
-        == Volume instance
+        == Stop a Kadalu Storage Pool
 
-        Volume instance
+        Stop a Kadalu Storage Pool
 
         Example:
 
@@ -153,16 +70,19 @@ class Pool:
 
         mgr = StorageManager("http://localhost:3000")
 
-        mgr.pool("DEV").volume("vol1")
+        mgr.pool("pool1").stop()
         ----
         """
-        return Volume(self.mgr, self.name, volume_name)
+        resp = self.mgr.http_post(
+            f"{self.mgr.url}/api/v1/pools/{self.name}/stop"
+        )
+        return response_object_or_error("Pool", resp, 200)
 
     def delete(self):
         """
-        == Delete a Pool
+        == Delete a Kadalu Storage Pool
 
-        Delete a Pool
+        Delete a Kadalu Storage Pool
 
         Example:
 
@@ -172,7 +92,7 @@ class Pool:
 
         mgr = StorageManager("http://localhost:3000")
 
-        mgr.pool("DEV").delete()
+        mgr.pool("pool1").delete()
         ----
         """
         url = f"{self.mgr.url}/api/v1/pools/{self.name}"

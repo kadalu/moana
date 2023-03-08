@@ -2,55 +2,50 @@
 
 Kadalu Storage is a modern opinionated distributed filesystem focused on ease of use, scale, and stability.
 
-- **Storage Pool** is a logical entity that groups the Volumes and provides isolation from other Pools available.
-- **Storage Volume** exposes the storage from all nodes and provides a single Unified namespace to the applications.
+- **Storage Pool** is a collection of directories from one of more nodes.
 - **Storage Nodes** are associated with the Kadalu Storage pool. One Storage node can't be part of two Storage pools.
 - **Storage Unit** is a directory or device in a node that will then be combined with other directories/devices from same or different nodes to provide single unified namespace.
 
-First, create a Storage Pool and then start adding nodes to the Pool. The following example shows three nodes added to the Storage Pool.
+The following example shows three nodes added to the Storage cluster.
 
 [source,console]
 ----
-$ kadalu pool create DEV
-Pool created successfully.
-ID: 4e67989e-0c24-44ac-b0a7-81aa5cb4ec6b
-$
-$ kadalu node add DEV/server1.example.com
-Node server1.example.com added to DEV successfully
+$ kadalu node add server1.example.com
+Node server1.example.com added successfully
 ID: 3befd57b-1d31-4664-94e9-f87bf7ce90f9
 $
-$ kadalu node add DEV/server2.example.com
-Node server2.example.com added to DEV successfully
+$ kadalu node add server2.example.com
+Node server2.example.com added successfully
 ID: e9a4ed06-f3d8-4dcc-aaaf-ae821846167a
 $
-$ kadalu node add DEV/server3.example.com
-Node server3.example.com added to DEV successfully
+$ kadalu node add server3.example.com
+Node server3.example.com added successfully
 ID: 9abf4512-029a-4ae1-85d6-400bf7e8e30c
 ----
 
-Prepare the mounted directory to use as a Storage unit while creating the Volume. Any filesystem that supports xattrs can be used as a Storage Unit of a Kadalu Volume. The following example demonstrates using a directory from each server and creating a Mirrored Kadalu Volume using them.
+Prepare the mounted directory to use as a Storage unit while creating the Pool. Any filesystem that supports xattrs can be used as a Storage Unit of a Kadalu Pool. The following example demonstrates using a directory from each server and creating a Mirrored Kadalu Pool using them.
 
 [source,console]
 ----
-[root@server1 ~]# mkdir -p /exports/vol1
-[root@server2 ~]# mkdir -p /exports/vol1
-[root@server3 ~]# mkdir -p /exports/vol1
+[root@server1 ~]# mkdir -p /exports/pool1
+[root@server2 ~]# mkdir -p /exports/pool1
+[root@server3 ~]# mkdir -p /exports/pool1
 ----
 
 [source,console]
 ----
-[root@server1 ~]# kadalu volume create DEV/vol1 \
+[root@server1 ~]# kadalu pool create pool1 \
     --allow-from-root-partition                 \
-    mirror server1.example.com:/exports/vol1/s1 \
-           server2.example.com:/exports/vol1/s2 \
-           server3.example.com:/exports/vol1/s3
+    mirror server1.example.com:/exports/pool1/s1 \
+           server2.example.com:/exports/pool1/s2 \
+           server3.example.com:/exports/pool1/s3
 ----
 
 Mirrored or Replicate volume copies a file to all three storage units whenever a file is created from the Mount point. Mount Kadalu Volume in any node using the following command. Note that all the Storage servers should be accessible from the node where the Volume is mounted.
 
 [source,console]
 ----
-[root@client ~]# mkdir /mnt/vol1
-[root@client ~]# mount -t kadalu server1.example.com:/DEV/vol1 /mnt/vol1
+[root@client ~]# mkdir /mnt/pool1
+[root@client ~]# mount -t kadalu /pool1 /mnt/pool1
 ----
 

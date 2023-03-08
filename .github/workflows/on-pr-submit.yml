@@ -24,9 +24,6 @@ jobs:
         run: make fmt-check
       - name: Lint
         run: make lint
-      - name: Test Volgen
-        run: |
-          cd volgen && shards install && crystal spec
       - name: Install Binnacle
         run: |
           curl -L https://github.com/kadalu/binnacle/releases/latest/download/binnacle -o binnacle

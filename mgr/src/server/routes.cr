@@ -117,12 +117,7 @@ class AuthHandler < Kemal::Handler
 
       env.set("user_id", user_id)
     elsif !node_id.nil?
-      # Request coming from the node. Always provides
-      # pool_name in the URL.
-      pool_name = env.params.url["pool_name"]?
-      return unauthorized(env, "pool_name not provided") if pool_name.nil?
-
-      unless Datastore.valid_node_of_a_pool?(pool_name, node_id, token)
+      unless Datastore.valid_node?(node_id, token)
         return unauthorized(env, "Invalid credentials")
       end
 

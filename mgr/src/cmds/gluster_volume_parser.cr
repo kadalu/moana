@@ -8,11 +8,11 @@ end
 
 # TODO: Fix and remove this warning
 # ameba:disable Metrics/CyclomaticComplexity
-def from_gluster_volumes_xml(pool_name, data, args)
+def from_gluster_volumes_xml(data, args)
   parsed = XML.parse(data)
   vols = parsed.xpath_nodes("//volume")
 
-  kadalu_volumes_args = [] of ImportVolumeData
+  kadalu_pools_args = [] of ImportVolumeData
   vols.each do |vol|
     volume_name = ""
     volume_id = ""
@@ -42,7 +42,7 @@ def from_gluster_volumes_xml(pool_name, data, args)
 
     vol_args = ImportVolumeData.new
     vol_args.volume_id = volume_id
-    vol_args.cli_args = ["#{pool_name}/#{volume_name}"]
+    vol_args.cli_args = [volume_name]
 
     vol_args.cli_args += ["replica", "#{replica_count}"] if replica_count > 1
     vol_args.cli_args += ["arbiter", "#{arbiter_count}"] if arbiter_count > 0
@@ -59,7 +59,7 @@ def from_gluster_volumes_xml(pool_name, data, args)
         end
       end
 
-      node_name = args.volume_args.node_maps.fetch(hostname, hostname)
+      node_name = args.pool_args.node_maps.fetch(hostname, hostname)
       vol_args.cli_args << "#{node_name}:#{path}"
     end
 
@@ -78,8 +78,8 @@ def from_gluster_volumes_xml(pool_name, data, args)
       vol_args.options[optname] = optvalue
     end
 
-    kadalu_volumes_args << vol_args
+    kadalu_pools_args << vol_args
   end
 
-  kadalu_volumes_args
+  kadalu_pools_args
 end

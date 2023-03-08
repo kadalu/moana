@@ -1,10 +1,10 @@
 module StorageManager
   class Node
-    def initialize(@client : Client, @pool_name : String, @name : String)
+    def initialize(@client : Client, @name : String)
     end
 
-    def self.add(client : Client, pool_name : String, name : String, endpoint : String)
-      url = "#{client.url}/api/v1/pools/#{pool_name}/nodes"
+    def self.add(client : Client, name : String, endpoint : String)
+      url = "#{client.url}/api/v1/nodes"
 
       req = MoanaTypes::NodeRequest.new
       req.name = name
@@ -17,19 +17,6 @@ module StorageManager
       )
       if response.status_code == 201
         MoanaTypes::Node.from_json(response.body)
-      else
-        StorageManager.error_response(response)
-      end
-    end
-
-    def self.list(client : Client, pool_name : String, state = false)
-      url = "#{client.url}/api/v1/pools/#{pool_name}/nodes?state=#{state ? 1 : 0}"
-      response = StorageManager.http_get(
-        url,
-        headers: client.auth_header
-      )
-      if response.status_code == 200
-        Array(MoanaTypes::Node).from_json(response.body)
       else
         StorageManager.error_response(response)
       end
@@ -49,7 +36,7 @@ module StorageManager
     end
 
     def delete
-      url = "#{@client.url}/api/v1/pools/#{@pool_name}/nodes/#{@name}"
+      url = "#{@client.url}/api/v1/nodes/#{@name}"
 
       response = StorageManager.http_delete(
         url,

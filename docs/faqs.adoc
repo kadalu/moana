@@ -38,7 +38,7 @@ Short answer is No. All the filesystem enhancements will be sent as PR to the Gl
 
 == Will Gluster CLI commands work for Kadalu Storage?
 
-Kadalu Storage provides the new CLI to manage the Kadalu Storage Volumes.
+Kadalu Storage provides the new CLI to manage the Kadalu Storage Pools.
 
 == Where can I request for new features or report issues?
 

@@ -1,0 +1,66 @@
+= Setting up the Storage Cluster
+
+Identify a node where Storage manager will be deployed. This node can be one of the storage nodes, or it can be a spare node that is highly available.
+
+Enable and start the `kadalu-mgr`
+
+[source,console]
+----
+[root@server1 ~]# systemctl enable kadalu-mgr
+[root@server1 ~]# systemctl start kadalu-mgr
+----
+
+The cluster configurations are stored in `/var/lib/kadalu`. Since the storage manager is running in a single node, by default it is not highly available. Use `kadalu-lite` Volume for high availability, or backup the Pool data in regular intervals. Refer "High availability" chapter (Coming soon) for more details.
+
+No nodes are added to the cluster by default. Invite the node to become part of the Cluster by running the following command.
+
+[source,console]
+----
+[root@server1 ~]# kadalu node add server1.example.com
+Node server1.example.com added successfully
+ID: 3befd57b-1d31-4664-94e9-f87bf7ce90f9
+----
+
+Default node endpoint is `http://<nodename>:3000`. If it is different then provide the endpoint using `--endpoint=ENDPOINT` option.
+
+[source,console]
+----
+[root@server1 ~]# kadalu node add server1.example.com --endpoint=http://server1.example.com:3001
+Node server1.example.com added successfully
+ID: 3befd57b-1d31-4664-94e9-f87bf7ce90f9
+----
+
+Before inviting other nodes to join the cluster, start the `kadalu-mgr` service.
+
+[source,console]
+----
+[root@server2 ~]# systemctl enable kadalu-mgr
+[root@server2 ~]# systemctl start kadalu-mgr
+----
+
+[source,console]
+----
+[root@server1 ~]# kadalu node add server2.example.com
+Node server2.example.com added successfully
+ID: 34aabcae-1052-4a78-91a5-d71c89458e8d
+----
+
+Run `node list` to view the list of the nodes and their status.
+
+[source,console]
+----
+[root@server1 ~]# kadalu node list
+                                                ID                 Name  Endpoint
+322b9883-9d00-4b30-b084-953306f0d431  server1.example.com  http://server1.example.com:3000
+34aabcae-1052-4a78-91a5-d71c89458e8d  server2.example.com  http://server2.example.com:3000
+----
+
+Include the Status information
+
+[source,console]
+----
+[root@server1 ~]# kadalu node list --status
+                                                ID   State                    Name  Endpoint
+322b9883-9d00-4b30-b084-953306f0d431      Up     server1.example.com  http://server1.example.com:3000
+34aabcae-1052-4a78-91a5-d71c89458e8d      Up     server2.example.com  http://server2.example.com:3000
+----

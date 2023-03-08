@@ -10,15 +10,15 @@ class ShdService < Service
     path.strip("/").gsub("/", "-")
   end
 
-  def initialize(volume_name, node_id)
+  def initialize(pool_name, node_id)
     @wait = true
     @create_pid_file = false
 
     @path = "glusterfs"
-    @id = "shd.#{volume_name}"
+    @id = "shd.#{pool_name}"
     @pid_file = "/run/kadalu/#{@id}.pid"
     @args = [
-      "--volfile-id", "shd/#{volume_name}",
+      "--volfile-id", "shd/#{pool_name}",
       "-p", @pid_file,
       "-S", "/run/kadalu/#{@id}.socket",
       "-l", "/var/log/kadalu/shd/#{@id}.log",

@@ -1,21 +1,21 @@
 require "./helpers"
 
-command "heal.start", "Start the Kadalu Storage Volume heal" do |parser, _|
-  parser.banner = "Usage: kadalu heal start POOL/VOLNAME"
+command "heal.start", "Start the Kadalu Storage Pool heal" do |parser, _|
+  parser.banner = "Usage: kadalu heal start POOL_NAME"
 end
 
 handler "heal.start" do |args|
   command_error "Pool name is required" if args.pos_args.size == 0
-  pool_name, volume_name = pool_and_volume_name(args.pos_args[0])
+  pool_name = args.pos_args[0]
 
-  api_call(args, "Failed to start healing Volume") do |client|
-    volume = client.pool(pool_name).volume(volume_name).heal_start
+  api_call(args, "Failed to start healing Pool") do |client|
+    pool = client.pool(pool_name).heal_start
 
-    handle_json_output(volume, args)
+    handle_json_output(pool, args)
 
-    puts "Volume #{volume_name} healed successfully! \n"
+    puts "Pool #{pool_name} healed successfully! \n"
 
-    volume.distribute_groups.each do |dist_grp|
+    pool.distribute_groups.each do |dist_grp|
       dist_grp.storage_units.each do |storage_unit|
         puts "\n"
         puts "Storage Unit                       :       #{storage_unit.node.name}:#{storage_unit.path}"
@@ -26,22 +26,22 @@ handler "heal.start" do |args|
   end
 end
 
-command "heal.info", "Get the Kadalu Storage Volume heal info" do |parser, _|
-  parser.banner = "Usage: kadalu heal info POOL/VOLNAME"
+command "heal.info", "Get the Kadalu Storage Pool heal info" do |parser, _|
+  parser.banner = "Usage: kadalu heal info POOL_NAME"
 end
 
 handler "heal.info" do |args|
   command_error "Pool name is required" if args.pos_args.size == 0
-  pool_name, volume_name = pool_and_volume_name(args.pos_args[0])
+  pool_name = args.pos_args[0]
 
-  api_call(args, "Failed to get heal info for Volume") do |client|
-    volume = client.pool(pool_name).volume(volume_name).heal_info
+  api_call(args, "Failed to get heal info for Pool") do |client|
+    pool = client.pool(pool_name).heal_info
 
-    handle_json_output(volume, args)
+    handle_json_output(pool, args)
 
-    puts "Volume info-summary of #{volume_name} \n"
+    puts "Pool info-summary of #{pool_name} \n"
 
-    volume.distribute_groups.each do |dist_grp|
+    pool.distribute_groups.each do |dist_grp|
       dist_grp.storage_units.each do |storage_unit|
         puts "\n"
         puts "Storage Unit                       :       #{storage_unit.node.name}:#{storage_unit.path}"

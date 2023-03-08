@@ -19,7 +19,6 @@ nodes.each do |node|
   TEST "systemctl start kadalu-mgr"
 end
 USE_NODE "server1"
-puts TEST "/usr/local/bin/pytest /root/python/tests/pools.py"
 
 load "#{File.dirname(__FILE__)}/../reset.t"
 nodes.each do |node|

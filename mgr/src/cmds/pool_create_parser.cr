@@ -5,7 +5,6 @@ enum TokenKind
   Numeric
   StorageUnit
   PoolName
-  VolumeName
 end
 
 TYPE_KEYWORDS = [
@@ -17,7 +16,7 @@ TYPE_KEYWORDS = [
   "arbiter",
 ]
 
-class InvalidVolumeRequest < Exception
+class InvalidPoolRequest < Exception
 end
 
 struct Token
@@ -27,7 +26,7 @@ struct Token
   end
 end
 
-module VolumeRequestParser
+module PoolRequestParser
   def self.next_token(tokens)
     token = tokens.next
 
@@ -63,14 +62,7 @@ module VolumeRequestParser
       end
 
       if idx == 0
-        parts = arg.split("/")
-        if parts.size == 1
-          tokens << Token.new(TokenKind::VolumeName, parts[0])
-        else
-          tokens << Token.new(TokenKind::PoolName, parts[0])
-          tokens << Token.new(TokenKind::VolumeName, parts[1])
-        end
-
+        tokens << Token.new(TokenKind::PoolName, arg)
         next
       end
 
@@ -222,10 +214,10 @@ module VolumeRequestParser
     }
   end
 
-  # Parse each tokens and construct the Volume Create Request
+  # Parse each tokens and construct the Pool Create Request
   def self.parse(args)
     tokens = tokenizer(args)
-    req = MoanaTypes::Volume.new
+    req = MoanaTypes::Pool.new
     tokens_iter = tokens.each
     token = next_token(tokens_iter)
 
@@ -245,8 +237,7 @@ module VolumeRequestParser
       break if token.nil?
 
       case token.kind
-      when TokenKind::VolumeName  then req.name = token.value
-      when TokenKind::PoolName    then req.pool.name = token.value
+      when TokenKind::PoolName    then req.name = token.value
       when TokenKind::StorageUnit then all_storage_units << token.value
       when TokenKind::TypeKeyword
         keyword = token.value
@@ -293,22 +284,21 @@ module VolumeRequestParser
     req
   end
 
-  # Validate the Volume create request after parsing
+  # Validate the Pool create request after parsing
   def self.validate(req)
-    raise InvalidVolumeRequest.new("Volume name not specified (Example: mypool/vol1)") if req.name == ""
-    raise InvalidVolumeRequest.new("Pool name not specified (Example: mypool/vol1)") if req.pool.name == ""
-    raise InvalidVolumeRequest.new("Atleast one Storage unit is required") if req.distribute_groups.size == 0
+    raise InvalidPoolRequest.new("Pool name not specified (Example: mypool)") if req.name == ""
+    raise InvalidPoolRequest.new("Atleast one Storage unit is required") if req.distribute_groups.size == 0
 
-    # TODO: Volume name validations
+    # TODO: Pool name validations
 
     req.distribute_groups.each do |dist_grp|
       if dist_grp.replica_count > 0 && dist_grp.storage_units.size != dist_grp.replica_count
-        raise InvalidVolumeRequest.new(
+        raise InvalidPoolRequest.new(
           "Number of Storage units not matching #{dist_grp.replica_keyword} count"
         )
       end
       if dist_grp.disperse_count > 0 && dist_grp.storage_units.size != dist_grp.disperse_count
-        raise InvalidVolumeRequest.new(
+        raise InvalidPoolRequest.new(
           "Number of Storage units not matching disperse count"
         )
       end
@@ -316,7 +306,7 @@ module VolumeRequestParser
       dist_grp.storage_units.each do |storage_unit|
         msg = storage_unit.port > 0 ? "#{storage_unit.port}:" : ""
         msg += storage_unit.path
-        raise InvalidVolumeRequest.new("Node name is not specified for #{msg}") if storage_unit.node.name == ""
+        raise InvalidPoolRequest.new("Node name is not specified for #{msg}") if storage_unit.node.name == ""
       end
     end
   end

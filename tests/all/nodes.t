@@ -14,20 +14,19 @@ end
 USE_NODE nodes[0]
 puts TEST "kadalu user create admin --password=kadalu"
 puts TEST "kadalu user login admin --password=kadalu"
-puts TEST "kadalu pool create DEV"
 
 nodes.each do |node|
   USE_NODE nodes[0]
-  TEST "kadalu node add DEV/#{node}"
+  TEST "kadalu node add #{node}"
 end
 
 USE_NODE nodes[0]
-puts TEST "kadalu node list DEV"
-puts TEST "kadalu node list DEV --status"
-puts TEST "kadalu node list DEV --status --json"
+puts TEST "kadalu node list"
+puts TEST "kadalu node list --status"
+puts TEST "kadalu node list --status --json"
 nodes.each do |node|
   USE_NODE nodes[0]
-  puts TEST "kadalu node remove DEV/#{node} --mode=script"
+  puts TEST "kadalu node remove #{node} --mode=script"
 end
 
 nodes.each do |node|
@@ -38,11 +37,10 @@ end
 # Add and remove again to see node cleanup happens after remove
 nodes.each do |node|
   USE_NODE nodes[0]
-  TEST "kadalu node add DEV/#{node}"
-  TEST "kadalu node remove DEV/#{node} --mode=script"
+  TEST "kadalu node add #{node}"
+  TEST "kadalu node remove #{node} --mode=script"
 end
 
-puts TEST "kadalu pool delete DEV --mode=script"
 puts TEST "kadalu user logout"
 
 nodes.each do |node|

@@ -57,8 +57,8 @@ def parse_heal_data(document)
   brick_data
 end
 
-def set_heal_data(volume, brick_data)
-  volume.distribute_groups.each do |dist_grp|
+def set_heal_data(pool, brick_data)
+  pool.distribute_groups.each do |dist_grp|
     dist_grp.storage_units.each do |storage_unit|
       storage_unit_full_path = storage_unit.node.name + ":" + storage_unit.path
 
@@ -74,7 +74,7 @@ def set_heal_data(volume, brick_data)
     end
   end
 
-  volume
+  pool
 end
 
 def glfsheal_path
@@ -85,68 +85,60 @@ def glfsheal_path
   "#{heal_bin_prefix}/glusterfs/glfsheal"
 end
 
-post "/api/v1/pools/:pool_name/volumes/:volume_name/heal/start" do |env|
+post "/api/v1/pools/:pool_name/heal/start" do |env|
   pool_name = env.params.url["pool_name"]
-  volume_name = env.params.url["volume_name"]
 
   forbidden_api_exception(!Datastore.maintainer?(env.user_id, pool_name))
 
   pool = Datastore.get_pool(pool_name)
   api_exception(pool.nil?, ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
 
-  volume = Datastore.get_volume(pool_name, volume_name)
-  api_exception(volume.nil?, ({"error": "The Volume(#{volume_name}) doesn't exists"}.to_json))
+  pool = pool.not_nil!
 
-  volume = volume.not_nil!
+  api_exception(!pool.replicate_family?, ({"error": "Cannot heal Pool(#{pool_name}). It is non replicated or dispersed"}.to_json))
 
-  api_exception(!volume.replicate_family?, ({"error": "Cannot heal Volume(#{volume_name}). It is non replicated or dispersed"}.to_json))
-
-  client_volfile = "/var/lib/kadalu/volfiles/client-dev-#{volume_name}.vol"
+  client_volfile = "/var/lib/kadalu/volfiles/client-dev-#{pool_name}.vol"
 
   if !File.exists?(client_volfile)
     tmpl = volfile_get("client")
-    content = Volgen.generate(tmpl, volume.to_json, volume.options)
+    content = Volgen.generate(tmpl, pool.to_json, pool.options)
     Dir.mkdir_p "/var/lib/kadalu/volfiles"
     File.write(client_volfile, content)
   end
 
-  rc, output, err = execute(glfsheal_path, ["vol1", "--xml", "volfile-path", client_volfile])
+  rc, output, err = execute(glfsheal_path, [pool_name, "--xml", "volfile-path", client_volfile])
 
   api_exception(rc < 0, ({"error": err}.to_json))
 
   document = XML.parse(output)
 
-  brick_data = parse_heal_data(document)
-  volume = set_heal_data(volume, brick_data)
+  storage_unit_data = parse_heal_data(document)
+  out_pool = set_heal_data(pool, storage_unit_data)
 
   env.response.status_code = 200
-  volume.to_json
+  out_pool.to_json
 end
 
-get "/api/v1/pools/:pool_name/volumes/:volume_name/heal" do |env|
+get "/api/v1/pools/:pool_name/heal" do |env|
   pool_name = env.params.url["pool_name"]
-  volume_name = env.params.url["volume_name"]
 
   forbidden_api_exception(!Datastore.maintainer?(env.user_id, pool_name))
 
   pool = Datastore.get_pool(pool_name)
   api_exception(pool.nil?, ({"error": "The Pool(#{pool_name}) doesn't exists"}.to_json))
 
-  volume = Datastore.get_volume(pool_name, volume_name)
-  api_exception(volume.nil?, ({"error": "The Volume(#{volume_name}) doesn't exists"}.to_json))
-
-  volume = volume.not_nil!
+  pool = pool.not_nil!
 
   api_exception(
-    !volume.replicate_family?,
-    ({"error": "Cannot heal Volume(#{volume_name}). It is non replicated or dispersed"}.to_json)
+    !pool.replicate_family?,
+    ({"error": "Cannot heal Pool(#{pool_name}). It is non replicated or dispersed"}.to_json)
   )
 
-  client_volfile = "/var/lib/kadalu/volfiles/client-dev-#{volume_name}.vol"
+  client_volfile = "/var/lib/kadalu/volfiles/client-dev-#{pool_name}.vol"
 
   if !File.exists?(client_volfile)
     tmpl = volfile_get("client")
-    content = Volgen.generate(tmpl, volume.to_json, volume.options)
+    content = Volgen.generate(tmpl, pool.to_json, pool.options)
     Dir.mkdir_p "/var/lib/kadalu/volfiles"
     File.write(client_volfile, content)
   end
@@ -158,8 +150,8 @@ get "/api/v1/pools/:pool_name/volumes/:volume_name/heal" do |env|
   document = XML.parse(output)
 
   brick_data = parse_heal_data(document)
-  volume = set_heal_data(volume, brick_data)
+  pool = set_heal_data(pool, brick_data)
 
   env.response.status_code = 200
-  volume.to_json
+  pool.to_json
 end

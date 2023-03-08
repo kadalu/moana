@@ -54,85 +54,67 @@ Password:
 Login successful. Details saved in `/root/.kadalu/session`. Delete this file or run `kadalu logout` command to delete the session.
 ----
 
-== Create a pool and add storage nodes
+== Add storage nodes
 The following commands are run from the storage manager (which can be one of the storage nodes or any separate node) which was chosen in the previous step.
 
-**Note**: The below steps 1 and 2 can be skipped and can be done as part of volume create by passing `--auto-add-nodes` and `--auto-create-pool` during volume create command.
+**Note**: The below steps 1 and 2 can be skipped and can be done as part of pool create by passing `--auto-add-nodes`.
 
 === Step 1:
 
-Create a pool
+Add nodes to the cluster
 
 [source,console]
 ----
-$ kadalu pool create DEV
-Pool DEV created successfully
-ID: 2a643b56-3fd9-4782-882a-3915853d67a7
-----
-
-[source,console]
-----
-$ kadalu pool list
-Name  ID
-DEV   2a643b56-3fd9-4782-882a-3915853d67a7
-----
-
-=== Step 2:
-
-Add nodes to the pool
-
-[source,console]
-----
-$ kadalu node add DEV/vm1
-Node vm1 added to DEV successfully
+$ kadalu node add vm1
+Node vm1 added to the cluster successfully
 ID: 710acd83-d3aa-4292-b362-543599d12edf
 $
-$ kadalu node add DEV/vm2
-Node vm2 added to DEV successfully
+$ kadalu node add vm2
+Node vm2 added to the cluster successfully
 ID: dfed8210-53d4-44e6-8a8b-7abe3fddb145
 $
-$ kadalu node add DEV/vm3
-Node vm3 added to DEV successfully
+$ kadalu node add vm3
+Node vm3 added to the cluster successfully
 ID: 9ac5d869-9542-4dac-9c88-97cfb11a5738
 $ kadalu node list
 Name     ID                                    Endpoint
-DEV/vm3  9ac5d869-9542-4dac-9c88-97cfb11a5738  http://vm3:3000
-DEV/vm2  dfed8210-53d4-44e6-8a8b-7abe3fddb145  http://vm2:3000
-DEV/vm1  710acd83-d3aa-4292-b362-543599d12edf  http://vm1:3000
+vm3      9ac5d869-9542-4dac-9c88-97cfb11a5738  http://vm3:3000
+vm2      dfed8210-53d4-44e6-8a8b-7abe3fddb145  http://vm2:3000
+vm1      710acd83-d3aa-4292-b362-543599d12edf  http://vm1:3000
 ----
 
-== Create a storage volume
+== Create a storage pool
 Now create a directory to use as a storage unit and create a Kadalu Storage Volume.
 
 [source,console]
 ----
 $ sudo mkdir /data/t2     (Run on all the storage nodes)
 $
-$ kadalu volume create DEV/Test-Vol replica 3 vm1:/data/t2 vm2:/data/t2 vm3:/data/t2
-Volume Test-Vol created successfully
+$ kadalu pool create Test-Pool replica 3 vm1:/data/t2 vm2:/data/t2 vm3:/data/t2
+Pool Test-Pool created successfully
 ID: 59a726ad-0010-4a4f-ac4d-b11e54e722d7
 $
-$ kadalu volume list
+$ kadalu pool list
 Name          ID                                    State    Type          Size  Inodes
-DEV/Test-Vol  59a726ad-0010-4a4f-ac4d-b11e54e722d7  Started  Replicate  50.0GiB   26.2M
+Test-Pool     59a726ad-0010-4a4f-ac4d-b11e54e722d7  Started  Replicate  50.0GiB   26.2M
 ----
 
 **Note**: The above command can be written as:
 
 [source,console]
 ----
-$ kadalu volume create DEV/Test-Vol replica 3 vm1:/data/t2 vm2:/data/t2 vm3:/data/t2 --auto-add-nodes --auto-create-pool
+$ kadalu pool create Test-Pool replica 3 vm1:/data/t2 vm2:/data/t2 vm3:/data/t2 --auto-add-nodes
 ----
 
-And the steps to create pool and node addition can be skipped.
+And the steps to node addition can be skipped.
 
-== Mount the volume
+== Mount the pool
 
 [source,console]
 ----
-$ sudo mkdir /mnt/kadalu_vol
-$ sudo mount -t kadalu vm1:DEV/Test-Vol /mnt/kadalu_vol/
-$ df -h /mnt/kadalu_vol/
+$ sudo mkdir /mnt/kadalu_pool
+$ sudo mount -t kadalu vm1:Test-Pool /mnt/kadalu_pool/
+$ df -h /mnt/kadalu_pool/
 Filesystem           Size  Used Avail Use% Mounted on
-kadalu:/Test-Vol   30G  554M   30G   2% /mnt/kadalu_vol
+kadalu:/Test-Pool    30G  554M   30G   2% /mnt/kadalu_pool
 ----

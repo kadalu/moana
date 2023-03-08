@@ -3,32 +3,32 @@ require "uuid"
 require "moana_types"
 
 module Datastore
-  def enable_service(pool_id, node_id, service)
-    query = insert_query("services", %w[pool_id node_id name unit], replace: true)
-    connection.exec(query, pool_id, node_id, service.id, service.to_json)
+  def enable_service(node_name, service)
+    query = insert_query("services", %w[node_name name unit], replace: true)
+    connection.exec(query, node_name, service.id, service.to_json)
   end
 
-  def disable_service(pool_id, node_id, service)
-    query = "DELETE FROM services WHERE pool_id = ? AND node_id = ? AND name = ?"
-    connection.exec(query, pool_id, node_id, service.id)
+  def disable_service(node_name, service)
+    query = "DELETE FROM services WHERE node_name = ? AND name = ?"
+    connection.exec(query, node_name, service.id)
   end
 
-  def update_service(pool_id, node_id, service)
-    query = update_query("services", %w[unit], where: "pool_id = ? AND node_id = ? AND name = ?")
-    connection.exec(query, service.to_json, pool_id, node_id, service.id)
+  def update_service(node_name, service)
+    query = update_query("services", %w[unit], where: "node_name = ? AND name = ?")
+    connection.exec(query, service.to_json, node_name, service.id)
   end
 
-  def list_services(pool_id, node_id)
-    query = "select unit FROM services WHERE pool_id = ? AND node_id = ?"
-    units = connection.query_all(query, pool_id, node_id, as: String)
+  def list_services(node_name)
+    query = "select unit FROM services WHERE node_name = ?"
+    units = connection.query_all(query, node_name, as: String)
     units.map do |unit|
       MoanaTypes::ServiceUnit.from_json(unit)
     end
   end
 
-  def get_service(pool_id, node_id, svc_name)
-    query = "select unit FROM services WHERE pool_id = ? AND node_id = ? AND name = ?"
-    unit = connection.query_one(query, pool_id, node_id, svc_name, as: String)
+  def get_service(node_name, svc_name)
+    query = "select unit FROM services WHERE node_name = ? AND name = ?"
+    unit = connection.query_one(query, node_name, svc_name, as: String)
     MoanaTypes::ServiceUnit.from_json(unit)
   end
 end

@@ -4,7 +4,7 @@ module Datastore
   struct UserView
     include DB::Serializable
 
-    property id = "", username = "", name = "", pool_id = "", volume_id = "", role = ""
+    property id = "", username = "", name = "", pool_id = "", role = ""
   end
 
   private def user_select_query
@@ -12,7 +12,6 @@ module Datastore
             users.username AS username,
             users.name AS name,
             roles.pool_id AS pool_id,
-            roles.volume_id AS volume_id,
             roles.name AS role
      FROM users"
   end
@@ -29,7 +28,6 @@ module Datastore
       user.roles = rows.map do |row|
         role = MoanaTypes::Role.new
         role.pool_id = row.pool_id
-        role.volume_id = row.volume_id
         role.user_id = row.id
         role.role = row.role
 
@@ -57,9 +55,14 @@ module Datastore
     " INNER JOIN roles ON users.id = roles.user_id "
   end
 
-  def list_users(pool_id, volume_id)
-    query = user_select_query + inner_join_roles + " WHERE roles.pool_id = ? AND roles.volume_id = ?"
+  def list_users(pool_id)
+    query = user_select_query + inner_join_roles + " WHERE roles.pool_id = ?"
     group_users(connection.query_all(query, pool_id, as: UserView))
+  end
+
+  def users_exists?
+    query = "SELECT COUNT(id) FROM users"
+    connection.scalar(query).as(Int64) > 0
   end
 
   def user_exists?(username)
@@ -89,10 +92,10 @@ module Datastore
     res.rows_affected > 0
   end
 
-  def valid_node_of_a_pool?(pool_name, node_id, token)
+  def valid_node?(node_id, token)
     token_hash = hash_sha256(token)
-    query = "SELECT COUNT(nodes.id) FROM nodes INNER JOIN pools WHERE pools.name = ? AND nodes.pool_id = pools.id AND nodes.id = ? AND nodes.mgr_token_hash = ?"
-    connection.scalar(query, pool_name, node_id, token_hash).as(Int64) > 0
+    query = "SELECT COUNT(nodes.id) FROM nodes WHERE nodes.id = ? AND nodes.mgr_token_hash = ?"
+    connection.scalar(query, node_id, token_hash).as(Int64) > 0
   end
 
   def create_user(username, name, password)
@@ -108,8 +111,8 @@ module Datastore
 
       # First user becomes super admin
       if first_user
-        roles_query = insert_query("roles", %w[user_id pool_id volume_id name])
-        conn.exec(roles_query, user_id, "all", "all", "admin")
+        roles_query = insert_query("roles", %w[user_id pool_id name])
+        conn.exec(roles_query, user_id, "all", "admin")
       end
     end
 

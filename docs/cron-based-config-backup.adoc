@@ -1,6 +1,6 @@
 = Cron-based Kadalu Storage configurations backup
 
-Kadalu Storage manager node contains all the cluster configuration data. All other nodes of the Cluster are agent nodes that interact with the Manager node. Downtime of Manager node has no impact on mounted Volumes/IO. But not possible to change the Volume configurations or create or manage new Volumes. Even though it is not critical for the Volume availability, it is very important to backup the Cluster configurations frequently for disaster management and recovery.
+Kadalu Storage manager node contains all the cluster configuration data. All other nodes of the Cluster are agent nodes that interact with the Manager node. Downtime of Manager node has no impact on mounted Pools/IO. But not possible to change the Pool configurations or create or manage new Pools. Even though it is not critical for the Pool availability, it is very important to backup the Cluster configurations frequently for disaster management and recovery.
 
 link:config-snapshots.adoc[Config Snapshots] feature allows Admins to backup the configurations and restore in case of disaster.
 

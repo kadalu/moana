@@ -1,82 +1,195 @@
 = Kadalu Storage Pools
 
-Identify a node where Storage manager will be deployed. This node can be one of the storage nodes, or it can be a spare node that is highly available.
+Kadalu Storage pool is a collection of one or more export directories from multiple servers.
 
-Enable and start the `kadalu-mgr`
+=== Pool Creation
 
-[source,console]
-----
-[root@server1 ~]# systemctl enable kadalu-mgr
-[root@server1 ~]# systemctl start kadalu-mgr
-----
+Create a Kadalu Storage Pool with Storage units from multiple Storage nodes.
 
 [source,console]
 ----
-[root@server1 ~]# kadalu pool create DEV
-Pool created successfully.
-ID: 4e67989e-0c24-44ac-b0a7-81aa5cb4ec6b
+[root@server1 ~]# kadalu pool create pool1 server1.example.com:/exports/pool1/s1
+Pool pool1 created successfully
+ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
 ----
 
-Run `pool list` command to see the list of Pools
+Where
 
-[source,console]
-----
-[root@server1 ~]# kadalu pool list
-                                  ID  Name
-4e67989e-0c24-44ac-b0a7-81aa5cb4ec6b  DEV
-----
+- `pool1` is the Pool name
+- `server1.example.com` is the node from which the Storage unit will be exported.
+- `/exports/pool1/s1` is the mounted path of Storage Unit.
 
-The pool data and the configurations are stored in `/var/lib/kadalu`. Since the storage manager is running in a single node, by default it is not highly available. Use `kadalu-lite` Volume for high availability, or backup the Pool data in regular intervals. Refer "High availability" chapter (Coming soon) for more details.
-
-Since Kadalu Storage manager supports multiple Pools, the manager node is not part of any Pool by default. Optionally invite the Storage manager node to join the Pool, which is similar to inviting other Storage nodes.
+Automatically add nodes to the Cluster that are specified in the Pool create request by adding `--auto-add-nodes`.
 
 [source,console]
 ----
-[root@server1 ~]# kadalu node add DEV/server1.example.com
-Node server1.example.com added to DEV successfully
-ID: 3befd57b-1d31-4664-94e9-f87bf7ce90f9
+[root@server1 ~]# kadalu pool create pool1 \
+    server1.example.com:/exports/pool1/s1   \
+    --auto-add-nodes
+Pool pool1 created successfully
+ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
 ----
 
-Default node endpoint is `http://<nodename>:3000`. If it is different then provide the endpoint using `--endpoint=ENDPOINT` option.
-
-[source,console]
-----
-[root@server1 ~]# kadalu node add DEV/server1.example.com --endpoint=http://server1.example.com:3001
-Node server1.example.com added to DEV successfully
-ID: 3befd57b-1d31-4664-94e9-f87bf7ce90f9
-----
-
-Before inviting other nodes to join the Pool, start the `kadalu-mgr` service.
+Create a Replicated or Mirrored Pool
 
 [source,console]
 ----
-[root@server2 ~]# systemctl enable kadalu-mgr
-[root@server2 ~]# systemctl start kadalu-mgr
+[root@server1 ~]# kadalu pool create pool1 \
+    replica server1.example.com:/exports/pool1/s1 \
+            server2.example.com:/exports/pool1/s2 \
+            server3.example.com:/exports/pool1/s3
+Pool pool1 created successfully
+ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
+----
+
+Using `mirror` is also supported
+
+[source,console]
+----
+[root@server1 ~]# kadalu pool create pool1 \
+    mirror server1.example.com:/exports/pool1/s1 \
+           server2.example.com:/exports/pool1/s2 \
+           server3.example.com:/exports/pool1/s3
+Pool pool1 created successfully
+ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
+----
+
+Alternatively, GlusterFS syntax is also supported
+
+[source,console]
+----
+[root@server1 ~]# kadalu pool create pool1 replica 3 \
+    server1.example.com:/exports/pool1/s1 \
+    server2.example.com:/exports/pool1/s2 \
+    server3.example.com:/exports/pool1/s3
+Pool pool1 created successfully
+ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
+----
+
+- By default, pools are started on create. Use `--no-start` to override this behavior.
+- If the Storage unit path is not a mounted directory then use `--allow-root-partition` option (Not yet implemented). This is not an optimal setup since the Kadalu Pool can fill up the root partition or other applications can fill up Kadalu Pool.
+- To import a Pool, Use `--pool-id` option to set the Same Pool ID to the imported Pool. If required Pool ID to be reused is not saved, it can be found in server volfile or at storage unit path as extended attribute in hexadecimal format.
++
+[source,console]
+----
+[root@server1 ~]# kadalu pool create pool1 \
+    server1.example.com:/exports/pool1/s1 \
+   --pool-id=02b6a3a4-e704-47ee-bb05-e541a561a921
+----
++
+- To reuse a Storage unit directory that was part of other Pool earlier, use `--reuse-storage-unit` (Not yet implemented, only applicable if the Storage unit directory is empty).
+- To allow using Replicate/Mirrored/Disperse Storage units from same node, use `--from-same-node`. This is not an optimal setup since it does not provide high availability for the distribute group if one node goes down (Not yet implemented).
+
+Ports for the Storage Unit are assigned automatically (`49252` to `49452`) while creating the Pool. Restarting the Pool will not change the Ports of the Storage units. The Pool info command will show the assigned ports. It is also possible to manually specify the Port while creating the Pool.
+
+[source,console]
+----
+[root@server1 ~]# kadalu pool create pool1 \
+    mirror server1.example.com:4501:/exports/pool1/s1 \
+           server2.example.com:4501:/exports/pool1/s2 \
+           server3.example.com:4501:/exports/pool1/s3
+Pool pool1 created successfully
+ID: 02b6a3a4-e704-47ee-bb05-e541a561a921
+----
+
+=== Pool Expansion and Rebalance
+
+Expand an already created Kadalu Storage Pool with storage units from multiple storage nodes.
+
+Example,
+
+Create a Replicated or Mirror Kadalu Storage Pool 'pool1' with 3 different storage nodes and 3 storage units.
+
+[source,console]
+----
+[root@server1 ~]# kadalu pool create pool1 \
+    mirror server1.example.com:/exports/pool1/s1 \
+           server2.example.com:/exports/pool1/s2 \
+           server3.example.com:/exports/pool1/s3
+Pool pool1 created successfully
+ID: 03c6a3a4-e704-47ee-bb05-e541a561a875
+----
+
+Expand Kadalu Storage Pool `pool1` by adding more Storage units.
+
+- Note:
+
+  Pool type, distribute group count, replica count, data and redundant storage unit count should be the same as when the Kadalu Storage Pool was created.
+
+  For example above Kadalu Storage Pool being of type mirror 3, it has 1 distribute group with 3 storage units. Hence during pool expansion Kadalu Storage expects distribute group being a multiple of 1.
+
+
+[source,console]
+----
+[root@server1 ~]# kadalu pool expand pool1   \
+    mirror server1.example.com:/exports/pool1/s1_e \
+           server2.example.com:/exports/pool1/s2_e \
+           server3.example.com:/exports/pool1/s3_e
+Pool pool1 expanded successfully
+ID: 03c6a3a4-e704-47ee-bb05-e541a561a875
+
+Proceed to the rebalancing of pool pool1 by following the below steps.
+To start the rebalancing of pool: kadalu pool rebalance-start pool1.
+To force stop the rebalancing of pool: kadalu pool rebalance-stop pool1.
+----
+
+==== Rebalance
+
+During the expansion of pool, Kadalu Storage also fixes the layout of all expanded storage units, i.e., it triggers the creation of directories in the expanded storage units, to maintain the same directory structure as in storage units before expansion.
+
+Once the layout of the expanded storage units is fixed, data migration can commence. Data migration involves recalculating the hash of files and distributing them across storage units.
+
+To start and stop the rebalance (i.e., data migration), follow the steps displayed after the pool expansion.
+
+[source,console]
+----
+[root@server1 ~]# kadalu rebalance start pool1
+Rebalance of Pool pool1 started.
 ----
 
 [source,console]
 ----
-[root@server1 ~]# kadalu node add DEV/server2.example.com
-Node server2.example.com added to DEV successfully
-ID: 34aabcae-1052-4a78-91a5-d71c89458e8d
+[root@server1 ~]# kadalu rebalance stop pool1
+Rebalance of Pool pool1 started.
 ----
 
-Run `node list` to view the list of the nodes and their status.
+- Note:
 
-[source,console]
-----
-[root@server1 ~]# kadalu node list DEV
-                                                ID                 Name  Endpoint
-322b9883-9d00-4b30-b084-953306f0d431  server1.example.com  http://server1.example.com:3000
-34aabcae-1052-4a78-91a5-d71c89458e8d  server2.example.com  http://server2.example.com:3000
-----
+  The Rebalance process, if restarted in the middle of completion, will start scanning storage units from the beginning and not from the point where it stopped
 
-Include the Status information
+To view the status of Rebalance processes,
+
+`kadalu rebalance status pool1`
 
 [source,console]
 ----
-[root@server1 ~]# kadalu node list DEV --status
-                                                ID   State                    Name  Endpoint
-322b9883-9d00-4b30-b084-953306f0d431      Up     server1.example.com  http://server1.example.com:3000
-34aabcae-1052-4a78-91a5-d71c89458e8d      Up     server2.example.com  http://server2.example.com:3000
+[root@server1 ~]# kadalu rebalance status pool1
+
+Name                       : pool1
+Type                       : Distributed Mirror
+ID                         : 03c6a3a4-e704-47ee-bb05-e541a561a875
+Fix-Layout Status          : complete
+Total Dirs Scanned         : 3
+Duration                   : 0
+Progress                   : 100.00 %
+Estimate Seconds           : 0
+Scanned                    : 1.13MiB / 1.13MiB
+
+Pool pool1 Rebalance Status            : complete
+Total Number of Rebalance Process       : 6
+Number of Completed Rebalance Process   : 6
+Number of Failed Rebalance Process      : 0
 ----
+
+Where,
+
+- `Fix-Layout Status` is status of fix-layout process after pool expansion.
+- `Total Dirs Scanned` indicates total number of dirs which was scanned and added to newer storage units.
+- `Duration` is the time taken for fix-layout process to complete.
+- `Progress` is the percentage amount of progress made with migration of data (Rebalance).
+- `Estimate Seconds` is the estimated amount of time which might be taken for completion of migration of data.
+- `Scanned` indicates in Bytes, files scanned out of total files.
+
+- `Rebalance Status` can be of complete, partial, failed and not-started indicating the status of Rebalance at pool level.
+
+To view the `Rebalance Status` of each storage-unit : `kadalu rebalance status <pool> --detail`.

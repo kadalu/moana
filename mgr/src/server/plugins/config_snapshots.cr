@@ -4,7 +4,7 @@ require "../conf"
 require "./helpers"
 require "../datastore/*"
 require "./ping"
-require "./volume_utils.cr"
+require "./pool_utils.cr"
 
 post "/api/v1/config-snapshots" do |env|
   data = MoanaTypes::ConfigSnapshot.from_json(env.request.body.not_nil!)

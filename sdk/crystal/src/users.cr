@@ -31,19 +31,6 @@ module StorageManager
       end
     end
 
-    def self.list(client : Client, pool_name : String, volume_name : String)
-      url = "#{client.url}/api/v1/pools/#{pool_name}/volumes/#{volume_name}/users"
-      response = StorageManager.http_get(
-        url,
-        headers: client.auth_header
-      )
-      if response.status_code == 200
-        Array(MoanaTypes::User).from_json(response.body)
-      else
-        StorageManager.error_response(response)
-      end
-    end
-
     def self.create(client : Client, username : String, name : String, password : String)
       url = "#{client.url}/api/v1/users"
 
@@ -129,16 +116,16 @@ module StorageManager
       ApiKey.new(@client, api_key_id)
     end
 
-    def add_role(pool_id : String, volume_id : String, role : String)
-      Role.add(@client, @user_id, pool_id, volume_id, role)
+    def add_role(pool_id : String, role : String)
+      Role.add(@client, @user_id, pool_id, role)
     end
 
     def list_roles
       Role.list(@client, @user_id)
     end
 
-    def role(pool_id : String, volume_id : String, role : String)
-      Role.new(@client, @user_id, pool_id, volume_id, role)
+    def role(pool_id : String, role : String)
+      Role.new(@client, @user_id, pool_id, role)
     end
 
     def delete

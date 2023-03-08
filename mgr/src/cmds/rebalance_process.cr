@@ -22,7 +22,7 @@ class Rebalancer
   property fix_layout_status = MoanaTypes::FixLayoutRebalanceStatus.new
   property migrate_data_status = MoanaTypes::MigrateDataRebalanceStatus.new
 
-  def initialize(@volume_name : String, @backend_dir : String, @ignore_paths = [".glusterfs"])
+  def initialize(@pool_name : String, @backend_dir : String, @ignore_paths = [".glusterfs"])
     @mount_dir = "/mnt/reb-#{@backend_dir.gsub("/", "%2F")}"
     @migrate_data_status.total_bytes = 0_i64
     @migrate_data_status.scanned_bytes = BLOCK_SIZE.to_i64
@@ -83,7 +83,7 @@ class Rebalancer
   end
 
   def status_file(rebalance_type)
-    rebalance_dir = Path.new(WORKDIR, "rebalance", "#{@volume_name}").to_s
+    rebalance_dir = Path.new(WORKDIR, "rebalance", "#{@pool_name}").to_s
     Dir.mkdir_p rebalance_dir
     Path.new(
       rebalance_dir,
@@ -233,9 +233,9 @@ class Rebalancer
     execute("chattr", ["+i", @mount_dir])
 
     args = [
-      "--volfile-id", @volume_name,
+      "--volfile-id", @pool_name,
       "--process-name", "fuse",
-      "--fs-display-name", "kadalu:rebalance-%s" % @volume_name,
+      "--fs-display-name", "kadalu:rebalance-%s" % @pool_name,
       "-l", "/var/log/kadalu/rebalance-mnt-#{@backend_dir.gsub("/", "%2F")}.log",
       "--client-pid", "-3",
     ]
@@ -272,7 +272,7 @@ class Args
 end
 
 command "_rebalance", "Rebalance process" do |parser, args|
-  parser.banner = "Usage: kadalu _rebalance <pool-name>/<volume-name> <storage-unit-path> [arguments]"
+  parser.banner = "Usage: kadalu _rebalance <pool-name> <storage-unit-path> [arguments]"
 
   parser.on("--volfile-servers=SERVERS", "List of Volfile Servers") do |servers|
     args.rebalance_args.volfile_servers = servers.split(" ")
@@ -292,10 +292,10 @@ handler "_rebalance" do |args|
 
   command_error "Volfile servers not provided" if args.rebalance_args.volfile_servers.empty?
 
-  _pool_name, volume_name = pool_and_volume_name(args.pos_args[0])
-  command_error "Volume name not specified" if volume_name == ""
+  pool_name = args.pos_args[0]
+  command_error "Pool name not specified" if pool_name == ""
 
-  reb = Rebalancer.new(volume_name, args.pos_args[1])
+  reb = Rebalancer.new(pool_name, args.pos_args[1])
 
   if args.rebalance_args.fix_layout
     status_file = reb.status_file("fix-layout")
