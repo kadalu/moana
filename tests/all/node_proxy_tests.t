@@ -33,7 +33,7 @@ USE_NODE nodes[1]
 puts TEST "kadalu user login admin --password=kadalu"
 
 # Distribute
-TEST "kadalu pool create vol1 server1:/exports/vol1/s1 server2:/exports/vol1/s2 server3:/exports/vol1/s3"
+TEST "kadalu pool create vol1 server1:/exports/vol1/s1 server2:/exports/vol1/s2 server3:/exports/vol1/s3 --distribute"
 
 nodes.each do |node|
   USE_NODE node

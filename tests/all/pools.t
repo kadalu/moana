@@ -49,7 +49,7 @@ end
 
 USE_NODE nodes[0]
 # Distribute
-TEST "kadalu pool create pool1 server1:/exports/pool1/s1 server2:/exports/pool1/s2 server3:/exports/pool1/s3"
+TEST "kadalu pool create pool1 --distribute server1:/exports/pool1/s1 server2:/exports/pool1/s2 server3:/exports/pool1/s3"
 
 # Replicate
 TEST "kadalu pool create pool2 replica server1:/exports/pool2/s1 server2:/exports/pool2/s2 server3:/exports/pool2/s3"
@@ -58,7 +58,7 @@ TEST "kadalu pool create pool2 replica server1:/exports/pool2/s1 server2:/export
 TEST "kadalu pool create pool3 data server1:/exports/pool3/s1 server2:/exports/pool3/s2 redundancy server3:/exports/pool3/s3"
 
 # Distributed Replicate
-TEST "kadalu pool create pool4 replica server1:/exports/pool4/s1 server2:/exports/pool4/s2 server3:/exports/pool4/s3 replica server1:/exports/pool4/s4 server2:/exports/pool4/s5 server3:/exports/pool4/s6"
+TEST "kadalu pool create pool4 --distribute replica server1:/exports/pool4/s1 server2:/exports/pool4/s2 server3:/exports/pool4/s3 replica server1:/exports/pool4/s4 server2:/exports/pool4/s5 server3:/exports/pool4/s6"
 
 puts TEST "kadalu pool list --json"
 
@@ -101,7 +101,7 @@ nodes.each do |node|
 end
 
 USE_NODE nodes[0]
-TEST "kadalu pool create pool5 server1:/exports/pool5/s1 server2:/exports/pool5/s2 server3:/exports/pool5/s3 --auto-add-nodes"
+TEST "kadalu pool create pool5 server1:/exports/pool5/s1 server2:/exports/pool5/s2 server3:/exports/pool5/s3 --auto-add-nodes --distribute"
 TEST "kadalu pool stop pool5 --mode=script"
 TEST "kadalu pool delete pool5 --mode=script"
 
@@ -117,16 +117,16 @@ end
 # Case 1
 # Create pool6 & delete it. Reuse the same path with --pool-id for pool7.
 USE_NODE nodes[0]
-pool_id = create_pool_and_get_id("kadalu pool create pool6 server1:/exports/pool6/s1 server2:/exports/pool6/s2 server3:/exports/pool6/s3 --no-start")
+pool_id = create_pool_and_get_id("kadalu pool create pool6 server1:/exports/pool6/s1 server2:/exports/pool6/s2 server3:/exports/pool6/s3 --no-start --distribute")
 TEST "kadalu pool delete pool6 --mode=script"
-new_pool_id = create_pool_and_get_id("kadalu pool create pool7 server1:/exports/pool6/s1 server2:/exports/pool6/s2 server3:/exports/pool6/s3 --no-start --pool-id=#{pool_id}")
+new_pool_id = create_pool_and_get_id("kadalu pool create pool7 server1:/exports/pool6/s1 server2:/exports/pool6/s2 server3:/exports/pool6/s3 --no-start --pool-id=#{pool_id} --distribute")
 EQUAL pool_id, new_pool_id, "Checking if pool-id are equal after pool6 is reused with --pool-id in pool7"
 TEST "kadalu pool delete pool7 --mode=script"
 
 # Case 2
 # Create pool8. Create pool9 with --pool-id of active pool8.
-pool_id = create_pool_and_get_id("kadalu pool create pool8 server1:/exports/pool8/s1 server2:/exports/pool8/s2 server3:/exports/pool8/s3 --no-start")
-TEST 1, "kadalu pool create pool9 server1:/exports/pool9/s1 server2:/exports/pool9/s2 server3:/exports/pool9/s3 --no-start --pool-id=#{pool_id}"
+pool_id = create_pool_and_get_id("kadalu pool create pool8 server1:/exports/pool8/s1 server2:/exports/pool8/s2 server3:/exports/pool8/s3 --no-start --distribute")
+TEST 1, "kadalu pool create pool9 server1:/exports/pool9/s1 server2:/exports/pool9/s2 server3:/exports/pool9/s3 --no-start --pool-id=#{pool_id} --distribute"
 TEST "kadalu pool delete pool8 --mode=script"
 
 # Case 3
@@ -136,17 +136,17 @@ TEST "kadalu pool delete pool10 --mode=script"
 
 # Case 4 [Negation of Case1]
 # Create pool11 & delete it. Create pool12 with same path of unactive pool11 without --pool-id.
-TEST "kadalu pool create pool11 server1:/exports/pool11/s1 server2:/exports/pool11/s2 server3:/exports/pool11/s3 --no-start"
+TEST "kadalu pool create pool11 server1:/exports/pool11/s1 server2:/exports/pool11/s2 server3:/exports/pool11/s3 --no-start --distribute"
 TEST "kadalu pool delete pool11 --mode=script"
-TEST 1, "kadalu pool create pool12 server1:/exports/pool11/s1 server2:/exports/pool11/s2 server3:/exports/pool11/s3 --no-start"
+TEST 1, "kadalu pool create pool12 server1:/exports/pool11/s1 server2:/exports/pool11/s2 server3:/exports/pool11/s3 --no-start --distribute"
 
 # Case 5
 # Create pool13 with fresh path & no xattrs using --pool-id with wrong format. [Check for matching format of pool-id with uuid]
-TEST 1, "kadalu pool create pool13 server1:/exports/pool12/s1 server2:/exports/pool12/s2 server3:/exports/pool12/s3 --no-start --pool-id=123-456-789"
+TEST 1, "kadalu pool create pool13 server1:/exports/pool12/s1 server2:/exports/pool12/s2 server3:/exports/pool12/s3 --no-start --pool-id=123-456-789 --distribute"
 
 
 # Tests for restarting of all services on node-reboot
-TEST "kadalu pool create pool14 server1:/exports/pool14/s1 server2:/exports/pool14/s2 server3:/exports/pool14/s3"
+TEST "kadalu pool create pool14 server1:/exports/pool14/s1 server2:/exports/pool14/s2 server3:/exports/pool14/s3 --distribute"
 nodes.each do |node|
   USE_NODE node
   puts TEST "ps aux | grep 'glusterfsd'"
@@ -220,7 +220,7 @@ TEST "kadalu pool stop pool_volfile --mode=script"
 TEST "kadalu pool delete pool_volfile --mode=script"
 
 # Tests for Backup & Restore
-TEST "kadalu pool create pool19 server1:/exports/pool19/s1 server2:/exports/pool19/s2 server3:/exports/pool19/s3"
+TEST "kadalu pool create pool19 server1:/exports/pool19/s1 server2:/exports/pool19/s2 server3:/exports/pool19/s3 --distribute"
 USE_NODE nodes[0]
 TEST "kadalu config-snapshot create snap1"
 puts TEST "kadalu config-snapshot list"
@@ -237,7 +237,7 @@ TEST "kadalu pool delete pool19 --mode=script"
 
 # Tests for pool expansion
 # Distribute
-TEST "kadalu pool create pool15 server1:/exports/pool15/s1 server2:/exports/pool15/s2 server3:/exports/pool15/s3"
+TEST "kadalu pool create pool15 server1:/exports/pool15/s1 server2:/exports/pool15/s2 server3:/exports/pool15/s3 --distribute"
 TEST "mkdir -p /mnt/pool15"
 puts TEST "kadalu mount pool15 /mnt/pool15"
 puts TEST "df /mnt/pool15"
@@ -336,7 +336,7 @@ TEST "kadalu pool stop pool16 --mode=script"
 TEST "kadalu pool delete pool16 --mode=script"
 
 # Distributed Replicate
-TEST "kadalu pool create pool17 replica server1:/exports/pool17/s1 server2:/exports/pool17/s2 server3:/exports/pool17/s3 replica server1:/exports/pool17/s4 server2:/exports/pool17/s5 server3:/exports/pool17/s6"
+TEST "kadalu pool create pool17 --distribute replica server1:/exports/pool17/s1 server2:/exports/pool17/s2 server3:/exports/pool17/s3 replica server1:/exports/pool17/s4 server2:/exports/pool17/s5 server3:/exports/pool17/s6"
 TEST "mkdir -p /mnt/pool17"
 puts TEST "kadalu mount pool17 /mnt/pool17"
 puts TEST "df /mnt/pool17"
@@ -482,7 +482,7 @@ puts TEST "kadalu config-snapshot list"
 # Tests for renaming of pool
 USE_NODE nodes[0]
 TEST "kadalu pool create pool20a server1:/exports/pool20a/s1 --no-start"
-TEST "kadalu pool create pool20b server1:/exports/pool20b/s1 server2:/exports/pool20b/s2 server3:/exports/pool20b/s3 --no-start"
+TEST "kadalu pool create pool20b server1:/exports/pool20b/s1 server2:/exports/pool20b/s2 server3:/exports/pool20b/s3 --no-start --distribute"
 TEST 1, "kadalu pool rename pool20b pool20b"
 
 TEST "kadalu pool delete pool20a --mode=script"
