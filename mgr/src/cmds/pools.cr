@@ -4,7 +4,7 @@ require "./gluster_volume_parser"
 
 struct PoolArgs
   property status = false, detail = false, name = "", pool_id = "", no_start = false,
-    auto_add_nodes = false,
+    auto_add_nodes = false, distribute = false,
     node_maps = Hash(String, String).new, volfiles_separator = " "
 end
 
@@ -22,6 +22,9 @@ command "pool.create", "Kadalu Storage Pool Create" do |parser, args|
   end
   parser.on("--auto-add-nodes", "Automatically add nodes to the pool") do
     args.pool_args.auto_add_nodes = true
+  end
+  parser.on("--distribute", "Create a distributed pool") do
+    args.pool_args.distribute = true
   end
   parser.on("--node-map=NODEMAP", "Provide node mapping while importing.\nExample: --node-map=\"server1.example.com=node1.example.com\"") do |node|
     old_name, new_name = node.split("=")
@@ -45,6 +48,16 @@ handler "pool.create" do |args|
     else
       req = PoolRequestParser.parse(args.pos_args)
       req.pool_id = args.pool_args.pool_id
+    end
+
+    if req.distribute_groups.size > 1 && !args.pool_args.distribute
+      next unless (args.script_mode || yes(<<-YES_MSG))
+         Using a distributed pool for small-volume claims may degrade
+         the performance of the volume. Consider creating multiple
+         Storage pools without distribution enabled if it suits your needs.
+
+         Are you sure you want to create a distributed pool? [y/N]
+         YES_MSG
     end
 
     req.no_start = args.pool_args.no_start
