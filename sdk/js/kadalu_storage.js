@@ -1,6 +1,7 @@
 import StorageManagerAuthError from './helpers';
 import Pool from './pools';
 import User from './users';
+import Node from './nodes';
 
 export default class StorageManager {
     constructor(url) {
