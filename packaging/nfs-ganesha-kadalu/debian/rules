@@ -7,6 +7,7 @@
 #   $ cd nfs-ganesha/src
 #   $ dpkg-buildpackage -uc -us
 #
+
 export DH_VERBOSE=1
 export PREFIX=/usr
 export DESTDIR=$(CURDIR)/debian/tmp
@@ -18,12 +19,11 @@ DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 	 dh $@ --with python3,systemd
 
 override_dh_shlibdeps:
-	 dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
+	 dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info -l /usr/lib/ganesha/
 
 override_dh_auto_configure:
 	 cd src && ln -s ../debian .
 	 cd src && dh_auto_configure -- \
-		-DWITH_PYTHON3=3 \
 		-DBUILD_CONFIG=debian \
 		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
 		-DLIB_INSTALL_DIR:STRING=lib/${DEB_HOST_MULTIARCH} \
@@ -35,15 +35,14 @@ override_dh_auto_configure:
 		-DUSE_FSAL_CEPH=NO \
 		-DUSE_FSAL_RGW=NO \
 		-DUSE_FSAL_GPFS=NO \
-		-DUSE_FSAL_KVSFS=NO \
+		-DUSE_FSAL_PANFS=NO \
 		-DUSE_FSAL_GLUSTER=YES \
 		-DUSE_FSAL_VFS=NO \
-		-DUSE_FSAL_PROXY_V4=ON \
-		-DUSE_FSAL_PROXY_V3=ON \
+		-DUSE_FSAL_PROXY=ON \
 		-DUSE_SYSTEM_NTIRPC=YES \
 		-DUSE_9P_RDMA=NO \
 		-DUSE_LTTNG=NO \
-		-DUSE_RADOS_RECOV=YES \
+		-DUSE_RADOS_RECOV=NO \
 		-DRADOS_URLS=YES \
 		-DUSE_ADMIN_TOOLS=YES \
 		-DUSE_GUI_ADMIN_TOOLS=YES \
@@ -52,8 +51,8 @@ override_dh_auto_configure:
 		-DDISTNAME_HAS_GIT_DATA=OFF \
 		-DUSE_MAN_PAGE=YES \
 		-D_MSPAC_SUPPORT=YES \
-		-DSANITIZE_ADDRESS=NO \
-		-DALLOCATOR=jemalloc
+		-DSANITIZE_ADDRESS=NO
+
 
 override_dh_auto_build:
 	cd src && dh_auto_build
@@ -70,7 +69,7 @@ override_dh_install:
 	mkdir -p debian/tmp/usr/lib/ganesha
 	mkdir -p debian/tmp/usr/lib/${DEB_HOST_MULTIARCH}/ganesha
 	mkdir -p debian/tmp/usr/sbin/
-	cp src/config_samples/ganesha.conf.example debian/tmp/etc/ganesha/
+	cp src/config_samples/ganesha.conf.example debian/tmp/etc/ganesha/ganesha.conf
 	cp src/config_samples/vfs.conf debian/tmp/etc/ganesha/
 	cp src/config_samples/ceph.conf debian/tmp/etc/ganesha/
 	cp src/config_samples/rgw.conf debian/tmp/etc/ganesha/

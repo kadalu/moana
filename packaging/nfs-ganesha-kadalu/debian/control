@@ -6,7 +6,6 @@ Standards-Version: 3.9.7
 Homepage: https://kadalu.tech
 Build-Depends: debhelper (>= 10~),
                dh-python,
-               dh-systemd,
                quilt,
                bison,
                flex,
