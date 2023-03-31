@@ -18,11 +18,11 @@ install: build
                 $(DESTDIR)/sbin/mount.kadalu
 	install -m 700 -D extra/kadalu-mgr.service \
                 $(DESTDIR)/lib/systemd/system/kadalu-mgr.service
-	install -D -m 700 mgr/lib/volgen/templates/client.vol.j2 \
+	install -D -m 644 mgr/lib/volgen/templates/client.vol.j2 \
                 $(DESTDIR)/var/lib/kadalu/templates/client.vol.j2
-	install -D -m 700 mgr/lib/volgen/templates/storage_unit.vol.j2 \
+	install -D -m 644 mgr/lib/volgen/templates/storage_unit.vol.j2 \
                 $(DESTDIR)/var/lib/kadalu/templates/storage_unit.vol.j2
-	install -D -m 700 mgr/lib/volgen/templates/shd.vol.j2 \
+	install -D -m 644 mgr/lib/volgen/templates/shd.vol.j2 \
                 $(DESTDIR)/var/lib/kadalu/templates/shd.vol.j2
 
 clean:
