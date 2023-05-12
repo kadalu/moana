@@ -299,6 +299,7 @@ def services_and_volfiles(req)
 
   # Client Volfile
   tmpl = volfile_get("client")
+
   client_volfile_content = Volgen.generate(tmpl, req.to_json, req.options)
 
   # SHD Volfile
@@ -309,7 +310,7 @@ def services_and_volfiles(req)
   end
 
   req.distribute_groups.each do |dist_grp|
-    dist_grp.storage_units.each do |storage_unit|
+    dist_grp.storage_units.each_with_index do |storage_unit, index|
       # Generate Service Unit
       service = StorageUnitService.new(req.name, storage_unit)
       services[storage_unit.node.name] = [] of MoanaTypes::ServiceUnit unless services[storage_unit.node.name]?
@@ -321,6 +322,13 @@ def services_and_volfiles(req)
       tmpl = volfile_get("storage_unit")
       storage_unit.volume.id = req.id
       storage_unit.volume.name = req.name
+
+      # Handle arbiter pools
+      # Mark every 3rd storage-unit as type arbiter if distribute group has arbiter count > 0
+      if dist_grp.arbiter_count > 0 && ((index + 1) % 3 == 0)
+        storage_unit.type = "arbiter"
+      end
+
       content = Volgen.generate(tmpl, storage_unit.to_json)
       volfiles[storage_unit.node.name] = [] of MoanaTypes::Volfile unless volfiles[storage_unit.node.name]?
       volfiles[storage_unit.node.name] << MoanaTypes::Volfile.new(service.id, content)

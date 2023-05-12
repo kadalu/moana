@@ -178,6 +178,10 @@ module PoolRequestParser
         storage_units["replica"].size,
         storage_units["mirror"].size
       )
+    elsif storage_units["arbiter"].size == 3
+      grp_storage_units = storage_units["arbiter"]
+      dist_group.replica_count = 3
+      dist_group.arbiter_count = 1
     elsif storage_units["disperse"].size > 0 ||
           storage_units["data"].size > 0
       grp_storage_units = storage_units["disperse"] +
@@ -292,7 +296,12 @@ module PoolRequestParser
     # TODO: Pool name validations
 
     req.distribute_groups.each do |dist_grp|
-      if dist_grp.replica_count > 0 && dist_grp.storage_units.size != dist_grp.replica_count
+      replica_arbiter_dist_grp_size = dist_grp.replica_count
+      if dist_grp.arbiter_count > 0 && dist_grp.replica_count == 2
+        replica_arbiter_dist_grp_size += 1
+      end
+
+      if dist_grp.replica_count > 0 && dist_grp.storage_units.size != replica_arbiter_dist_grp_size
         raise InvalidPoolRequest.new(
           "Number of Storage units not matching #{dist_grp.replica_keyword} count"
         )
