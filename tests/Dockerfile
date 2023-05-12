@@ -28,6 +28,4 @@ RUN git clone https://github.com/kadalu/glusterfs && \
 
 RUN curl -fsSL https://crystal-lang.org/install.sh | sudo bash
 
-RUN curl -fsSL https://github.com/kadalu/volgen/releases/latest/download/install.sh | sudo bash -x
-
 cmd ["/usr/sbin/init"]

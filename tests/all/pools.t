@@ -45,7 +45,7 @@ nodes.each do |node|
   TEST "mkdir -p /exports/pool19"
   TEST "mkdir -p /exports/pool20a"
   TEST "mkdir -p /exports/pool20b"
-  TEST "mkdir -p /exports/pool/21"
+  TEST "mkdir -p /exports/pool21"
 end
 
 USE_NODE nodes[0]
@@ -505,10 +505,19 @@ puts TEST "df /mnt/pool21"
 TEST "mkdir -p /mnt/pool21/d1"
 TEST "echo 'pool21' >> /mnt/pool21/d1/pool21.txt"
 
-puts TEST "cat /exports/pool21/s1/d1/pool21.txt"
-puts TEST "cat /exports/pool21/s2/d1/pool21.txt"
+content = TEST "cat /exports/pool21/s1/d1/pool21.txt"
+EQUAL content.strip, "pool21", "Test if server1:/exports/pool21/s1/d1/pool21.txt has 'pool21'"
+
+USE_NODE nodes[1]
+content = TEST "cat /exports/pool21/s2/d1/pool21.txt"
+EQUAL content.strip, "pool21", "Test if server2:/exports/pool21/s2/d1/pool21.txt has 'pool21'"
+
+USE_NODE nodes[2]
 # Expect below to be a empty file
-puts TEST "cat /exports/pool21/s3/d1/pool21.txt"
+content = TEST "cat /exports/pool21/s3/d1/pool21.txt"
+NOT_EQUAL content.strip, "pool21", "Test if server3:/exports/pool21/s3/d1/pool21.txt has 'pool21'"
+
+USE_NODE nodes[0]
 
 TEST "kadalu pool stop pool21 --mode=script"
 TEST "kadalu pool delete pool21 --mode=script"
