@@ -45,6 +45,7 @@ nodes.each do |node|
   TEST "mkdir -p /exports/pool19"
   TEST "mkdir -p /exports/pool20a"
   TEST "mkdir -p /exports/pool20b"
+  TEST "mkdir -p /exports/pool/21"
 end
 
 USE_NODE nodes[0]
@@ -491,6 +492,26 @@ TEST 0, "kadalu pool rename pool20b pool20a"
 puts TEST "kadalu node list"
 
 TEST "kadalu pool delete pool20a --mode=script"
+
+# Test for Arbiter Pool type
+USE_NODE nodes[0]
+TEST "kadalu pool create pool21 arbiter server1:/exports/pool21/s1 server2:/exports/pool21/s2 server3:/exports/pool21/s3"
+
+TEST "mkdir -p /mnt/pool21"
+
+puts TEST "kadalu mount pool21 /mnt/pool21"
+puts TEST "df /mnt/pool21"
+
+TEST "mkdir -p /mnt/pool21/d1"
+TEST "echo 'pool21' >> /mnt/pool21/d1/pool21.txt"
+
+puts TEST "cat /exports/pool21/s1/d1/pool21.txt"
+puts TEST "cat /exports/pool21/s2/d1/pool21.txt"
+# Expect below to be a empty file
+puts TEST "cat /exports/pool21/s3/d1/pool21.txt"
+
+TEST "kadalu pool stop pool21 --mode=script"
+TEST "kadalu pool delete pool21 --mode=script"
 
 nodes.each do |node|
   USE_NODE nodes[0]
