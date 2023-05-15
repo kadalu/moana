@@ -109,7 +109,9 @@ module MoanaTypes
     end
 
     def type
-      if @replica_count > 0
+      if @replica_count >= 2 && @arbiter_count == 1
+        "Arbiter"
+      elsif @replica_count > 0
         @replica_keyword == "mirror" ? "Mirror" : "Replicate"
       elsif @disperse_count > 0
         "Disperse"

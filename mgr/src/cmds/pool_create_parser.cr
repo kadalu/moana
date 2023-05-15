@@ -178,6 +178,10 @@ module PoolRequestParser
         storage_units["replica"].size,
         storage_units["mirror"].size
       )
+    elsif storage_units["arbiter"].size == 3
+      grp_storage_units = storage_units["arbiter"]
+      dist_group.replica_count = 3
+      dist_group.arbiter_count = 1
     elsif storage_units["disperse"].size > 0 ||
           storage_units["data"].size > 0
       grp_storage_units = storage_units["disperse"] +
@@ -284,30 +288,49 @@ module PoolRequestParser
     req
   end
 
-  # Validate the Pool create request after parsing
   def self.validate(req)
+    validate_pool_name(req)
+    validate_storage_units(req.distribute_groups)
+  end
+
+  def self.validate_pool_name(req)
+    # TODO: Pool name validations
     raise InvalidPoolRequest.new("Pool name not specified (Example: mypool)") if req.name == ""
     raise InvalidPoolRequest.new("Atleast one Storage unit is required") if req.distribute_groups.size == 0
+  end
 
-    # TODO: Pool name validations
+  def self.validate_storage_units(distribute_groups)
+    distribute_groups.each do |dist_grp|
+      validate_storage_units_match_replica_count(dist_grp)
+      validate_storage_units_match_disperse_count(dist_grp)
+      validate_storage_units_node_names(dist_grp.storage_units)
+    end
+  end
 
-    req.distribute_groups.each do |dist_grp|
-      if dist_grp.replica_count > 0 && dist_grp.storage_units.size != dist_grp.replica_count
-        raise InvalidPoolRequest.new(
-          "Number of Storage units not matching #{dist_grp.replica_keyword} count"
-        )
-      end
-      if dist_grp.disperse_count > 0 && dist_grp.storage_units.size != dist_grp.disperse_count
-        raise InvalidPoolRequest.new(
-          "Number of Storage units not matching disperse count"
-        )
-      end
+  def self.validate_storage_units_match_replica_count(dist_grp)
+    replica_arbiter_dist_grp_size = dist_grp.replica_count
+    replica_arbiter_dist_grp_size += 1 if dist_grp.arbiter_count > 0 && dist_grp.replica_count == 2
 
-      dist_grp.storage_units.each do |storage_unit|
-        msg = storage_unit.port > 0 ? "#{storage_unit.port}:" : ""
-        msg += storage_unit.path
-        raise InvalidPoolRequest.new("Node name is not specified for #{msg}") if storage_unit.node.name == ""
-      end
+    if dist_grp.replica_count > 0 && dist_grp.storage_units.size != replica_arbiter_dist_grp_size
+      raise InvalidPoolRequest.new(
+        "Number of Storage units not matching #{dist_grp.replica_keyword} count"
+      )
+    end
+  end
+
+  def self.validate_storage_units_match_disperse_count(dist_grp)
+    if dist_grp.disperse_count > 0 && dist_grp.storage_units.size != dist_grp.disperse_count
+      raise InvalidPoolRequest.new(
+        "Number of Storage units not matching disperse count"
+      )
+    end
+  end
+
+  def self.validate_storage_units_node_names(storage_units)
+    storage_units.each do |storage_unit|
+      msg = storage_unit.port > 0 ? "#{storage_unit.port}:" : ""
+      msg += storage_unit.path
+      raise InvalidPoolRequest.new("Node name is not specified for #{msg}") if storage_unit.node.name == ""
     end
   end
 end
